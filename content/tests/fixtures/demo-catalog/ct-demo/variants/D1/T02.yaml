@@ -1,0 +1,127 @@
+type: ct-demo:D1.T02
+variants:
+- id: ct-demo:D1.T02.S1.V001
+  subvariant: ct-demo:D1.T02.S1
+  statement: Чему равно $2 + 3$?
+  key:
+  - 4
+  options:
+  - n: 1
+    text: '4'
+    trap_id: off_by_one
+  - n: 2
+    text: '7'
+    trap_id: off_by_one
+  - n: 3
+    text: '8'
+    trap_id: off_by_one
+  - n: 4
+    text: '5'
+  - n: 5
+    text: '6'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T02.S1.V002
+  subvariant: ct-demo:D1.T02.S1
+  statement: Чему равно $3 + 4$?
+  key:
+  - 5
+  options:
+  - n: 1
+    text: '6'
+    trap_id: off_by_one
+  - n: 2
+    text: '8'
+    trap_id: off_by_one
+  - n: 3
+    text: '9'
+    trap_id: off_by_one
+  - n: 4
+    text: '10'
+    trap_id: off_by_one
+  - n: 5
+    text: '7'
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T02.S1.V003
+  subvariant: ct-demo:D1.T02.S1
+  statement: Чему равно $4 + 5$?
+  key:
+  - 1
+  options:
+  - n: 1
+    text: '9'
+  - n: 2
+    text: '8'
+    trap_id: off_by_one
+  - n: 3
+    text: '11'
+    trap_id: off_by_one
+  - n: 4
+    text: '12'
+    trap_id: off_by_one
+  - n: 5
+    text: '10'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T02.S1.V004
+  subvariant: ct-demo:D1.T02.S1
+  statement: Чему равно $5 + 6$?
+  key:
+  - 3
+  options:
+  - n: 1
+    text: '13'
+    trap_id: off_by_one
+  - n: 2
+    text: '14'
+    trap_id: off_by_one
+  - n: 3
+    text: '11'
+  - n: 4
+    text: '10'
+    trap_id: off_by_one
+  - n: 5
+    text: '12'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T02.S1.V005
+  subvariant: ct-demo:D1.T02.S1
+  statement: Чему равно $6 + 7$?
+  key:
+  - 1
+  options:
+  - n: 1
+    text: '13'
+  - n: 2
+    text: '14'
+    trap_id: off_by_one
+  - n: 3
+    text: '15'
+    trap_id: off_by_one
+  - n: 4
+    text: '12'
+    trap_id: off_by_one
+  - n: 5
+    text: '16'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D1.B01

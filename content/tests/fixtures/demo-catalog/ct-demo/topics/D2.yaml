@@ -1,0 +1,50 @@
+id: ct-demo:D2
+title: Умножение
+section: Арифметика
+status: active
+spec_version: demo-1
+citations: &id001
+- doc: demo-spec
+  item: '1'
+elements:
+- id: ct-demo:D2.E1
+  title: 'Умножение: тема целиком'
+  citations: *id001
+types:
+- id: ct-demo:D2.T01
+  title: 'Умножение: число'
+  kind: exam
+  primary_element: ct-demo:D2.E1
+  prerequisites: &id002
+  - ct-demo:D1.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.5
+    automatism:
+      hours: 1.0
+  citations:
+  - doc: topic-card
+    ref: D2 §Банк 1
+  subvariants:
+  - id: ct-demo:D2.T01.S1
+    given: два числа
+- id: ct-demo:D2.T02
+  title: 'Умножение: выбор'
+  kind: exam
+  primary_element: ct-demo:D2.E1
+  prerequisites: *id002
+  answer_format: ct.choice1
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.5
+    automatism:
+      hours: 1.0
+  citations:
+  - doc: topic-card
+    ref: D2 §Банк 2
+  subvariants:
+  - id: ct-demo:D2.T02.S1
+    given: два числа и варианты
