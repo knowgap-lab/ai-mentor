@@ -1,0 +1,66 @@
+# Примеры к catalog/schema.md (D133).
+# id_check — проверяется автоматически по catalog.schema.json (tools/examples/check_schema_examples.py).
+# ci — описание проверки CI на уровне репозитория (схема JSON этого выразить не может); служит тестовой спецификацией для CI.
+- {id: cs-01, rule: CS-R1,  id_check: {value: "ct-math:M14.T07.S1.V003", def: variant_id, valid: true}}
+- {id: cs-02, rule: CS-R1,  id_check: {value: "ct-math:M14.T7", def: type_id, valid: false}, error: id_invalid}
+- {id: cs-03, rule: CS-R1,  id_check: {value: "ct-math:M14.T07", def: type_id, valid: true}}
+- {id: cs-04, rule: CS-R1,  id_check: {value: "ct-math:M14.E01", def: element_id, valid: false}, error: id_invalid, note: "у E номер без ведущих нулей"}
+- {id: cs-05, rule: CS-R1,  id_check: {value: "ct-math:M14.B5", def: block_id, valid: false}, error: id_invalid, note: "у B ширина 2"}
+- {id: cs-06, rule: CS-R2,  id_check: {value: "ct-math:M14.E2.S1", def: subvariant_id, valid: false}, error: id_invalid, note: "S бывает только под T"}
+- {id: cs-07, rule: CS-R2,  id_check: {value: "ct-math:M14.B05.V001", def: variant_id, valid: false}, error: id_invalid, note: "V бывает только под S"}
+- {id: cs-08, rule: CS-R3,  id_check: {value: "ct-math:TEST.2025-CT-V2", def: test_id, valid: true}}
+- {id: cs-09, rule: CS-R30, id_check: {value: "ct-math:L07", def: lesson_id, valid: true}}
+- {id: cs-10, rule: CS-R30, id_check: {value: "ct-math:L07.G3", def: stage_id, valid: true}}
+- {id: cs-11, rule: CS-R30, id_check: {value: "ct-math:L7.G0", def: stage_id, valid: false}, error: id_invalid, note: "урок — 2+ цифры, этап начинается с 1"}
+- {id: cs-12, rule: CS-R6,  id_check: {value: "tmp:abc", def: tmp_key, valid: true}, note: "временный ключ допустим только в PR"}
+- id: cs-20
+  rule: CS-R4
+  ci: {change: "в PR удалён ct-math:M14.T07", expect: {error: id_removed}}
+- id: cs-21
+  rule: CS-R4
+  ci: {change: "новый тип получил id ранее retired ct-math:M14.T05", expect: {error: id_reused}}
+- id: cs-22
+  rule: CS-R5
+  ci: {change: "тип ct-math:M14.T07 перенесён в тему M13", expect: {valid: true, id_unchanged: true}}
+- id: cs-23
+  rule: CS-R6
+  ci: {change: "в main попал ключ tmp:abc", expect: {error: tmp_key_in_main}}
+- id: cs-24
+  rule: CS-R9
+  ci: {change: "тип без primary_element", expect: {error: primary_element_missing}}
+- id: cs-25
+  rule: CS-R10
+  ci: {change: "prerequisites: [ct-math:M13]", expect: {error: prereq_not_element}}
+- id: cs-26
+  rule: CS-R11
+  ci: {change: "T1 требует элемент T2, T2 требует элемент T1", expect: {error: prereq_cycle}}
+- id: cs-27
+  rule: CS-R15
+  ci: {change: "тип skill с появлением в тесте", expect: {error: skill_has_appearance}}
+- id: cs-28
+  rule: CS-R17
+  ci: {change: "base.hours 1.0, automatism.hours 0.5", expect: {error: level_hours_order}}
+- id: cs-29
+  rule: CS-R21
+  ci: {change: "тип без citations", expect: {error: citation_missing}}
+- id: cs-30
+  rule: CS-R25
+  ci: {change: "тип retired, был в тестах, нет в карте переноса", expect: {error: transfer_map_missing}}
+- id: cs-31
+  rule: CS-R25
+  ci: {change: "тип T07 делится на T22 и T23, subvariants_to T22", expect: {valid: true, subvariants_stay_with: "ct-math:M14.T22", ids_unchanged: true}}
+- id: cs-32
+  rule: CS-R27
+  ci: {change: "у типа темы M14 prerequisites [ct-math:M13.E1]", expect: {valid: true}}
+- id: cs-33
+  rule: CS-R29
+  ci: {change: "в файле темы поле tier: B", expect: {error: field_not_allowed}}
+- id: cs-34
+  rule: CS-R13
+  ci: {change: "блок kind: flashcard", expect: {valid: true}}
+- id: cs-35
+  rule: CS-R16
+  ci: {change: "answer_format типа не объявлен в пакете", expect: {error: answer_format_unknown}}
+- id: cs-36
+  rule: CS-R12
+  ci: {change: "ссылка на несуществующий id", expect: {error: dangling_ref}}

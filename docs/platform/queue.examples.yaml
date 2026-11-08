@@ -1,0 +1,55 @@
+# Примеры к platform/queue.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: queue-01
+  rule: QU-R1
+  given: транзакция сдачи ДЗ откатилась
+  expect: задания нет
+- id: queue-02
+  rule: QU-R2
+  given: ученик сдал ДЗ
+  expect: задание `model`
+- id: queue-03
+  rule: QU-R2
+  given: репетитор сдвинул дату экзамена
+  expect: задание `plan`
+- id: queue-04
+  rule: QU-R3
+  given: ученик дал один ответ
+  expect: задания нет
+- id: queue-05
+  rule: QU-R5
+  given: '`plan` и `model` одного ученика ожидают'
+  expect: одно задание `model` с максимальным `trigger_event_id`
+- id: queue-06
+  rule: QU-R6
+  given: расчёт на версии 6 готов после записи плана версии 7
+  expect: план версии 6 не записан
+- id: queue-07
+  rule: QU-R7
+  given: ученика архивировали при ожидающем задании
+  expect: задание отменено
+- id: queue-08
+  rule: QU-R8
+  given: worker упал во время расчёта
+  expect: через 120 с задание взял другой экземпляр
+- id: queue-09
+  rule: QU-R9
+  given: два задания одного ученика
+  expect: выполняются по очереди
+- id: queue-10
+  rule: QU-R10
+  given: во время расчёта пришло новое событие
+  expect: результат не записан, задание начато заново
+- id: queue-11
+  rule: QU-R12
+  given: пятая ошибка подряд
+  expect: '`failed`, тревога владельцу'
+- id: queue-12
+  rule: QU-R14
+  given: событие необработано 16 минут
+  expect: одна тревога репетитору
+- id: queue-13
+  rule: QU-R16
+  given: worker читает таблицу ПДн
+  expect: отказ базы

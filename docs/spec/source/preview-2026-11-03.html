@@ -1,0 +1,961 @@
+<title>Платформа адаптивной подготовки</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column on squared exercise-book paper; ink-blue for structure, teacher's red for risks */
+:root {
+  --bg: #f4f6fa;
+  --grid: rgba(46, 92, 184, 0.07);
+  --surface: #ffffff;
+  --card: #f7f9fd;
+  --ink: #17223b;
+  --muted: #5a6680;
+  --faint: #8792a8;
+  --line: #d9e0ec;
+  --accent: #2e5cb8;
+  --accent-soft: #e4ecfb;
+  --red: #c0392b;
+  --red-soft: #fbe8e6;
+  --green: #2f7d4f;
+  --green-soft: #e3f3e9;
+  --amber: #9a6200;
+  --amber-soft: #fbf0dc;
+  --store: #5b4bb5;
+  --font-body: "Golos Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1420; --grid: rgba(126, 166, 255, 0.05); --surface: #161d2c; --card: #1b2335;
+    --ink: #e6ebf5; --muted: #a3aec4; --faint: #7d889f; --line: #2b3652;
+    --accent: #85a9ff; --accent-soft: #1e2b4a; --red: #ff8173; --red-soft: #3a2024;
+    --green: #74d39c; --green-soft: #18301f; --amber: #e6b05a; --amber-soft: #352a15; --store: #b4a8ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1420; --grid: rgba(126, 166, 255, 0.05); --surface: #161d2c; --card: #1b2335;
+  --ink: #e6ebf5; --muted: #a3aec4; --faint: #7d889f; --line: #2b3652;
+  --accent: #85a9ff; --accent-soft: #1e2b4a; --red: #ff8173; --red-soft: #3a2024;
+  --green: #74d39c; --green-soft: #18301f; --amber: #e6b05a; --amber-soft: #352a15; --store: #b4a8ff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 900px; margin: 0 auto; display: grid; gap: 28px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent); }
+
+/* Hero */
+.hero { display: grid; gap: 14px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.hero h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -0.02em; }
+.hero .lead { color: var(--muted); max-width: 62ch; font-size: 17px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-size: 13px; font-weight: 500; padding: 3px 11px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.chip.red { background: var(--red-soft); color: var(--red); }
+.chip.plain { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+
+/* Answer sheet strip: the 30 test positions */
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 10px; }
+.sheet-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 13px; color: var(--muted); }
+.sheet-head b { color: var(--ink); font-weight: 600; }
+.cells { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 4px; }
+.cell { font-family: var(--font-mono); font-size: 11px; text-align: center; padding: 5px 0; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cell.a { border-color: var(--accent); color: var(--accent); }
+.cell.p { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+
+/* Glance */
+.glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.g { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.g .k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.g.risk .k { color: var(--red); }
+.g .v { font-size: 15px; line-height: 1.5; }
+
+/* Sections */
+.section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 26px clamp(16px, 4vw, 30px); display: grid; gap: 14px; }
+.section > * { min-width: 0; }
+.section h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; display: flex; gap: 12px; align-items: baseline; }
+.section h2 .num { font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--faint); }
+.section h3 { font-size: 16px; font-weight: 600; margin-top: 6px; }
+.tldr { color: var(--muted); border-left: 3px solid var(--accent); padding-left: 12px; max-width: 70ch; }
+.section p, .section li { max-width: 72ch; }
+.section ul, .section ol { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--card); border: 1px solid var(--line); padding: 1px 5px; border-radius: 4px; }
+pre { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; }
+.note { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+.note.red { background: var(--red-soft); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.two > div { min-width: 0; display: grid; gap: 8px; align-content: start; }
+
+/* Diagrams */
+.dwrap { overflow-x: auto; margin: 4px -4px; padding: 4px; }
+.dwrap svg { display: block; width: 100%; height: auto; }
+.cap { text-align: center; color: var(--faint); font-size: 13px; }
+svg text { font-family: var(--font-body); }
+.n { fill: var(--card); stroke: var(--accent); stroke-opacity: .55; }
+.n-start { fill: var(--accent-soft); stroke: var(--accent); }
+.n-store { fill: var(--card); stroke: var(--store); }
+.n-ext { fill: none; stroke: var(--faint); stroke-dasharray: 5 4; }
+.n-red { fill: var(--red-soft); stroke: var(--red); }
+.n-green { fill: var(--green-soft); stroke: var(--green); }
+.n-amber { fill: var(--amber-soft); stroke: var(--amber); }
+.t { fill: var(--ink); font-size: 13px; }
+.t-s { fill: var(--muted); font-size: 11px; }
+.t-acc { fill: var(--accent); font-size: 13px; font-weight: 600; }
+.t-store { fill: var(--store); font-size: 13px; font-weight: 600; }
+.t-red { fill: var(--red); font-size: 12px; }
+.t-green { fill: var(--green); font-size: 12px; }
+.t-amber { fill: var(--amber); font-size: 12px; }
+.t-ext { fill: var(--muted); font-size: 13px; }
+.e { stroke: var(--faint); stroke-width: 1.5; fill: none; }
+.e-red { stroke: var(--red); stroke-width: 1.5; fill: none; }
+.e-acc { stroke: var(--accent); stroke-width: 1.5; fill: none; }
+.ah { fill: var(--faint); }
+.ah-red { fill: var(--red); }
+.ah-acc { fill: var(--accent); }
+
+/* Tables */
+.twrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.id { font-family: var(--font-mono); font-size: 12px; color: var(--faint); white-space: nowrap; }
+td.src { white-space: nowrap; font-size: 12px; }
+.src-i { color: var(--accent); }
+.src-r { color: var(--red); }
+details { border: 1px solid var(--line); border-radius: 8px; }
+summary { cursor: pointer; padding: 12px 16px; font-weight: 600; color: var(--muted); }
+summary:hover { color: var(--ink); }
+summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+details[open] summary { border-bottom: 1px solid var(--line); }
+details .twrap { padding: 4px 4px 8px; }
+
+/* Timeline */
+.steps { list-style: none; padding: 0 !important; margin: 0; display: grid; gap: 0 !important; }
+.steps li { position: relative; padding: 0 0 18px 40px; max-width: none; }
+.steps li::before { content: attr(data-step); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-family: var(--font-mono); font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+.steps li.rel::before { background: var(--green-soft); color: var(--green); }
+.steps li.later::before { background: var(--card); color: var(--faint); border: 1px dashed var(--faint); }
+.steps li:not(:last-child)::after { content: ""; position: absolute; left: 12px; top: 31px; bottom: 4px; width: 2px; background: var(--line); }
+.steps .st { font-weight: 600; }
+.steps .sd { color: var(--muted); font-size: 15px; }
+.badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+.badge.rel { background: var(--green-soft); color: var(--green); }
+.badge.par { background: var(--amber-soft); color: var(--amber); }
+.badge.idea, .chip.idea { background: var(--amber-soft); color: var(--amber); }
+.section.idea { border: 1.5px dashed var(--amber); }
+.idea-banner { background: var(--amber-soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+.src-idea { color: var(--amber); }
+
+footer { color: var(--faint); font-size: 13px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<main>
+  <header class="hero">
+    <span class="eyebrow">Черновик спецификации · обновлено 3 ноября 2026</span>
+    <h1>Платформа адаптивной подготовки к ЦТ и ЦЭ</h1>
+    <p class="lead">Один общий каталог тем, типов заданий и задач. Из него для каждого ученика собираются свой план, свой конспект и своя практика, а план подстраивается по результатам домашних заданий и уроков.</p>
+    <div class="chips">
+      <span class="chip">71 решение</span>
+      <span class="chip idea">1 идея и 3 вопроса на обсуждение</span>
+      <span class="chip">2 раунда red-team, 42 находки</span>
+      <span class="chip red">3 принятых риска</span>
+      <span class="chip plain">математика и физика</span>
+    </div>
+    <div class="sheet" aria-label="Позиции теста ЦТ и ЦЭ">
+      <div class="sheet-head"><span><b>30 позиций теста</b> — единица, к которой привязаны частоты и баллы</span><span>А: 1 балл · В1–В2: частичный балл · В3–В20: 2 балла, целое число</span></div>
+      <div class="cells">
+        <span class="cell a">А1</span><span class="cell a">А2</span><span class="cell a">А3</span><span class="cell a">А4</span><span class="cell a">А5</span><span class="cell a">А6</span><span class="cell a">А7</span><span class="cell a">А8</span><span class="cell a">А9</span><span class="cell a">А10</span>
+        <span class="cell p">В1</span><span class="cell p">В2</span><span class="cell">В3</span><span class="cell">В4</span><span class="cell">В5</span><span class="cell">В6</span><span class="cell">В7</span><span class="cell">В8</span><span class="cell">В9</span><span class="cell">В10</span>
+        <span class="cell">В11</span><span class="cell">В12</span><span class="cell">В13</span><span class="cell">В14</span><span class="cell">В15</span><span class="cell">В16</span><span class="cell">В17</span><span class="cell">В18</span><span class="cell">В19</span><span class="cell">В20</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="glance">
+    <div class="g"><span class="k">Задача</span><span class="v">У каждого ученика свой уровень, темп, число уроков и дата экзамена, а материалы пишутся один раз.</span></div>
+    <div class="g"><span class="k">Подход</span><span class="v">Алгоритм считает план по вероятностям знаний; ИИ-агент вносит правки в заданных рамках; бэкенд всё проверяет.</span></div>
+    <div class="g"><span class="k">Стек</span><span class="v">React + TypeScript, Python (FastAPI, SymPy), PostgreSQL, один Linux-сервер. Язык ядра — открытый вопрос (Q2).</span></div>
+    <div class="g risk"><span class="k">Главный риск</span><span class="v">Неверный ключ ответа портит модель ученика. Защита: независимая проверка ключей и пересчёт из журнала.</span></div>
+  </div>
+
+  <!-- 1. How it works -->
+  <section class="section">
+    <h2><span class="num">01</span>Как это работает</h2>
+    <p class="tldr">Каталог проходит проверки и попадает в базу; ученик решает, попытки копятся в журнале, из журнала считаются вероятности знаний, из них — план.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 980 430" role="img" aria-label="Сверху конвейер материалов: каталог в git, проверки, рабочая копия в базе. Снизу замкнутый цикл ученика: журнал попыток, модель знаний, оптимизатор, план, урок и ДЗ, снова журнал. Диагностика — вход в цикл. Агент и репетитор правят план сбоку.">
+        <defs>
+          <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="a1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-acc"/></marker>
+        </defs>
+        <!-- bands -->
+        <rect x="6" y="6" width="968" height="112" rx="10" style="fill:none;stroke:var(--line);stroke-dasharray:4 4"/>
+        <text class="t-s" x="20" y="26">МАТЕРИАЛЫ · конвейер, срабатывает только когда меняется каталог</text>
+        <rect x="6" y="140" width="968" height="282" rx="10" style="fill:none;stroke:var(--line);stroke-dasharray:4 4"/>
+        <text class="t-s" x="20" y="160">УЧЕНИК · замкнутый цикл, крутится каждую неделю</text>
+
+        <!-- conveyor -->
+        <path class="e" d="M170,69 L226,69" marker-end="url(#a1)"/>
+        <path class="e" d="M400,69 L456,69" marker-end="url(#a1)"/>
+        <!-- materials feed the loop -->
+        <path class="e" d="M545,92 L545,126 L500,126 L500,196" marker-end="url(#a1)"/>
+        <text class="t-s" x="556" y="114">какие типы есть</text>
+        <path class="e" d="M630,69 L950,69 L950,353 L786,353" marker-end="url(#a1)"/>
+        <text class="t-s" x="940" y="226" text-anchor="end">задачи и конспект</text>
+
+        <!-- the loop -->
+        <path class="e-acc" d="M370,223 L426,223" marker-end="url(#a1r)"/>
+        <path class="e-acc" d="M570,223 L626,223" marker-end="url(#a1r)"/>
+        <path class="e-acc" d="M700,246 L700,326" marker-end="url(#a1r)"/>
+        <path class="e-acc" d="M630,353 L374,353" marker-end="url(#a1r)"/>
+        <path class="e-acc" d="M300,330 L300,250" marker-end="url(#a1r)"/>
+        <text class="t-s" x="500" y="344" text-anchor="middle">ответы, отметки урока</text>
+        <text class="t-s" x="292" y="294" text-anchor="end">пересчёт</text>
+        <text class="t-s" x="710" y="290">что задать</text>
+        <text class="t-acc" x="500" y="290" text-anchor="middle">↻ цикл</text>
+
+        <!-- entry -->
+        <path class="e" d="M150,353 L226,353" marker-end="url(#a1)"/>
+        <text class="t-s" x="188" y="344" text-anchor="middle">1 раз</text>
+
+        <!-- side hands -->
+        <path class="e" d="M816,206 L774,214" marker-end="url(#a1)"/>
+        <path class="e" d="M816,262 L774,234" marker-end="url(#a1)"/>
+
+        <!-- nodes -->
+        <rect class="n-start" x="20" y="46" width="150" height="46" rx="10"/><text class="t-acc" x="95" y="62" text-anchor="middle" dominant-baseline="middle">Каталог в git</text><text class="t-s" x="95" y="80" text-anchor="middle" dominant-baseline="middle">оригинал, правят здесь</text>
+        <rect class="n" x="230" y="46" width="170" height="46" rx="10"/><text class="t" x="315" y="62" text-anchor="middle" dominant-baseline="middle">Проверки (CI)</text><text class="t-s" x="315" y="80" text-anchor="middle" dominant-baseline="middle">+ генерация вариантов</text>
+        <rect class="n-store" x="460" y="46" width="170" height="46" rx="4"/><text class="t-store" x="545" y="62" text-anchor="middle" dominant-baseline="middle">Копия в базе</text><text class="t-s" x="545" y="80" text-anchor="middle" dominant-baseline="middle">её читает сайт</text>
+
+        <rect class="n-store" x="230" y="200" width="140" height="46" rx="4"/><text class="t-store" x="300" y="216" text-anchor="middle" dominant-baseline="middle">Модель знаний</text><text class="t-s" x="300" y="234" text-anchor="middle" dominant-baseline="middle">вероятности</text>
+        <rect class="n" x="430" y="200" width="140" height="46" rx="10"/><text class="t" x="500" y="216" text-anchor="middle" dominant-baseline="middle">Оптимизатор</text><text class="t-s" x="500" y="234" text-anchor="middle" dominant-baseline="middle">что учить дальше</text>
+        <rect class="n" x="630" y="200" width="140" height="46" rx="10"/><text class="t" x="700" y="223" text-anchor="middle" dominant-baseline="middle">План</text>
+        <rect class="n-start" x="630" y="330" width="156" height="46" rx="10"/><text class="t-acc" x="708" y="353" text-anchor="middle" dominant-baseline="middle">Урок и ДЗ</text>
+        <rect class="n-store" x="230" y="330" width="140" height="46" rx="4"/><text class="t-store" x="300" y="346" text-anchor="middle" dominant-baseline="middle">Журнал попыток</text><text class="t-s" x="300" y="364" text-anchor="middle" dominant-baseline="middle">факты, навсегда</text>
+        <rect class="n-ext" x="20" y="330" width="130" height="46" rx="10"/><text class="t-ext" x="85" y="346" text-anchor="middle" dominant-baseline="middle">Диагностика</text><text class="t-s" x="85" y="364" text-anchor="middle" dominant-baseline="middle">вход в цикл</text>
+        <rect class="n-ext" x="820" y="184" width="110" height="40" rx="10"/><text class="t-ext" x="875" y="204" text-anchor="middle" dominant-baseline="middle">ИИ-агент</text>
+        <rect class="n-ext" x="820" y="244" width="110" height="40" rx="10"/><text class="t-ext" x="875" y="264" text-anchor="middle" dominant-baseline="middle">Репетитор</text>
+      </svg>
+    </div>
+    <p class="cap">Сверху — конвейер материалов, он не цикл. Снизу — цикл ученика: журнал → модель → оптимизатор → план → урок и ДЗ → журнал. Агент и репетитор правят план сбоку, через проверки.</p>
+    <p>Единых источников истины два: каталог в git и журнал ученика (попытки, отметки уроков, правки). Модель знаний, прогноз балла и план — производные, их можно пересчитать после исправления любой формулы. Агент никогда не пишет план напрямую: он предлагает действия из заранее заданного списка, бэкенд их проверяет и превращает в ограничения для оптимизатора. Ваши правки идут тем же путём. Есть идея на обсуждение (раздел 03): чтобы каталог в git правил не только человек, а модуль-составитель собирал набор тем из документов и приносил изменения pull request'ом.</p>
+  </section>
+
+  <!-- 2. Catalog -->
+  <section class="section">
+    <h2><span class="num">02</span>Каталог: что знать и что проверяют</h2>
+    <p class="tldr">Полный минимальный набор на 100 баллов: границу задаёт спецификация 2027, глубину — частоты по реальным сессиям 2023–2026.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 800 250" role="img" aria-label="Модель каталога: тема, тип задания, подвариант, вариант; у типа появления в тестах; у темы блоки конспекта и предпосылки; попытка ссылается на вариант">
+        <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <path class="e" d="M150,60 L196,60" marker-end="url(#a2)"/>
+        <path class="e" d="M346,60 L392,60" marker-end="url(#a2)"/>
+        <path class="e" d="M532,60 L578,60" marker-end="url(#a2)"/>
+        <path class="e" d="M85,83 L85,156" marker-end="url(#a2)"/>
+        <path class="e" d="M270,83 L270,156" marker-end="url(#a2)"/>
+        <path class="e" d="M650,156 L650,87" marker-end="url(#a2)"/>
+        <path class="e" d="M40,37 C40,0 130,0 130,33" marker-end="url(#a2)"/>
+        <text class="t-s" x="85" y="12" text-anchor="middle">предпосылки</text>
+        <text class="t-s" x="410" y="104" text-anchor="middle">ценность навыка — через «нужен для»</text>
+
+        <rect class="n-start" x="20" y="37" width="130" height="46" rx="10"/><text class="t-acc" x="85" y="60" text-anchor="middle" dominant-baseline="middle">Тема</text>
+        <rect class="n" x="200" y="37" width="146" height="46" rx="10"/><text class="t" x="273" y="54" text-anchor="middle" dominant-baseline="middle">Тип задания</text><text class="t-s" x="273" y="71" text-anchor="middle" dominant-baseline="middle">экзаменационный · навык</text>
+        <rect class="n" x="396" y="37" width="136" height="46" rx="10"/><text class="t" x="464" y="54" text-anchor="middle" dominant-baseline="middle">Подвариант</text><text class="t-s" x="464" y="71" text-anchor="middle" dominant-baseline="middle">что дано / что найти</text>
+        <rect class="n" x="582" y="37" width="136" height="46" rx="10"/><text class="t" x="650" y="54" text-anchor="middle" dominant-baseline="middle">Вариант</text><text class="t-s" x="650" y="71" text-anchor="middle" dominant-baseline="middle">числа, ответ, № навсегда</text>
+        <rect class="n" x="20" y="160" width="130" height="46" rx="10"/><text class="t" x="85" y="177" text-anchor="middle" dominant-baseline="middle">Блок конспекта</text><text class="t-s" x="85" y="194" text-anchor="middle" dominant-baseline="middle">теория, пример, виджет</text>
+        <rect class="n-amber" x="200" y="160" width="146" height="46" rx="10"/><text class="t-amber" x="273" y="177" text-anchor="middle" dominant-baseline="middle">Появление в тесте</text><text class="t-s" x="273" y="194" text-anchor="middle" dominant-baseline="middle">сессия, год, позиция</text>
+        <rect class="n-store" x="582" y="160" width="136" height="46" rx="4"/><text class="t-store" x="650" y="177" text-anchor="middle" dominant-baseline="middle">Попытка ученика</text><text class="t-s" x="650" y="194" text-anchor="middle" dominant-baseline="middle">ответ + версия каталога</text>
+      </svg>
+    </div>
+    <p class="cap">Позиция теста — свойство появления, а не типа: тип может стоять на В7 в одном году и на В9 в другом.</p>
+    <div class="two">
+      <div>
+        <h3>Граница и глубина</h3>
+        <ul>
+          <li>Входит всё, что есть в спецификации 2027; то, чего не было в тестах, — на базовом уровне как страховка.</li>
+          <li>Один независимый образец — одна сессия ЦЭ или ЦТ. Параллельные варианты одной сессии — копии и считаются один раз.</li>
+          <li>Частоты считаются по 2023–2026; 2021–2022, РТ и ДРТ дают только отметку «встречалось».</li>
+          <li>Подготовительные упражнения — тип вида «навык»: своих баллов нет, ценность приходит от типов, для которых он нужен.</li>
+          <li>Тема делится на элементы по глубине: например, тригонометрия — Т1 «определения и значения» … Т5 «сумма ↔ произведение». Предпосылки ссылаются на элемент, поэтому проекции в физике требуют только Т1, а не всей тригонометрии.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Качество</h3>
+        <ul>
+          <li>Номера тем, типов и вариантов вечные; удалять нельзя, только «устарел».</li>
+          <li>Шаблоны разворачиваются в варианты заранее, в CI: 30–50 на тип и отдельный резерв для срезов.</li>
+          <li>Ключ проверяется независимо: подстановкой ответа в условие или вторым решателем. Правила ЦТ проверяются автоматически: целый ответ, единицы и константы в условии, «считается без калькулятора».</li>
+          <li>Разметку реальных заданий по типам делают два ИИ независимо, расхождения решаете вы. Возможно, это станет частью составителя (идея, раздел 03).</li>
+          <li>Вы просматриваете задачи урока, ДЗ и среза в кабинете перед уроком.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Curriculum builder (idea, not approved) -->
+  <section class="section idea">
+    <h2><span class="num">03</span>Составление программы <span class="badge idea">идея · не утверждено</span></h2>
+    <p class="idea-banner"><b>Это идея, а не решение.</b> Раздел не входит в утверждённый план и не меняет остальные разделы. Его нужно разобрать вместе с агентом — интервью и red-team, как для остальных разделов, — и только потом решить, строим ли модуль, в каком объёме и делаем ли его курсовой. Всё ниже — черновик для этого разбора.</p>
+    <p class="tldr">Составитель работает в два уровня: граф 1 по формулировке цели предлагает профиль — где искать и какой источник за что отвечает; граф 2 по профилю собирает общий каталог. Личный план по-прежнему строит платформа. Цель может быть любой: ЦТ, вузовский курс, трудоустройство. У каждой темы есть ссылка на источник, результат приходит pull request'ом.</p>
+    <h3>Любая программа — пять частей</h3>
+    <p>Если раздеть ЦТ до сути, программа обучения — это цель, граница, вес, порядок и измерение. ЦТ — частный случай: для другой цели меняются источники, а роли остаются те же.</p>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Часть</th><th>ЦТ и ЦЭ</th><th>Трудоустройство (джун на Go)</th><th>Вузовский курс</th></tr></thead>
+        <tbody>
+          <tr><td>Цель — что значит «готов»</td><td>балл ≥ 80</td><td>оффер</td><td>сдать экзамен</td></tr>
+          <tr><td>Граница — что входит</td><td>спецификация РИКЗ</td><td>требования из ~200 вакансий</td><td>программа дисциплины</td></tr>
+          <tr><td>Вес — как часто требуют</td><td>частота в сессиях</td><td>доля вакансий, где навык упомянут</td><td>частота в билетах</td></tr>
+          <tr><td>Порядок — что раньше чего</td><td>школьные программы</td><td>roadmap, учебники</td><td>порядок лекций</td></tr>
+          <tr><td>Измерение — как проверить</td><td>задачи с числовым ответом</td><td>вопросы собеседований, задачи на код, мини-проект</td><td>задачи контрольных</td></tr>
+          <tr><td>Проверка ответа</td><td>сравнение</td><td>автотесты кода, оценка по критериям</td><td>сравнение или символьная</td></tr>
+          <tr><td>Эксперт в цикле</td><td>вы</td><td>практикующий разработчик</td><td>преподаватель</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Вес считается одинаково для любой цели: <i>w</i>(<i>e</i>) = <i>n</i><sub><i>e</i></sub> / <i>N</i>, где <i>N</i> — число независимых образцов (сессий ЦТ, вакансий, билетов), а <i>n</i><sub><i>e</i></sub> — в скольких из них встретился элемент <i>e</i>. Дубликаты убираются по одному правилу: параллельные варианты одной сессии — одна сессия, вакансия, перевыложенная пять раз, — одна вакансия.</p>
+    <h3>Три уровня: что общее, а что личное</h3>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Уровень</th><th>Что делает</th><th>Результат</th><th>Сколько</th></tr></thead>
+        <tbody>
+          <tr><td>Граф 1 · профиль</td><td>Решает, где искать и какую роль играет каждый источник</td><td>Профиль: файл на 10–20 строк</td><td>Один на цель</td></tr>
+          <tr><td>Граф 2 · каталог</td><td>Читает источники из профиля и собирает всё, что нужно знать</td><td>Каталог: элементы, предпосылки, веса, типы заданий</td><td>Один на цель, общий для всех учеников</td></tr>
+          <tr><td>Платформа (разделы 06–07)</td><td>Диагностика → модель знаний → оптимизатор</td><td>Личный план</td><td>Один на ученика</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Пример, цель «джун на Go» (числа условные). Граф 1 ещё ничего не знает про горутины и решает только, как изучать тему: 200 вакансий — граница и веса, roadmap — порядок, сборники вопросов с собеседований — задания, проверка — код с автотестами и устные ответы. Вы правите этот список за пять минут. Граф 2 идёт по нему и собирает каталог примерно из 150 элементов — горутины, каналы, интерфейсы, SQL JOIN, HTTP-сервер — со связями («каналы требуют горутин») и весами («горутины — в 80 % вакансий»). Платформа строит по каталогу план под конкретного ученика: знает Python, 10 часов в неделю, SQL уже умеет — значит, начинаем с основ Go.</p>
+    <ul>
+      <li><b>Ошибку в профиле дёшево поймать и дорого пропустить.</b> Проверить 15 строк — пять минут. Неудачный источник, например вакансии сеньоров вместо джунов, превратится в неправильный каталог из 150 элементов.</li>
+      <li><b>Профиль работает многократно.</b> Граф 1 запускается один раз на цель, граф 2 перезапускается с тем же профилем при каждом обновлении источников.</li>
+      <li><b>Граф 1 можно не запускать.</b> Для ЦТ источники известны — профиль пишется руками. Уровни связаны только файлом профиля, поэтому граф 1 можно заменить ручным файлом или скиллом (вопрос Q3 ниже).</li>
+    </ul>
+    <h3>Профиль программы — договор между уровнями</h3>
+    <p>Граф 2 ничего не знает про ЦТ. Всё, чем одна программа отличается от другой, описано в профиле — файле рядом с каталогом. Новая программа — это новый профиль, а не новый код.</p>
+    <pre>program: ct-math-2027
+sources:
+  - {file: spec_2027.pdf,        role: boundary}   # что входит
+  - {file: vstup_2026.pdf,       role: naming}     # названия и деление тем
+  - {glob: school/*.pdf,         role: order}      # порядок и предпосылки
+  - {dir: variants/2023-2026,    role: tasks, sample: session}
+assessment: {positions: 30, scoring: ct}
+task_rules: [integer_answer, no_calculator, units_in_statement]
+links: [ct-phys-2027]</pre>
+    <p class="cap">Набросок профиля. Роли источников — фиксированный короткий список, сами источники — любые.</p>
+    <ul>
+      <li>Узлы графа обобщённые: «прочитать источник», «выписать элементы», «разметить задания». Что делать с источником, решает его роль из профиля. Читатели источников подключаются: PDF, веб-страница, таблица, папка с вариантами.</li>
+      <li>Шаги включаются по профилю. Нет реальных заданий — нет разметки и частот, ценность тем задаёт модуль цели (D52). Нет источника с ролью «порядок» — порядок предлагает ИИ, и он уходит к вам вопросом.</li>
+      <li>Результат у всех программ в одной схеме: тема → элемент → тип, предпосылки, цитаты. Поэтому модель знаний, оптимизатор и конспекты работают с любым каталогом без изменений — тот же принцип, что «цель — заменяемый модуль» (D29, D52).</li>
+      <li>Предметные проверки, например правила ЦТ для шаблонов, — подключаемые правила из профиля, а не код графа.</li>
+      <li>Каталоги разных программ ссылаются друг на друга номерами: предпосылка из другого каталога — обычная ссылка.</li>
+      <li>Профиль пишется руками (так проще для ЦТ) или его предлагает граф 1 по формулировке цели, а вы подтверждаете.</li>
+    </ul>
+    <h3>Пример профиля: откуда берём темы для ЦТ и ЦЭ</h3>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Источник</th><th>Что берём</th><th>За что отвечает</th></tr></thead>
+        <tbody>
+          <tr><td>Спецификация теста РИКЗ по предмету (сейчас 2026, после выхода — 2027)</td><td>Проверяемые элементы содержания, структура теста, позиции</td><td>Граница: что входит в каталог</td></tr>
+          <tr><td>Программа вступительных испытаний</td><td>Разделы, темы, требования «знать и уметь»</td><td>Названия и деление тем</td></tr>
+          <tr><td>Школьные учебные программы 5–11 классов</td><td>В каком классе и в каком порядке изучается тема</td><td>Предпосылки, порядок, глубина элементов</td></tr>
+          <tr><td>Варианты ЦТ и ЦЭ 2023–2026, по одному на сессию</td><td>Реальные задания с позициями</td><td>Типы заданий и частоты</td></tr>
+          <tr><td>РТ, ДРТ, ЦТ 2021–2022</td><td>Задания</td><td>Только отметка «встречалось» и запас подвариантов</td></tr>
+          <tr><td>Черновой граф из 82 тем</td><td>Структура и номера</td><td>Старт; вечные номера не меняются</td></tr>
+          <tr><td>Вы</td><td>Ответы на вопросы графа</td><td>Последнее слово в спорном</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Если источники расходятся, побеждает роль: граница — из источника «граница», порядок — из источника «порядок». В этом профиле это спецификация и школьная программа.</p>
+    <h3>Граф 2: сборка каталога по профилю</h3>
+    <div class="dwrap">
+      <svg viewBox="0 0 930 240" role="img" aria-label="Граф составителя: источники, разбор документов, извлечение элементов, сопоставление с каталогом, разметка заданий двумя ИИ, типы и предпосылки, частоты и проверки, критик с возвратом на доработку, ваш разбор, pull request в каталог">
+        <defs>
+          <marker id="a3c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="a3cr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-red"/></marker>
+        </defs>
+        <path class="e" d="M140,55 L166,55" marker-end="url(#a3c)"/>
+        <path class="e" d="M300,55 L326,55" marker-end="url(#a3c)"/>
+        <path class="e" d="M480,55 L506,55" marker-end="url(#a3c)"/>
+        <path class="e" d="M680,55 L706,55" marker-end="url(#a3c)"/>
+        <path class="e" d="M810,80 L810,166" marker-end="url(#a3c)"/>
+        <text class="t-s" x="820" y="126">сотни заданий</text>
+        <path class="e" d="M710,195 L684,195" marker-end="url(#a3c)"/>
+        <path class="e" d="M510,195 L494,195" marker-end="url(#a3c)"/>
+        <path class="e-red" d="M430,161 L430,118 L595,118 L595,84" marker-end="url(#a3cr)"/>
+        <text class="t-red" x="583" y="110" text-anchor="end">дыры → доработать, ≤ 3 круга</text>
+        <path class="e" d="M370,195 L324,195" marker-end="url(#a3c)"/>
+        <text class="t-green" x="347" y="186" text-anchor="middle">ок</text>
+        <path class="e" d="M170,195 L144,195" marker-end="url(#a3c)"/>
+
+        <rect class="n-start" x="20" y="30" width="120" height="50" rx="10"/><text class="t-acc" x="80" y="47" text-anchor="middle" dominant-baseline="middle">Источники</text><text class="t-s" x="80" y="65" text-anchor="middle" dominant-baseline="middle">PDF, сайты</text>
+        <rect class="n" x="170" y="30" width="130" height="50" rx="10"/><text class="t" x="235" y="47" text-anchor="middle" dominant-baseline="middle">Разбор</text><text class="t-s" x="235" y="65" text-anchor="middle" dominant-baseline="middle">код: PDF → текст</text>
+        <rect class="n-ext" x="330" y="30" width="150" height="50" rx="10"/><text class="t-ext" x="405" y="47" text-anchor="middle" dominant-baseline="middle">Элементы</text><text class="t-s" x="405" y="65" text-anchor="middle" dominant-baseline="middle">ИИ · каждый с цитатой</text>
+        <rect class="n-ext" x="510" y="30" width="170" height="50" rx="10"/><text class="t-ext" x="595" y="47" text-anchor="middle" dominant-baseline="middle">Сопоставление</text><text class="t-s" x="595" y="65" text-anchor="middle" dominant-baseline="middle">с каталогом, номера те же</text>
+        <rect class="n-ext" x="710" y="30" width="200" height="50" rx="10"/><text class="t-ext" x="810" y="47" text-anchor="middle" dominant-baseline="middle">Разметка заданий</text><text class="t-s" x="810" y="65" text-anchor="middle" dominant-baseline="middle">2 ИИ независимо, параллельно</text>
+        <rect class="n-ext" x="710" y="170" width="200" height="50" rx="10"/><text class="t-ext" x="810" y="187" text-anchor="middle" dominant-baseline="middle">Типы и предпосылки</text><text class="t-s" x="810" y="205" text-anchor="middle" dominant-baseline="middle">ИИ · связи по элементам</text>
+        <rect class="n" x="510" y="170" width="170" height="50" rx="10"/><text class="t" x="595" y="187" text-anchor="middle" dominant-baseline="middle">Частоты и проверки</text><text class="t-s" x="595" y="205" text-anchor="middle" dominant-baseline="middle">обычный код</text>
+        <path d="M430,161 L490,195 L430,229 L370,195 Z" class="n-amber"/><text class="t-amber" x="430" y="195" text-anchor="middle" dominant-baseline="middle">критик</text>
+        <rect class="n-green" x="170" y="170" width="150" height="50" rx="10"/><text class="t-green" x="245" y="187" text-anchor="middle" dominant-baseline="middle">Ваш разбор</text><text class="t-s" x="245" y="205" text-anchor="middle" dominant-baseline="middle">граф на паузе</text>
+        <rect class="n-start" x="20" y="170" width="120" height="50" rx="10"/><text class="t-acc" x="80" y="187" text-anchor="middle" dominant-baseline="middle">PR в каталог</text><text class="t-s" x="80" y="205" text-anchor="middle" dominant-baseline="middle">дальше CI и вы</text>
+      </svg>
+    </div>
+    <p class="cap">Пунктир — шаги с ИИ, сплошные — обычный код, ромб — проверка. После каждого шага состояние сохраняется в PostgreSQL: если граф упал или неделю ждёт вашего ответа, он продолжит с того же места.</p>
+    <div class="two">
+      <div>
+        <h3>Как устроен</h3>
+        <ul>
+          <li>Состояние графа — один типизированный объект: тексты источников, элементы, сопоставления, разметка, вопросы к вам. Каждый узел — функция «состояние → изменения», её можно тестировать отдельно.</li>
+          <li>Разметка идёт параллельно: на каждое задание запускаются два независимых ИИ (<code>Send</code>). Совпали — принято, разошлись — вопрос в ваш список.</li>
+          <li>Критик — обычный код на условном ребре. Элемент спецификации без типа, задание без разметки, цикл в предпосылках, ссылка без цитаты — граф идёт на доработку. После трёх кругов остаток уходит вопросом к вам.</li>
+          <li>Ваш разбор — пауза графа (<code>interrupt</code>): вопросы приходят списком в кабинет, ответы возвращаются в граф, и он доделывает PR.</li>
+          <li>Модель подключается через тот же адаптер, что у агента: облачная или локальная, их можно сравнивать.</li>
+          <li>Язык: LangGraph есть на Python и JS/TypeScript, на Go его нет. Поэтому составитель — отдельный сервис на Python, и язык ядра от него не зависит (вопрос Q2, раздел 10).</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Почему не испортит каталог</h3>
+        <ul>
+          <li>Составитель пишет только ветку и PR в репозиторий каталога. Дальше обычный путь: CI → ваше слияние → загрузчик. К базе и ученикам доступа нет.</li>
+          <li>У каждого элемента, темы и типа есть цитата: документ, страница, пункт. Без цитаты критик не пропустит, поэтому ИИ не может придумать тему.</li>
+          <li>Номера вечные: сопоставление сначала ищет существующую тему; новый номер — только для нового; «устарел» ставится только с вашего согласия.</li>
+          <li>Частоты, циклы и покрытие считает код, а не ИИ, и он тестируется как ядро.</li>
+          <li>Повторный прогон (вышла спецификация 2027, прошла новая сессия) даёт разницу к текущему каталогу, а не новый каталог.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note"><b>Готово, когда</b> каждый элемент из источника-границы покрыт хотя бы одним типом; каждое задание из источников-заданий размечено (если они есть в профиле); у каждого типа есть предпосылки на уровне элементов и частота или квота страховки; в графе предпосылок нет циклов; открытых вопросов к вам нет.</p>
+    <h3>Где будет трудно</h3>
+    <ul>
+      <li><b>Один навык под разными названиями.</b> «Горутины», «конкурентность в Go», «goroutines/channels» — это одно и то же. Самая сложная техническая часть: эмбеддинги → кластеризация → ИИ-судья на спорных парах → вечный номер элемента. Для курсовой — отдельная измеримая подзадача.</li>
+      <li><b>Зернистость.</b> Правило, которое ИИ обязан соблюдать: элемент — то, что проверяется одним типом задания за 5–30 минут. Иначе один ИИ выдаст «знает Go», а другой — «умеет закрыть канал».</li>
+      <li><b>Не всё проверяется задачей с ответом.</b> Форматы по убыванию надёжности: точный ответ → код с автотестами (песочница) → оценка по критериям с ИИ → отметка эксперта. Модель знаний должна учитывать надёжность формата — это расширение D44.</li>
+      <li><b>Нет официальной границы.</b> Для трудоустройства граница статистическая и меняется каждые полгода, поэтому нужны регулярные перезапуски с разницей к каталогу.</li>
+      <li><b>Эксперт у каждой области свой.</b> Модуль универсальный, экспертиза — нет. Без проверяющего человека получится правдоподобный, но непроверенный каталог.</li>
+    </ul>
+    <h3>Как начинать, чтобы не утонуть</h3>
+    <p>Сразу строить «универсальную машину для всего» — против D19 (без функций на будущее). Порядок:</p>
+    <ol class="steps">
+      <li data-step="1"><span class="st">ЦТ, но роли из профиля с первого дня</span><br><span class="sd">Никаких захардкоженных «спецификаций» в коде графа.</span></li>
+      <li data-step="2"><span class="st">Второй профиль, где эксперт — вы</span><br><span class="sd">Курс ДУ или школьная математика 7 класса. Эталон размечаете сами.</span></li>
+      <li data-step="3"><span class="st">Трудоустройство</span><br><span class="sd">Третьим, как демонстрация переносимости; нужен эксперт-разработчик.</span></li>
+      <li data-step="4"><span class="st">Граф 1 — последним</span><br><span class="sd">Когда граф 2 уже работает на нескольких ручных профилях.</span></li>
+    </ol>
+    <h3>Как оформить: LangGraph или скилл Claude <span class="badge idea">вопрос Q3</span></h3>
+    <p>Скилл — папка с инструкцией (<code>SKILL.md</code>) и скриптами: Claude читает её и сам выполняет процедуру своими инструментами. LangGraph — код, в котором шаги и переходы заданы явно.</p>
+    <div class="twrap">
+      <table>
+        <thead><tr><th></th><th>Скилл Claude</th><th>LangGraph</th></tr></thead>
+        <tbody>
+          <tr><td>Старт</td><td>часы: инструкция и пара скриптов</td><td>дни–недели: состояние, узлы, промпты, тесты</td></tr>
+          <tr><td>Порядок шагов</td><td>решает модель по инструкции</td><td>задан кодом</td></tr>
+          <tr><td>Повторяемость</td><td>ниже: два прогона могут пойти разными путями</td><td>выше: те же шаги, модели и промпты фиксируются</td></tr>
+          <tr><td>Модели</td><td>только Claude</td><td>любые через адаптер, включая локальную (риск D28)</td></tr>
+          <tr><td>Сотни заданий × 2 ИИ</td><td>упирается в контекст одной сессии</td><td>параллельно (<code>Send</code>), с чекпоинтами</td></tr>
+          <tr><td>Пауза на дни</td><td>естественна в чате, но состояние — в разговоре и файлах</td><td><code>interrupt</code> + чекпоинты в PostgreSQL</td></tr>
+          <tr><td>Запуск из платформы</td><td>через API Claude</td><td>обычный сервис, его вызывает worker</td></tr>
+          <tr><td>Для курсовой</td><td>«написал инструкцию» — слабый вклад</td><td>своя система и измеримые эксперименты</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note"><b>Предложение для разбора:</b> гибрид по уровням. Граф 1 — скилл: он редкий, разговорный, выход маленький, и вы всё равно рядом. Граф 2 — LangGraph: много однотипной работы, нужны повторяемость, локальная модель и метрики. Начать с прототипа: собрать каталог для одной темы скиллом и понять, какие шаги и промпты реально работают; потом <code>SKILL.md</code> становится спецификацией узлов графа. Для курсовой скилл — естественный базовый вариант: «свободный агент против явного графа» по качеству, повторяемости и цене.</p>
+    <h3>Почему это может стать курсовой</h3>
+    <p>Здесь есть вопрос, на который отвечают числа: насколько точно граф из ИИ-шагов собирает программу по сравнению с человеком и что даёт каждая его часть. И модуль нужен сервису сам по себе: без него полный каталог собирается вручную.</p>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Что меряем</th><th>Как</th></tr></thead>
+        <tbody>
+          <tr><td>Эталон</td><td>Вы вручную размечаете 2 сессии (около 60 заданий на предмет) и элементы спецификации одного предмета. Граф эталона не видит.</td></tr>
+          <tr><td>Извлечение элементов</td><td>Точность и полнота против эталона</td></tr>
+          <tr><td>Разметка заданий</td><td>Доля совпадений с вами; согласие двух ИИ между собой (каппа Коэна)</td></tr>
+          <tr><td>Предпосылки</td><td>Доля связей, которые вы подтвердили; циклов — ноль</td></tr>
+          <tr><td>Цена</td><td>Время и стоимость прогона, сколько вопросов ушло к вам</td></tr>
+          <tr><td>Эксперименты</td><td>Один ИИ против двух; с критиком и без; облачная модель против локальной; свободный агент (скилл) против явного графа</td></tr>
+          <tr><td>Универсальность</td><td>Один и тот же граф 2 на разных профилях — ЦТ, вузовский курс, трудоустройство — без изменения кода</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. Platform -->
+  <section class="section">
+    <h2><span class="num">04</span>Платформа: процессы и границы</h2>
+    <p class="tldr">Фронтенд, бэкенд и база разделены; бэкенд разрезан по границам отказа, а не по сущностям, поэтому одна операция ученика — одна транзакция.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 820 330" role="img" aria-label="Процессы на одном сервере: web, api с модулями, PostgreSQL с очередью, worker, локальная модель, облачная модель, Telegram">
+        <defs><marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <path class="e" d="M140,93 L166,93" marker-end="url(#a3)"/>
+        <path class="e" d="M290,93 L326,93" marker-end="url(#a3)"/>
+        <path class="e" d="M530,95 L596,95" marker-end="url(#a3)"/>
+        <text class="t-s" x="563" y="86" text-anchor="middle">одна транзакция</text>
+        <path class="e" d="M680,130 L680,236 L534,236" marker-end="url(#a3)"/>
+        <text class="t-s" x="690" y="186">задания из очереди</text>
+        <path class="e" d="M430,262 L430,286 L596,286" marker-end="url(#a3)"/>
+        <path class="e" d="M326,236 L246,236" marker-end="url(#a3)"/>
+
+        <rect class="n-ext" x="20" y="70" width="120" height="46" rx="10"/><text class="t-ext" x="80" y="87" text-anchor="middle" dominant-baseline="middle">Ученик,</text><text class="t-ext" x="80" y="103" text-anchor="middle" dominant-baseline="middle">репетитор</text>
+        <rect class="n" x="170" y="70" width="120" height="46" rx="10"/><text class="t" x="230" y="87" text-anchor="middle" dominant-baseline="middle">web</text><text class="t-s" x="230" y="103" text-anchor="middle" dominant-baseline="middle">React, телефон</text>
+        <rect class="n-start" x="330" y="20" width="200" height="160" rx="10"/>
+        <text class="t-acc" x="430" y="42" text-anchor="middle" dominant-baseline="middle">api — ядро</text>
+        <text class="t" x="430" y="70" text-anchor="middle" dominant-baseline="middle">вход и права</text>
+        <text class="t" x="430" y="92" text-anchor="middle" dominant-baseline="middle">каталог</text>
+        <text class="t" x="430" y="114" text-anchor="middle" dominant-baseline="middle">проверка ответов</text>
+        <text class="t" x="430" y="136" text-anchor="middle" dominant-baseline="middle">модель знаний</text>
+        <text class="t" x="430" y="158" text-anchor="middle" dominant-baseline="middle">планировщик</text>
+        <rect class="n-store" x="600" y="60" width="160" height="70" rx="4"/><text class="t-store" x="680" y="86" text-anchor="middle" dominant-baseline="middle">PostgreSQL</text><text class="t-s" x="680" y="106" text-anchor="middle" dominant-baseline="middle">данные + очередь заданий</text>
+        <rect class="n" x="330" y="212" width="200" height="50" rx="10"/><text class="t" x="430" y="230" text-anchor="middle" dominant-baseline="middle">worker</text><text class="t-s" x="430" y="248" text-anchor="middle" dominant-baseline="middle">пересчёты, перепроверка, агент</text>
+        <rect class="n" x="600" y="266" width="160" height="40" rx="10"/><text class="t" x="680" y="286" text-anchor="middle" dominant-baseline="middle">llm: локальная модель</text>
+        <rect class="n-ext" x="110" y="214" width="136" height="44" rx="10"/><text class="t-ext" x="178" y="236" text-anchor="middle" dominant-baseline="middle">Telegram-бот</text>
+        <rect class="n-ext" x="110" y="274" width="136" height="40" rx="10"/><text class="t-ext" x="178" y="294" text-anchor="middle" dominant-baseline="middle">позже: песочница</text>
+      </svg>
+    </div>
+    <p class="cap">Один Linux-сервер. Каждый процесс перезапускается и ограничивается по памяти отдельно. Облачная модель подключается через тот же адаптер, что и локальная.</p>
+    <div class="two">
+      <div>
+        <h3>Почему так</h3>
+        <ul>
+          <li>«Сохранить попытку → обновить модель → поставить пересчёт» помещается в одну транзакцию базы: полусостояний не бывает.</li>
+          <li>Отдельные процессы стоят там, где компонент может упасть или зависнуть сам: агент, модель, долгие пересчёты.</li>
+          <li>Между api и worker — очередь в той же базе (шаблон «исходящий ящик»): задание пишется вместе с данными, упавший worker его не потеряет.</li>
+          <li>Каждый модуль ядра владеет своими таблицами, CI запрещает лезть в чужие. Поэтому модуль можно вынести в отдельный сервис, когда появится причина.</li>
+          <li>Если идею составителя (раздел 03) примут, он будет отдельным процессом вне пути ученика: запускаться по команде, писать только ветку в репозитории каталога и не иметь доступа к базе учеников.</li>
+          <li>Открытый вопрос Q1 (раздел 10): проверка ответов сейчас — модуль ядра; рассмотреть вынос в отдельный процесс или сервис как отдельную зону отказа.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Безопасность и данные</h3>
+        <ul>
+          <li>Личные данные — в отдельной таблице, агенту и внешним моделям не уходят никогда; для несовершеннолетних — согласие родителя.</li>
+          <li>Ответы и решения не попадают во фронтенд до попытки; лимит попыток и права доступа проверяет бэкенд.</li>
+          <li>Учётные записи только по вашему приглашению; проверенная библиотека входа.</li>
+          <li>Восстановление базы на любой момент, ежедневная копия у другого провайдера, ежемесячная проверка восстановления. Журнал защищён от изменения на уровне базы.</li>
+          <li>Структурированные логи и сбор ошибок везде, без личных данных.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Attempts -->
+  <section class="section">
+    <h2><span class="num">05</span>Ответы и виды ошибок</h2>
+    <p class="tldr">Ученика ни о чём не спрашиваем: «не понял» или «невнимательность» выводятся из его поведения, а в модель знаний идёт только первая попытка, как на экзамене.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 900 270" role="img" aria-label="Обработка ответа: часть А одна попытка и ловушка называет причину; часть В две попытки, исправил со второй — невнимательность, снова неверно — непонимание; всё в журнал">
+        <defs>
+          <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="a4r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-red"/></marker>
+        </defs>
+        <path class="e" d="M140,123 L166,53" marker-end="url(#a4)"/>
+        <path class="e" d="M140,123 L166,143" marker-end="url(#a4)"/>
+        <path class="e-red" d="M336,53 L376,53" marker-end="url(#a4r)"/>
+        <text class="t-red" x="356" y="44" text-anchor="middle">неверно</text>
+        <path class="e-red" d="M336,143 L376,143" marker-end="url(#a4r)"/>
+        <text class="t-red" x="356" y="134" text-anchor="middle">неверно</text>
+        <path class="e" d="M546,143 L586,143" marker-end="url(#a4)"/>
+        <text class="t-green" x="566" y="134" text-anchor="middle">верно</text>
+        <path class="e-red" d="M460,166 L460,206" marker-end="url(#a4r)"/>
+        <text class="t-red" x="470" y="190">неверно</text>
+        <path class="e" d="M600,53 L830,53 L830,92" marker-end="url(#a4)"/>
+        <path class="e" d="M756,143 L766,143" marker-end="url(#a4)"/>
+        <path class="e" d="M650,229 L830,229 L830,154" marker-end="url(#a4)"/>
+
+        <rect class="n-start" x="20" y="100" width="120" height="46" rx="10"/><text class="t-acc" x="80" y="123" text-anchor="middle" dominant-baseline="middle">Ответ</text>
+        <rect class="n" x="170" y="30" width="166" height="46" rx="10"/><text class="t" x="253" y="53" text-anchor="middle" dominant-baseline="middle">Часть А: 1 попытка</text>
+        <rect class="n-amber" x="380" y="30" width="220" height="46" rx="10"/><text class="t-amber" x="490" y="47" text-anchor="middle" dominant-baseline="middle">выбранная ловушка</text><text class="t-s" x="490" y="64" text-anchor="middle" dominant-baseline="middle">называет причину ошибки</text>
+        <rect class="n" x="170" y="120" width="166" height="46" rx="10"/><text class="t" x="253" y="143" text-anchor="middle" dominant-baseline="middle">Часть В: попытка 1</text>
+        <rect class="n" x="380" y="120" width="166" height="46" rx="10"/><text class="t" x="463" y="143" text-anchor="middle" dominant-baseline="middle">попытка 2</text>
+        <rect class="n-green" x="590" y="120" width="166" height="46" rx="10"/><text class="t-green" x="673" y="137" text-anchor="middle" dominant-baseline="middle">невнимательность</text><text class="t-s" x="673" y="154" text-anchor="middle" dominant-baseline="middle">знание есть, балл потерян</text>
+        <rect class="n-red" x="380" y="206" width="270" height="46" rx="10"/><text class="t-red" x="515" y="223" text-anchor="middle" dominant-baseline="middle">непонимание</text><text class="t-s" x="515" y="240" text-anchor="middle" dominant-baseline="middle">решение + в разбор на уроке</text>
+        <rect class="n-store" x="770" y="96" width="120" height="54" rx="4"/><text class="t-store" x="830" y="114" text-anchor="middle" dominant-baseline="middle">Журнал</text><text class="t-s" x="830" y="133" text-anchor="middle" dominant-baseline="middle">1-я попытка → модель</text>
+      </svg>
+    </div>
+    <p class="cap">Всё, что произошло, пишется в журнал как есть; вид ошибки — вычисляемый слой поверх фактов, его способ можно менять.</p>
+    <ul>
+      <li>ДЗ: результат сразу, решение после финальной неудачи. Срезы и пробники: результат только в конце. Режим — настройка вида задания.</li>
+      <li>Одинаковых задач у ученика не бывает: в ДЗ сначала разные подварианты, потом разные числа. Задачи, разобранные на уроке, обязательно возвращаются в ДЗ с другими числами.</li>
+      <li>Ошибся — похожая задача того же типа возвращается в следующем ДЗ или в разборе урока.</li>
+      <li>Найдена ошибка в ключе — все попытки перепроверяются автоматически; у ученика и у вас есть кнопка «оспорить».</li>
+    </ul>
+  </section>
+
+  <!-- 5. Knowledge model + optimizer -->
+  <section class="section">
+    <h2><span class="num">06</span>Модель знаний и оптимизатор</h2>
+    <p class="tldr">По каждому типу хранится одно число — вероятность решить его на экзамене; оптимизатор направляет часы туда, где прирост ожидаемых баллов за час наибольший.</p>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Тип задания</th><th>P(решит)</th><th>Проверяли</th><th>Ошибки: понимание / внимательность</th></tr></thead>
+        <tbody>
+          <tr><td>Показательное уравнение, сводящееся к квадратному</td><td>0,82</td><td>28.10</td><td>0 / 2</td></tr>
+          <tr><td>Проекция вектора на ось</td><td>0,45</td><td>30.10</td><td>2 / 0</td></tr>
+          <tr><td>Логарифмическое уравнение</td><td>0,10</td><td>не проверялось</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Пример модели ученика. Числа вымышлены.</p>
+    <div class="two">
+      <div>
+        <h3>Модель знаний</h3>
+        <ul>
+          <li>Шанс угадать задаётся форматом: выбор из пяти — около 20 %, ответ-число — почти ноль. Верный ответ в части А весит меньше верного в части В.</li>
+          <li>Темп и забывание — одни на ученика; по типу уточняется только «насколько знает».</li>
+          <li>Учитывается первая попытка; срезы, пробники и смешанные блоки весят полностью, однотипный блок сразу после урока — меньше.</li>
+          <li>Успех на сложном типе мягко поднимает оценку предпосылок; «освоено» ставится только после задания без угадывания или двух успехов.</li>
+          <li>Стартовые оценки — из двухчасовой адаптивной диагностики на сайте.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Оптимизатор</h3>
+        <ul>
+          <li>Ценность типа задаёт модуль цели. Для ЦТ это баллы позиции × частота; цель заменяема (например, школьная программа позже).</li>
+          <li>Выгода считается пакетом «тип + его неизученные предпосылки», в том числе из другого предмета. Выбранная предпосылка становится оплаченной, и все пакеты, где она нужна, дешевеют. Поэтому «дверь» к многим лёгким заданиям (дроби, тригонометрия) идёт первой.</li>
+          <li>Ценность предпосылки приходит только от заданий, вошедших в план при цели ученика. Предпосылка только для трудных В19–В20 при цели 65 в план не попадает, при цели 100 — попадает.</li>
+          <li>У типа два уровня освоения: «база» (решает медленно, 0,3 → 0,7 за ~2 ч) и «автоматизм» (быстро и надёжно, 0,7 → 0,92 за ещё ~4 ч). Сначала база по многим типам, затем автоматизм по самым частым — он ещё и экономит время на экзамене.</li>
+          <li>Типам из спецификации, которых не было в тестах, выделяется отдельная квота часов (только «база», ближе к концу курса). Квота динамическая: растёт с целью (~1 % при 60, ~8 % при 100), обнуляется, если ученик отстаёт, и пополняется, если опережает. Ваше ручное значение важнее.</li>
+          <li>Два предмета: бюджет раздельный или общий с максимумом суммы баллов и минимальной долей на каждый предмет.</li>
+          <li>Прогноз балла показывается диапазоном по таблицам перевода прошлых лет.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Plan -->
+  <section class="section">
+    <h2><span class="num">07</span>План со скользящим горизонтом</h2>
+    <p class="tldr">Ближние уроки не трогаем, середину пересчитываем, дальнюю часть держим только вехами; фазу пробных тестов не может съесть никакое отставание.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 860 130" role="img" aria-label="Горизонт плана: два замороженных урока, 4–6 недель пересчёта, дальше вехи, в конце защищённая фаза пробников и экзамен">
+        <rect x="20" y="40" width="120" height="40" rx="6" style="fill:var(--accent)"/>
+        <text x="80" y="60" text-anchor="middle" dominant-baseline="middle" style="fill:var(--surface);font-size:13px;font-weight:600">2 урока</text>
+        <rect x="144" y="40" width="270" height="40" rx="6" class="n-start"/>
+        <text class="t-acc" x="279" y="60" text-anchor="middle" dominant-baseline="middle">4–6 недель: порядок тем</text>
+        <rect x="418" y="40" width="250" height="40" rx="6" class="n-ext"/>
+        <text class="t-ext" x="543" y="60" text-anchor="middle" dominant-baseline="middle">вехи и бюджет часов</text>
+        <rect x="672" y="40" width="150" height="40" rx="6" class="n-red"/>
+        <text class="t-red" x="747" y="60" text-anchor="middle" dominant-baseline="middle">пробники</text>
+        <path d="M832,30 L832,92" style="stroke:var(--red);stroke-width:2"/>
+        <text class="t-red" x="832" y="112" text-anchor="middle">экзамен</text>
+        <text class="t-s" x="80" y="104" text-anchor="middle">заморожены</text>
+        <text class="t-s" x="279" y="104" text-anchor="middle">после каждого урока</text>
+        <text class="t-s" x="543" y="104" text-anchor="middle">пересчёт редко</text>
+        <text class="t-s" x="747" y="104" text-anchor="middle">защищены</text>
+        <text class="t-s" x="20" y="22">сегодня</text>
+      </svg>
+    </div>
+    <ul>
+      <li>Урок состоит из пронумерованных блоков; вы отмечаете последний пройденный. Недорешённые задачи уходят в ДЗ, недообъяснённая теория — в начало следующего урока. Это единственное, что может изменить замороженный урок.</li>
+      <li>В каждом уроке есть постоянный блок «разбор ошибок» на 8–10 минут; список задач подставляется перед уроком.</li>
+      <li>Правила методики выполняет алгоритм, а не агент: повторение через 1, 3, 7 и 15 уроков; ниже 80 % верных — добавка в ДЗ, ниже 60 % — часть урока.</li>
+      <li>Срезы — по расписанию, раз в 4–5 уроков: в них попадают типы около порога и с самой неуверенной оценкой.</li>
+      <li>План меняется, только если выигрыш заметный, поэтому он не «скачет».</li>
+      <li>Конспект собирается из блоков библиотеки под план ученика: свой состав, общий проверенный текст.</li>
+    </ul>
+  </section>
+
+  <!-- 7. Agent -->
+  <section class="section">
+    <h2><span class="num">08</span>ИИ-агент</h2>
+    <p class="tldr">Агент нужен для суждений, которых нет у алгоритма: понять причину ошибок, подобрать задачи, разбить тему. Работает в рамках списка действий и не видит, о ком речь.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 940 210" role="img" aria-label="Цикл агента: повод, пакет контекста, агент с инструментами, предложение, проверка бэкенда, автоприменение или очередь на одобрение">
+        <defs>
+          <marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+          <marker id="a7r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-red"/></marker>
+        </defs>
+        <path class="e" d="M130,53 L156,53" marker-end="url(#a7)"/>
+        <path class="e" d="M300,53 L326,53" marker-end="url(#a7)"/>
+        <path class="e" d="M470,53 L496,53" marker-end="url(#a7)"/>
+        <path class="e" d="M640,53 L672,53" marker-end="url(#a7)"/>
+        <path class="e" d="M802,53 L830,53 L830,126" marker-end="url(#a7)"/>
+        <text class="t-green" x="840" y="92">прошла</text>
+        <path class="e-red" d="M737,86 L737,156" marker-end="url(#a7r)"/>
+        <text class="t-red" x="747" y="124">нарушает правила</text>
+
+        <rect class="n-start" x="20" y="30" width="110" height="46" rx="10"/><text class="t-acc" x="75" y="53" text-anchor="middle" dominant-baseline="middle">Повод</text>
+        <rect class="n" x="160" y="30" width="140" height="46" rx="10"/><text class="t" x="230" y="47" text-anchor="middle" dominant-baseline="middle">Пакет контекста</text><text class="t-s" x="230" y="64" text-anchor="middle" dominant-baseline="middle">без имени, ~10 типов</text>
+        <rect class="n-ext" x="330" y="30" width="140" height="46" rx="10"/><text class="t-ext" x="400" y="47" text-anchor="middle" dominant-baseline="middle">Агент</text><text class="t-s" x="400" y="64" text-anchor="middle" dominant-baseline="middle">+ инструменты чтения</text>
+        <rect class="n" x="500" y="30" width="140" height="46" rx="10"/><text class="t" x="570" y="47" text-anchor="middle" dominant-baseline="middle">Предложение</text><text class="t-s" x="570" y="64" text-anchor="middle" dominant-baseline="middle">из allowed_actions</text>
+        <path d="M737,20 L802,53 L737,86 L672,53 Z" class="n-amber"/><text class="t-amber" x="737" y="53" text-anchor="middle" dominant-baseline="middle">проверка</text>
+        <rect class="n-green" x="770" y="130" width="150" height="46" rx="10"/><text class="t-green" x="845" y="147" text-anchor="middle" dominant-baseline="middle">в план или на</text><text class="t-green" x="845" y="163" text-anchor="middle" dominant-baseline="middle">ваше одобрение</text>
+        <rect class="n-red" x="662" y="160" width="100" height="40" rx="10"/><text class="t-red" x="712" y="180" text-anchor="middle" dominant-baseline="middle">отклонено</text>
+      </svg>
+    </div>
+    <div class="two">
+      <div>
+        <h3>Когда зовём</h3>
+        <ul>
+          <li>Ошибка «не понял», заметное падение оценки, прогноз отстаёт от цели, урок «не успели». Нет повода — нет вызова.</li>
+          <li>Не чаще раза в сутки на ученика по одному поводу; месячный лимит расходов; журнал вызовов со стоимостью у вас в кабинете.</li>
+          <li>Автоприменение — настройка ученика, по умолчанию выключено.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Как устроен</h3>
+        <ul>
+          <li>Рамки — инструменты со схемами, список разрешённых действий и проверка бэкендом; фреймворк для этого не нужен. LangGraph — если агент станет вести многошаговые сценарии; кандидат — составитель программы (идея, раздел 03).</li>
+          <li>Адаптер провайдеров: облачная модель и локальная (Ollama) с первого дня.</li>
+          <li>Платформа полностью работает и без агента.</li>
+        </ul>
+      </div>
+    </div>
+    <pre>{
+  "student": "s-0042", "subject": "math", "goal": 65, "forecast": [52, 57],
+  "trigger": "conceptual_error", "lessons_left": 28, "mock_phase_from": "2027-05-01",
+  "recent": [{"type": "log-eq-quadratic", "p": 0.31, "was": 0.55, "errors": {"concept": 2, "slip": 0}}],
+  "next_lessons": [{"n": 14, "frozen": true, "types": ["log-eq-quadratic"]}],
+  "allowed_actions": ["insert_review", "reorder", "swap_hw_tasks", "split_topic"]
+}</pre>
+    <p class="cap">Пакет контекста: сотни строк вместо всего каталога. Остальное агент запрашивает сам.</p>
+  </section>
+
+  <!-- 8. How we work -->
+  <section class="section">
+    <h2><span class="num">09</span>Как мы работаем</h2>
+    <p class="tldr">Спецификация → критерии приёмки → тесты → код. Каждое правило формулируется так, чтобы его можно было проверить тестом.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 900 120" role="img" aria-label="Процесс: спецификация, критерии, тесты отдельным PR, код без права менять тесты, CI, слияние только репетитором">
+        <defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <path class="e" d="M140,53 L160,53" marker-end="url(#a8)"/>
+        <path class="e" d="M290,53 L310,53" marker-end="url(#a8)"/>
+        <path class="e" d="M450,53 L470,53" marker-end="url(#a8)"/>
+        <path class="e" d="M610,53 L630,53" marker-end="url(#a8)"/>
+        <path class="e" d="M750,53 L770,53" marker-end="url(#a8)"/>
+        <rect class="n-start" x="20" y="30" width="120" height="46" rx="10"/><text class="t-acc" x="80" y="53" text-anchor="middle" dominant-baseline="middle">Спецификация</text>
+        <rect class="n" x="164" y="30" width="126" height="46" rx="10"/><text class="t" x="227" y="53" text-anchor="middle" dominant-baseline="middle">Критерии</text>
+        <rect class="n" x="314" y="30" width="136" height="46" rx="10"/><text class="t" x="382" y="47" text-anchor="middle" dominant-baseline="middle">Тесты</text><text class="t-s" x="382" y="64" text-anchor="middle" dominant-baseline="middle">отдельный PR</text>
+        <rect class="n" x="474" y="30" width="136" height="46" rx="10"/><text class="t" x="542" y="47" text-anchor="middle" dominant-baseline="middle">Код</text><text class="t-s" x="542" y="64" text-anchor="middle" dominant-baseline="middle">тесты не трогать</text>
+        <path d="M690,20 L750,53 L690,86 L630,53 Z" class="n-amber"/><text class="t-amber" x="690" y="53" text-anchor="middle" dominant-baseline="middle">CI</text>
+        <rect class="n-green" x="774" y="30" width="110" height="46" rx="10"/><text class="t-green" x="829" y="47" text-anchor="middle" dominant-baseline="middle">Слияние</text><text class="t-s" x="829" y="64" text-anchor="middle" dominant-baseline="middle">только вы</text>
+      </svg>
+    </div>
+    <div class="two">
+      <div>
+        <h3>Правило формулировки</h3>
+        <p class="note red">Не «план должен быть разумным»,</p>
+        <p class="note">а «тема никогда не стоит в плане раньше своих предпосылок».</p>
+        <p>Приёмочные тесты домена пишутся таблицами примеров по-русски, их можно читать без кода: «ответ → балл», «последовательность попыток → вероятность».</p>
+      </div>
+      <div>
+        <h3>Защита тестов</h3>
+        <ul>
+          <li>Всё, что «считается», — чистые функции «вход → выход»: оптимизатор, модель знаний, вид ошибки, перепроверка, шаблоны.</li>
+          <li>Тесты, эталоны, папка CI и миграции меняются только отдельным PR; CI пишет «изменено тестов: N».</li>
+          <li>Тесты-свойства для шаблонов («для любых чисел ответ целый и подставляется в условие»), эталонные сценарии для оптимизатора, мутационное тестирование ядра.</li>
+          <li>Экраны кабинетов проверяет робот-браузер на ширине телефона.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Risks -->
+  <section class="section">
+    <h2><span class="num">10</span>Принятые риски и открытое</h2>
+    <p class="tldr">Три риска приняты осознанно; спецификация 2027 ещё не вышла; тема курсовой обсуждается; два архитектурных вопроса ждут разбора.</p>
+    <div class="twrap">
+      <table>
+        <thead><tr><th>Что</th><th>Статус</th><th>Что уже заложено</th></tr></thead>
+        <tbody>
+          <tr><td>Права на реальные задачи ЦТ/РТ</td><td>принят</td><td>У задачи есть поле «источник»: замена клонами — операция над данными.</td></tr>
+          <tr><td>Хостинг в Беларуси, доступ к западным моделям, передача данных за рубеж</td><td>принят</td><td>Платформа работает без агента; провайдер меняется; агенту не уходят личные данные.</td></tr>
+          <tr><td>Параметры модели знаний на малом числе учеников</td><td>принят</td><td>Параметры из формата ответа; пересмотр при 10+ учениках; журнал позволяет пересчитать всё.</td></tr>
+          <tr><td>Спецификация РИКЗ 2027</td><td>ожидается в ноябре</td><td>Каталог сверяется с ней сразу после выхода.</td></tr>
+          <tr><td>Курсовая (лето 2027)</td><td>обсуждается</td><td>Кандидат — составитель программы (идея, раздел 03), его ещё нужно разобрать. Локальная модель — с первого дня.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Вопросы на рассмотрение <span class="badge idea">не решено</span></h3>
+    <p class="idea-banner">Записаны, чтобы разобрать их с агентом так же, как идею из раздела 03. Пока вопросы не разобраны, действуют текущие решения D33 и D34. Вопрос Q3 (LangGraph или скилл для составителя) — в разделе 03.</p>
+    <div class="two">
+      <div>
+        <h3>Q1 · Проверка ответов как отдельная зона отказа</h3>
+        <p>Сейчас проверка — модуль внутри api, в одной транзакции с сохранением попытки (D33). Вопрос: вынести её в отдельный поток, процесс или микросервис, чтобы её сбой не ронял ядро.</p>
+        <ul>
+          <li><b>Что может сломаться.</b> Для форматов ЦТ (выбор из пяти, целое число) проверка — сравнение, падать там нечему. Риск появляется с символьными ответами (выражение, интервал, множество) — например, в других программах из идеи 03. Разбор выражения может зависнуть или съесть память, а <code>sympify</code> небезопасен на вводе пользователя: он использует <code>eval</code>.</li>
+          <li><b>Вариант А.</b> Простые форматы остаются в ядре, символьная проверка идёт в пул процессов с таймаутом и лимитом памяти.</li>
+          <li><b>Вариант Б.</b> Отдельный сервис проверки без состояния: чистая функция «ответ + ключ → верно / нет». Легко перезапускать, масштабировать и писать на любом языке.</li>
+          <li><b>Что уже помогает.</b> Журнал хранит сам ответ, а «верно» вычисляется (D22). Если проверка недоступна, попытка сохраняется со статусом «ждёт проверки» и проверяется позже: ответ не теряется, только результат приходит с задержкой. Но для второй попытки в части В результат нужен сразу — это надо учесть.</li>
+          <li><b>Цена выноса.</b> Сетевой вызов перед транзакцией, ещё один процесс в мониторинге, контракт между сервисами.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Q2 · Язык бэкенда: Go или Python</h3>
+        <p>В команде есть человек, который хорошо знает Go, а в Python опыта меньше. Решение D34 (Python) стоит пересмотреть.</p>
+        <ul>
+          <li><b>SymPy — слабее довод, чем казалось.</b> В рабочем пути для ЦТ он почти не нужен: ответ — выбор или целое число, это сравнение. SymPy нужен в CI: генерация вариантов и независимая проверка ключа (D53, D56). CI — отдельный конвейер и может остаться на Python при любом языке ядра.</li>
+          <li><b>Зрелого аналога SymPy в Go нет:</b> есть небольшие символьные библиотеки, но не того уровня. Если символьная проверка понадобится, её можно сделать сервисом на Python — это же вариант Б из Q1.</li>
+          <li><b>LangGraph</b> есть только на Python и JS/TypeScript. Составитель (идея 03) в любом случае будет отдельным сервисом на Python. Агенту из раздела 08 фреймворк не нужен, его можно писать на Go. Локальные модели (Ollama) работают по HTTP, язык не важен.</li>
+          <li><b>Возможная схема:</b> ядро на Go; Python там, где без него трудно, — CI каталога, составитель, при необходимости символьная проверка. Минус: два языка в проекте и контракты между ними.</li>
+          <li><b>Что выяснить при разборе:</b> кто реально будет писать ядро; библиотеки Go для входа и миграций; как на Go получать OpenAPI для типов фронтенда (D34). Решить до шага 0 порядка работ.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Decisions log -->
+  <section class="section">
+    <h2><span class="num">11</span>Журнал решений</h2>
+    <p class="tldr">71 решение из интервью и двух раундов red-team; номера постоянные, на них ссылаются спецификации. Строки I1–I9 — идеи и вопросы на обсуждение, не решения.</p>
+    <details>
+      <summary>Развернуть журнал</summary>
+      <div class="twrap">
+        <table>
+          <thead><tr><th>ID</th><th>Тема</th><th>Решение</th><th>Почему</th><th>Источник</th><th>Дата</th></tr></thead>
+          <tbody>
+            <tr><td class="id">D1</td><td>Граница каталога</td><td>Спецификация 2027 задаёт состав, частоты — глубину</td><td>Минимум без промаха</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D2</td><td>Основа каталога</td><td>Черновой граф из 82 тем — старт; типов и частот пока нет</td><td>Не терять сделанное</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D3</td><td>Единица каталога</td><td>Тема → тип → задача; позиция — у появления</td><td>Позиции кочуют по годам</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D4</td><td>Хранение каталога</td><td>git → CI → база; приложение читает базу</td><td>История, ревью, проверки</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D5</td><td>Построение плана</td><td>Алгоритм + агент в рамках allowed_actions</td><td>Воспроизводимость, малый контекст</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D6</td><td>Модель ученика</td><td>Вероятность по типу + забывание; журнал неизменяем</td><td>Работает с первого ученика</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D7</td><td>Диагностика</td><td>Адаптивная по графу</td><td>Короче без потери точности</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D8</td><td>Горизонт</td><td>2 урока заморожены, 4–6 недель пересчёт, дальше вехи</td><td>Стабильность</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D9</td><td>Отметка урока</td><td>Блоки урока, отметка последнего, правила переноса</td><td>Механика без агента</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D10</td><td>Ввод ответов</td><td>Ученик на сайте, проверяет бэкенд</td><td>Данные без вашего труда</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D11</td><td>Вид ошибки</td><td>Ловушки (А), вторая попытка (В), закономерности</td><td>Не спрашивать ученика</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D12</td><td>Показ ответов</td><td>Настройка вида задания</td><td>ДЗ учит, срез измеряет</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D13</td><td>Стек (уточнён в D34)</td><td>React + TypeScript, PostgreSQL</td><td>—</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D14</td><td>Вызов агента</td><td>По поводам; автоприменение — настройка ученика</td><td>Нет повода — нет вызова</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D15</td><td>Контекст агента</td><td>Компактный пакет без ПДн + инструменты чтения</td><td>Окно контекста</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D16</td><td>Права на задачи</td><td>Риск принят</td><td>Решение владельца</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D17</td><td>Безопасность</td><td>ПДн отдельно, права на бэкенде, ответы не во фронтенде, лимиты, секреты на сервере</td><td>Несовершеннолетние ученики</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D18</td><td>Хранение данных</td><td>Бессрочно; удаление и обезличивание возможны</td><td>—</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D19</td><td>Расширяемость</td><td>Заменяемые модули с границами</td><td>Без функций «на будущее»</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D20</td><td>Документы</td><td>Три спецификации + обзор</td><td>—</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D21</td><td>Вечные номера</td><td>Номера не меняются; «устарел»; карта переноса</td><td>История попыток</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D22</td><td>Перепроверка</td><td>Хранится ответ, «верно» вычисляется; «оспорить»</td><td>Ошибки ключей</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D23</td><td>Форматы ответа</td><td>Формат и баллы — свойство типа; частичный балл</td><td>А6/А10, В1/В2</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D24</td><td>Правки агента</td><td>Становятся ограничениями; версия плана</td><td>Пересчёт их не стирает</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D25</td><td>Часы до освоения</td><td>Базовые часы × темп ученика</td><td>Холодный старт</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D26</td><td>Два предмета</td><td>Один оптимизатор, связи между предметами, бюджет раздельный или общий с минимумом</td><td>Общий срок ученика</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D27</td><td>Без повторов</td><td>Семейства вариантов; в срезах только невиданное</td><td>Честный замер</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D28</td><td>Беларусь</td><td>Риск хостинга и доступа к моделям принят</td><td>Работа без агента</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D29</td><td>Цель</td><td>Сейчас только ЦТ/ЦЭ; цель — заменяемый модуль</td><td>Школьники позже</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D30</td><td>TDD</td><td>Спецификация → критерии → тесты → код; проверяемые формулировки</td><td>Агент не подгоняет тесты</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D31</td><td>Сводка red-team 2</td><td>См. D44–D67</td><td>—</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D32</td><td>Принцип выбора</td><td>Лучшее решение по качеству и стабильности; сервис первичен</td><td>Это бизнес, не прототип</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D33</td><td>Процессы</td><td>web, api, worker, llm, db — по границам отказа</td><td>Транзакции целы</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D34</td><td>Язык бэкенда</td><td>Python (FastAPI, SymPy); типы фронтенда из OpenAPI. Пересматривается: вопрос Q2</td><td>Проверка ответов, локальные модели</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D35</td><td>Источник истины</td><td>git + журнал; остальное производное</td><td>Исправление задним числом</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D36</td><td>Фреймворк агента</td><td>Без LangChain; LangGraph при многошаговости (кандидат — идея I4)</td><td>Рамки — схемы и проверка</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D37</td><td>Варианты</td><td>Подварианты по структуре и числам; пул 30–50 + резерв</td><td>Без повторов</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D38</td><td>Цель, проверка, логи, выпуск</td><td>Максимум суммы с минимумом; второй ИИ + вы перед уроком; логи без ПДн; ранний выпуск</td><td>Отладка на практике</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D39</td><td>Урок → ДЗ</td><td>Разобранное на уроке — в ДЗ с другими числами</td><td>Закрепление</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D40</td><td>Интерфейсы</td><td>Веб mobile first + Telegram-уведомления; ученику ДЗ, конспект, PDF</td><td>Прогресс видит репетитор</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D41</td><td>Стартовая оценка</td><td>Двухчасовой адаптивный тест дома на сайте</td><td>Объективный старт</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D42</td><td>Ученики</td><td>Вид экзамена, дата и бюджет часов — свойства ученика</td><td>11-классники сдают ЦЭ</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D43</td><td>Конспект</td><td>Сборка проверенных блоков; без ИИ-текста ученику</td><td>Пояснения — роль репетитора</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D44</td><td>Параметры модели</td><td>Угадывание и невнимательность — по формату; темп и забывание — на ученика</td><td>Мало данных</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D45</td><td>Доказательство знания</td><td>Первая попытка; веса по условиям</td><td>На экзамене попытка одна</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D46</td><td>Предпосылки</td><td>Мягкий вывод; «освоено» после В или двух успехов</td><td>Угадывание</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D47</td><td>Ценность фундамента</td><td>Цепочка «тип + предпосылки»; уровни; квота страховки</td><td>Иначе фундамент выпадает</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D48</td><td>Стабильность плана</td><td>Порог выигрыша; срезы по расписанию</td><td>План не скачет</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D49</td><td>Разбор ошибок</td><td>Постоянный блок 8–10 минут в уроке</td><td>Заморозка не мешает</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D50</td><td>Правила методики</td><td>1–3–7–15 и 80/60 — в алгоритме</td><td>Не зависят от агента</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D51</td><td>Наблюдение</td><td>Модель видит стандартное наблюдение; попытки — свойство типа</td><td>Ядро без ЦТ</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D52</td><td>Цель как модуль</td><td>Цель отдаёт ценность, прогноз, финальные блоки</td><td>Оптимизатор без ЦТ</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D53</td><td>Генерация вариантов</td><td>В CI заранее, номера навсегда</td><td>Сервер не исполняет код материалов</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D54</td><td>Ваши правки</td><td>Те же действия, что у агента; план пишет только оптимизатор</td><td>Пересчёт не стирает</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D55</td><td>Защита тестов</td><td>Обязательный CI; тесты отдельным PR; сливаете вы</td><td>Агент не ослабит тест</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D56</td><td>Верность ключа</td><td>Подстановка или второй решатель; примеры в PR</td><td>«Целое» ≠ «верное»</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D57</td><td>Версии каталога</td><td>Все версии в базе; загрузка только добавляет</td><td>Перепроверка и заморозка</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D58</td><td>Вход</td><td>Проверенная библиотека; учётные записи по приглашению</td><td>Самое рискованное место</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D59</td><td>Резервные копии</td><td>Восстановление на момент, копия у другого провайдера, ежемесячная проверка</td><td>Журнал не восстановить иначе</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D60</td><td>Расходы на агента</td><td>Месячный лимит; раз в сутки на повод; журнал расходов</td><td>Защита от зацикливания</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D61</td><td>Частоты</td><td>Образец — сессия; частоты 2023–2026, раньше «встречалось»</td><td>Параллельные варианты — копии</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D62</td><td>Навыки</td><td>Вид типа «навык», ценность через «нужен для»</td><td>Подготовительные упражнения</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D63</td><td>Разметка</td><td>По элементам спецификации; два ИИ; расхождения — вам</td><td>Согласованность типов</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D64</td><td>Правила шаблонов</td><td>Как на ЦТ: единицы, константы, целый ответ, без калькулятора</td><td>Ответ 2,5 там, где нужно целое</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D65</td><td>Рисунки</td><td>Графики и схемы строит программа из тех же чисел</td><td>Рисунок не противоречит условию</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D66</td><td>Стартовые часы типа</td><td>Часы темы делятся по уровню и решаемости</td><td>Сотни типов</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D67</td><td>Репозиторий</td><td>Приватный (проверено)</td><td>Ключи ответов не видны</td><td class="src src-r">Red Team</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D71</td><td>Порядок уровней</td><td>Сначала «база» по многим типам, затем «автоматизм» по самым частым; четыре правила-теста</td><td>Дёшево и много баллов сначала</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D69</td><td>Квота страховки</td><td>Отдельный бюджет на типы с частотой 0; динамический: растёт с целью, 0 при отставании, больше при опережении</td><td>Иначе формула их выбрасывает</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D70</td><td>Глубина темы</td><td>Тема делится на элементы; предпосылки ссылаются на элемент</td><td>Физике нужна базовая тригонометрия, а не вся</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">D68</td><td>Ценность предпосылок</td><td>Пакет «тип + неизученные предпосылки»; оплаченные предпосылки удешевляют остальные; ценность только от выбранных типов</td><td>Лёгкие «двери» первыми, лишнее под трудное — нет</td><td class="src src-i">Interview</td><td class="id">2026-11-01</td></tr>
+            <tr><td class="id">I1</td><td>Составитель программы</td><td>Отдельный модуль; на выходе только PR в каталог</td><td>Набор тем — из документов, а не по памяти</td><td class="src src-idea">Идея</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I2</td><td>Универсальность</td><td>Профиль программы задаёт источники, их роли, шаги и правила; граф один для любой программы</td><td>ЦТ, вуз, трудоустройство — без нового кода</td><td class="src src-idea">Идея</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I3</td><td>Цитаты</td><td>У элемента, темы и типа — ссылка на пункт источника; без неё не проходит</td><td>ИИ не придумает тему</td><td class="src src-idea">Идея</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I4</td><td>LangGraph в составителе</td><td>Параллельная разметка, круги критика, пауза на ваш разбор, чекпоинты</td><td>Здесь многошаговость настоящая</td><td class="src src-idea">Идея</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I5</td><td>Курсовая</td><td>Составитель + оценка на эталонной разметке и на двух профилях</td><td>Измеримый результат</td><td class="src src-idea">Идея</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I6</td><td>Вынос проверки ответов</td><td>Рассмотреть отдельный процесс или сервис проверки (Q1)</td><td>Отдельная зона отказа</td><td class="src src-idea">Вопрос</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I7</td><td>Язык ядра</td><td>Рассмотреть Go для ядра; Python — CI, составитель, символьная проверка (Q2)</td><td>Опыт команды в Go</td><td class="src src-idea">Вопрос</td><td class="id">2026-11-02</td></tr>
+            <tr><td class="id">I8</td><td>Два уровня составителя</td><td>Граф 1: цель → профиль; граф 2: профиль → общий каталог; личный план — платформа</td><td>Ошибку в профиле дёшево поймать</td><td class="src src-idea">Идея</td><td class="id">2026-11-03</td></tr>
+            <tr><td class="id">I9</td><td>LangGraph или скилл</td><td>Предложение: граф 1 — скилл, граф 2 — LangGraph; прототип скиллом (Q3)</td><td>Скорость против повторяемости</td><td class="src src-idea">Вопрос</td><td class="id">2026-11-03</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <!-- 11. Implementation order -->
+  <section class="section">
+    <h2><span class="num">12</span>Порядок работ</h2>
+    <p class="tldr">Сначала фундамент и минимальный каталог, затем выпуск 1 для учеников; модель знаний, оптимизатор и агент строятся на уже накопленных попытках.</p>
+    <div class="dwrap">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Граф зависимостей работ слева направо: фундамент, схемы и вход, загрузчик и генератор, каталог и проверка ответов, кабинеты и выпуск 1, модель знаний, оптимизатор, агент; полный каталог параллельно">
+        <defs><marker id="a11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker></defs>
+        <path class="e" d="M120,93 L146,53" marker-end="url(#a11)"/>
+        <path class="e" d="M120,93 L146,133" marker-end="url(#a11)"/>
+        <path class="e" d="M266,53 L292,53" marker-end="url(#a11)"/>
+        <path class="e" d="M266,53 L292,133" marker-end="url(#a11)"/>
+        <path class="e" d="M412,53 L438,53" marker-end="url(#a11)"/>
+        <path class="e" d="M412,133 L438,53" marker-end="url(#a11)"/>
+        <path class="e" d="M266,133 L438,133" marker-end="url(#a11)"/>
+        <path class="e" d="M558,53 L584,93" marker-end="url(#a11)"/>
+        <path class="e" d="M558,133 L584,93" marker-end="url(#a11)"/>
+        <path class="e" d="M694,93 L720,93" marker-end="url(#a11)"/>
+        <path class="e" d="M820,93 L846,93" marker-end="url(#a11)"/>
+        <path class="e" d="M900,116 L900,146" marker-end="url(#a11)"/>
+        <path class="e" d="M352,76 L352,196" marker-end="url(#a11)"/>
+
+        <rect class="n-start" x="20" y="70" width="100" height="46" rx="10"/><text class="t-acc" x="70" y="87" text-anchor="middle" dominant-baseline="middle">Фундамент</text><text class="t-s" x="70" y="104" text-anchor="middle" dominant-baseline="middle">репо и CI</text>
+        <rect class="n" x="150" y="30" width="116" height="46" rx="10"/><text class="t" x="208" y="47" text-anchor="middle" dominant-baseline="middle">Схемы</text><text class="t-s" x="208" y="64" text-anchor="middle" dominant-baseline="middle">каталог, журнал</text>
+        <rect class="n" x="150" y="110" width="116" height="46" rx="10"/><text class="t" x="208" y="133" text-anchor="middle" dominant-baseline="middle">Вход и права</text>
+        <rect class="n" x="296" y="30" width="116" height="46" rx="10"/><text class="t" x="354" y="47" text-anchor="middle" dominant-baseline="middle">Загрузчик</text><text class="t-s" x="354" y="64" text-anchor="middle" dominant-baseline="middle">git → база</text>
+        <rect class="n" x="296" y="110" width="116" height="46" rx="10"/><text class="t" x="354" y="127" text-anchor="middle" dominant-baseline="middle">Генератор</text><text class="t-s" x="354" y="144" text-anchor="middle" dominant-baseline="middle">вариантов</text>
+        <rect class="n" x="442" y="30" width="116" height="46" rx="10"/><text class="t" x="500" y="47" text-anchor="middle" dominant-baseline="middle">Каталог v0</text><text class="t-s" x="500" y="64" text-anchor="middle" dominant-baseline="middle">диагн. + ближ.</text>
+        <rect class="n" x="442" y="110" width="116" height="46" rx="10"/><text class="t" x="500" y="127" text-anchor="middle" dominant-baseline="middle">Проверка</text><text class="t-s" x="500" y="144" text-anchor="middle" dominant-baseline="middle">ответов, журнал</text>
+        <rect class="n-green" x="588" y="70" width="106" height="46" rx="10"/><text class="t-green" x="641" y="87" text-anchor="middle" dominant-baseline="middle">Выпуск 1</text><text class="t-s" x="641" y="104" text-anchor="middle" dominant-baseline="middle">кабинеты</text>
+        <rect class="n" x="724" y="70" width="96" height="46" rx="10"/><text class="t" x="772" y="87" text-anchor="middle" dominant-baseline="middle">Модель</text><text class="t-s" x="772" y="104" text-anchor="middle" dominant-baseline="middle">знаний</text>
+        <rect class="n" x="850" y="70" width="110" height="46" rx="10"/><text class="t" x="905" y="93" text-anchor="middle" dominant-baseline="middle">Оптимизатор</text>
+        <rect class="n" x="850" y="150" width="110" height="46" rx="10"/><text class="t" x="905" y="173" text-anchor="middle" dominant-baseline="middle">Агент</text>
+        <rect class="n-amber" x="296" y="200" width="300" height="40" rx="10"/><text class="t-amber" x="446" y="220" text-anchor="middle" dominant-baseline="middle">Полный каталог: спецификация 2027, частоты</text>
+      </svg>
+    </div>
+    <p class="cap">Граф зависимостей. Полный каталог строится параллельно с платформой.</p>
+    <ol class="steps">
+      <li data-step="0"><span class="st">Фундамент</span><br><span class="sd">До начала — решить вопрос Q2 (язык ядра). Репозиторий, обязательный CI с защитой тестов, схема базы, Docker Compose, логи и сбор ошибок, резервные копии.</span></li>
+      <li data-step="1"><span class="st">Схемы и вход</span><br><span class="sd">Описание темы, типа, подварианта, варианта, блока конспекта, появления, попытки. Вход по приглашению, права, личные данные отдельно.</span></li>
+      <li data-step="2"><span class="st">Загрузчик и генератор</span><br><span class="sd">git → база с версиями; генерация вариантов из шаблонов с независимой проверкой ключа и правилами ЦТ; примеры в PR.</span></li>
+      <li data-step="3"><span class="st">Каталог v0 и проверка ответов</span><br><span class="sd">Перенос 82 тем; диагностический срез по фундаменту и базе всего графа; типы пройденных и ближайших тем. Проверка ответов, ловушки, вторая попытка, журнал.</span></li>
+      <li data-step="4" class="rel"><span class="st">Выпуск 1 <span class="badge rel">ученики начинают</span></span><br><span class="sd">Ученик: ДЗ с автопроверкой, конспект из блоков, PDF, диагностика. Вы: ученики, отметка урока, просмотр задач перед уроком, Telegram-уведомления. План пока ведётся как сейчас, попытки копятся.</span></li>
+      <li data-step="5"><span class="st">Модель знаний и прогноз</span><br><span class="sd">Вероятности по типам, пересчёт из журнала, прогноз диапазоном. Вам — карта освоения.</span></li>
+      <li data-step="6"><span class="st">Оптимизатор и план</span><br><span class="sd">Скользящий горизонт, правила методики, фаза пробников, срезы по расписанию, ваши правки как ограничения.</span></li>
+      <li data-step="7"><span class="st">Агент</span><br><span class="sd">Адаптер (облако и локальная модель), поводы, пакет контекста, allowed_actions, лимиты, очередь одобрения.</span></li>
+      <li data-step="∥"><span class="st">Полный каталог <span class="badge par">параллельно</span></span><br><span class="sd">Сверка со спецификацией 2027, разметка сессий 2023–2026 двумя ИИ, частоты, глубина до 100 баллов. Вручную или составителем — решим после разбора идеи из раздела 03.</span></li>
+      <li data-step="8" class="later"><span class="st">Позже</span><br><span class="sd">Второй пакет предмета как проверка ядра; песочница для кода; цель «школьная программа».</span></li>
+    </ol>
+  </section>
+
+  <footer>Черновик для обсуждения. После одобрения превью он станет тремя спецификациями и обзором в <code>docs/</code>.</footer>
+</main>

@@ -1,0 +1,2903 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowgap-lab.example/contracts/events.schema.json",
+  "title": "События журнала core (platform/attempts.md, D35, D87, D97)",
+  "description": "Журнал только добавляется (AT-R1). Каждое событие — конверт (schema_version, journal_seq, occurred_at, actor, event_type, student_id, payload) и полезная нагрузка по типу. Вердикт попытки — запись attempt_verdict (AT-R3); manual_verdict — запрос репетитора, из которого core пишет attempt_verdict с origin manual. student_id отсутствует только у глобальных событий (catalog_version_loaded, device_confirmed, tutor_rebound).",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/assignment_issued"
+    },
+    {
+      "$ref": "#/$defs/assignment_withdrawn"
+    },
+    {
+      "$ref": "#/$defs/assignment_submitted"
+    },
+    {
+      "$ref": "#/$defs/deadline_changed"
+    },
+    {
+      "$ref": "#/$defs/attempt_recorded"
+    },
+    {
+      "$ref": "#/$defs/attempt_verdict"
+    },
+    {
+      "$ref": "#/$defs/manual_verdict"
+    },
+    {
+      "$ref": "#/$defs/did_not_understand"
+    },
+    {
+      "$ref": "#/$defs/dispute_opened"
+    },
+    {
+      "$ref": "#/$defs/observation"
+    },
+    {
+      "$ref": "#/$defs/recheck_completed"
+    },
+    {
+      "$ref": "#/$defs/catalog_version_loaded"
+    },
+    {
+      "$ref": "#/$defs/lesson_frozen"
+    },
+    {
+      "$ref": "#/$defs/lesson_marked"
+    },
+    {
+      "$ref": "#/$defs/lesson_moved"
+    },
+    {
+      "$ref": "#/$defs/lesson_cancelled"
+    },
+    {
+      "$ref": "#/$defs/lesson_skipped"
+    },
+    {
+      "$ref": "#/$defs/lesson_carried_over"
+    },
+    {
+      "$ref": "#/$defs/consent_given"
+    },
+    {
+      "$ref": "#/$defs/consent_revoked"
+    },
+    {
+      "$ref": "#/$defs/student_archived"
+    },
+    {
+      "$ref": "#/$defs/student_unarchived"
+    },
+    {
+      "$ref": "#/$defs/student_anonymised"
+    },
+    {
+      "$ref": "#/$defs/account_bound"
+    },
+    {
+      "$ref": "#/$defs/session_revoked"
+    },
+    {
+      "$ref": "#/$defs/device_confirmed"
+    },
+    {
+      "$ref": "#/$defs/dispute_resolved"
+    },
+    {
+      "$ref": "#/$defs/lesson_added"
+    },
+    {
+      "$ref": "#/$defs/plan_reordered"
+    },
+    {
+      "$ref": "#/$defs/schedule_rule_set"
+    },
+    {
+      "$ref": "#/$defs/tutor_rebound"
+    },
+    {
+      "$ref": "#/$defs/consent_revocation_cancelled"
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "внутренний идентификатор (непрозрачная строка; тип в базе — решение реализации)"
+    },
+    "ts": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "RFC 3339, UTC"
+    },
+    "verdict": {
+      "enum": [
+        "correct",
+        "partial",
+        "wrong"
+      ]
+    },
+    "source": {
+      "enum": [
+        "homework",
+        "checkpoint",
+        "mock",
+        "diagnostics",
+        "rt"
+      ]
+    },
+    "place": {
+      "enum": [
+        "home",
+        "lesson"
+      ]
+    },
+    "item_source": {
+      "enum": [
+        "new_topic",
+        "review",
+        "ct_format",
+        "reinforcement",
+        "unsolved",
+        "threshold"
+      ]
+    },
+    "catalog_ref": {
+      "type": "string",
+      "description": "id сущности каталога (catalog.schema.json)"
+    },
+    "assignment_item": {
+      "type": "object",
+      "properties": {
+        "item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "answer_format": {
+          "type": "string"
+        },
+        "max_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "partial_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source": {
+          "$ref": "#/$defs/item_source"
+        }
+      },
+      "required": [
+        "item_id",
+        "variant_id",
+        "answer_format",
+        "max_points",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "practice_ref": {
+      "type": "object",
+      "properties": {
+        "stage_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "position": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "stage_id",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_issued_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "homework",
+            "checkpoint",
+            "mock",
+            "diagnostics"
+          ]
+        },
+        "subject": {
+          "type": "string"
+        },
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rules_version": {
+          "type": "string"
+        },
+        "deadline": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "place": {
+          "$ref": "#/$defs/place"
+        },
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assignment_item"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "assignment_id",
+        "kind",
+        "subject",
+        "catalog_version",
+        "rules_version",
+        "deadline",
+        "place",
+        "items"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_withdrawn_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "свободный текст: проходит фильтр личных данных PV-R24"
+        }
+      },
+      "required": [
+        "assignment_id",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_submitted_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "answered": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skipped": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "assignment_id",
+        "answered",
+        "skipped"
+      ],
+      "additionalProperties": false
+    },
+    "deadline_changed_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "deadline": {
+          "$ref": "#/$defs/ts"
+        }
+      },
+      "required": [
+        "assignment_id",
+        "deadline"
+      ],
+      "additionalProperties": false
+    },
+    "attempt_recorded_payload": {
+      "type": "object",
+      "properties": {
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "raw_input": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "normalized_input": {
+          "type": "string"
+        },
+        "attempt_no": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "trap_id": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "place": {
+          "$ref": "#/$defs/place"
+        },
+        "rules_version": {
+          "type": "string"
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "late": {
+          "type": "boolean"
+        },
+        "rt_import": {
+          "type": "object",
+          "properties": {
+            "test_id": {
+              "$ref": "#/$defs/catalog_ref"
+            },
+            "sitting": {
+              "type": "string"
+            },
+            "position": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "test_id",
+            "sitting",
+            "position"
+          ],
+          "additionalProperties": false
+        },
+        "skipped": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "attempt_id",
+        "variant_id",
+        "catalog_version",
+        "raw_input",
+        "normalized_input",
+        "attempt_no",
+        "verdict",
+        "points",
+        "source",
+        "place",
+        "rules_version",
+        "idempotency_key"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "assignment_id",
+            "item_id"
+          ]
+        },
+        {
+          "required": [
+            "rt_import"
+          ]
+        }
+      ]
+    },
+    "attempt_verdict_payload": {
+      "type": "object",
+      "properties": {
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "origin": {
+          "enum": [
+            "scoring",
+            "recheck",
+            "manual"
+          ]
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trap_id": {
+          "type": "string"
+        },
+        "correction_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "previous_verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "previous_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "свободный текст: проходит фильтр личных данных PV-R24"
+        }
+      },
+      "required": [
+        "attempt_id",
+        "origin",
+        "verdict",
+        "points",
+        "max_points"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "recheck"
+              }
+            },
+            "required": [
+              "origin"
+            ]
+          },
+          "then": {
+            "required": [
+              "correction_id",
+              "previous_verdict",
+              "previous_points"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "origin": {
+                "const": "manual"
+              }
+            },
+            "required": [
+              "origin"
+            ]
+          },
+          "then": {
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    },
+    "manual_verdict_payload": {
+      "type": "object",
+      "properties": {
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "verdict": {
+          "$ref": "#/$defs/verdict"
+        },
+        "points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "свободный текст: проходит фильтр личных данных PV-R24"
+        }
+      },
+      "required": [
+        "attempt_id",
+        "verdict",
+        "points",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "did_not_understand_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "item_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "assignment_id",
+        "item_id"
+      ],
+      "additionalProperties": false
+    },
+    "dispute_opened_payload": {
+      "type": "object",
+      "properties": {
+        "assignment_id": {
+          "$ref": "#/$defs/id"
+        },
+        "item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "reason": {
+          "enum": [
+            "key_wrong",
+            "statement_error",
+            "equivalent_answer",
+            "other"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 300,
+          "description": "проходит фильтр личных данных PV-R24; не попадает в представление без ПДн"
+        },
+        "dispute_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "assignment_id",
+        "item_id",
+        "reason",
+        "dispute_id"
+      ],
+      "additionalProperties": false
+    },
+    "observation_payload": {
+      "type": "object",
+      "properties": {
+        "observation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "type_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "subvariant_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "variant_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "place": {
+          "$ref": "#/$defs/place"
+        },
+        "first_attempt_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "trap_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skipped": {
+          "type": "boolean"
+        },
+        "late": {
+          "type": "boolean"
+        },
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rules_version": {
+          "type": "string"
+        },
+        "rt_import": {
+          "type": "object",
+          "properties": {
+            "test_id": {
+              "$ref": "#/$defs/catalog_ref"
+            },
+            "sitting": {
+              "type": "string"
+            },
+            "position": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "test_id",
+            "sitting",
+            "position"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "observation_id",
+        "revision",
+        "type_id",
+        "subvariant_id",
+        "variant_id",
+        "source",
+        "place",
+        "first_attempt_points",
+        "total_points",
+        "max_points",
+        "trap_ids",
+        "skipped",
+        "late",
+        "catalog_version",
+        "rules_version"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "item_id"
+          ]
+        },
+        {
+          "required": [
+            "rt_import"
+          ]
+        }
+      ]
+    },
+    "recheck_completed_payload": {
+      "type": "object",
+      "properties": {
+        "correction_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "changed_items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "correction_id",
+        "changed_items"
+      ],
+      "additionalProperties": false
+    },
+    "catalog_version_loaded_payload": {
+      "type": "object",
+      "properties": {
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "catalog_version"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_frozen_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "template_id": {
+          "$ref": "#/$defs/catalog_ref"
+        },
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/catalog_ref"
+          }
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stage_id": {
+                "$ref": "#/$defs/catalog_ref"
+              },
+              "minutes": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "stage_id",
+              "minutes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "practice": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stage_id": {
+                "$ref": "#/$defs/catalog_ref"
+              },
+              "variant_id": {
+                "$ref": "#/$defs/catalog_ref"
+              },
+              "type_id": {
+                "$ref": "#/$defs/catalog_ref"
+              },
+              "role": {
+                "type": "string"
+              },
+              "position": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "stage_id",
+              "position",
+              "variant_id",
+              "type_id"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "lesson_id",
+        "template_id",
+        "catalog_version",
+        "blocks",
+        "stages",
+        "practice"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_marked_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "last_theory_block": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/catalog_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_practice": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/practice_ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "coverage": {
+          "enum": [
+            "all",
+            "none"
+          ]
+        }
+      },
+      "required": [
+        "lesson_id"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "last_theory_block",
+            "last_practice"
+          ]
+        },
+        {
+          "required": [
+            "coverage"
+          ]
+        }
+      ]
+    },
+    "lesson_moved_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "from": {
+          "$ref": "#/$defs/ts"
+        },
+        "to": {
+          "$ref": "#/$defs/ts"
+        }
+      },
+      "required": [
+        "lesson_id",
+        "to"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_cancelled_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/ts"
+        }
+      },
+      "required": [
+        "lesson_id",
+        "date"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_skipped_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "lesson_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_carried_over_payload": {
+      "type": "object",
+      "properties": {
+        "from_lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "to_lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/catalog_ref"
+          }
+        },
+        "practice": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/practice_ref"
+          }
+        }
+      },
+      "required": [
+        "from_lesson_id",
+        "to_lesson_id",
+        "blocks",
+        "practice"
+      ],
+      "additionalProperties": false
+    },
+    "consent_given_payload": {
+      "type": "object",
+      "properties": {
+        "consent_id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "parent",
+            "student"
+          ]
+        },
+        "text_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "consent_id",
+        "kind",
+        "text_version"
+      ],
+      "additionalProperties": false
+    },
+    "consent_revoked_payload": {
+      "type": "object",
+      "properties": {
+        "consent_id": {
+          "$ref": "#/$defs/id"
+        },
+        "anonymise_at": {
+          "$ref": "#/$defs/ts"
+        }
+      },
+      "required": [
+        "consent_id",
+        "anonymise_at"
+      ],
+      "additionalProperties": false
+    },
+    "student_archived_payload": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "student_unarchived_payload": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    },
+    "student_anonymised_payload": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "enum": [
+            "schedule",
+            "tutor_on_request"
+          ]
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "account_bound_payload": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "$ref": "#/$defs/id"
+        },
+        "role": {
+          "enum": [
+            "student",
+            "tutor"
+          ]
+        }
+      },
+      "required": [
+        "user_id",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "session_revoked_payload": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "$ref": "#/$defs/id"
+        },
+        "reason": {
+          "enum": [
+            "unbind",
+            "invite_reissue",
+            "consent_revoked",
+            "archived",
+            "anonymised",
+            "tutor_revoked_all",
+            "not_me",
+            "limit",
+            "expired",
+            "logout"
+          ]
+        }
+      },
+      "required": [
+        "user_id",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "device_confirmed_payload": {
+      "type": "object",
+      "properties": {
+        "tutor_id": {
+          "$ref": "#/$defs/id"
+        },
+        "method": {
+          "enum": [
+            "telegram",
+            "first_login"
+          ]
+        }
+      },
+      "required": [
+        "tutor_id",
+        "method"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_issued": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "assignment_issued"
+        },
+        "payload": {
+          "$ref": "#/$defs/assignment_issued_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_withdrawn": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "assignment_withdrawn"
+        },
+        "payload": {
+          "$ref": "#/$defs/assignment_withdrawn_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "assignment_submitted": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "assignment_submitted"
+        },
+        "payload": {
+          "$ref": "#/$defs/assignment_submitted_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "deadline_changed": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "deadline_changed"
+        },
+        "payload": {
+          "$ref": "#/$defs/deadline_changed_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "attempt_recorded": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "attempt_recorded"
+        },
+        "payload": {
+          "$ref": "#/$defs/attempt_recorded_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "attempt_verdict": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "attempt_verdict"
+        },
+        "payload": {
+          "$ref": "#/$defs/attempt_verdict_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "manual_verdict": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "manual_verdict"
+        },
+        "payload": {
+          "$ref": "#/$defs/manual_verdict_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "did_not_understand": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "did_not_understand"
+        },
+        "payload": {
+          "$ref": "#/$defs/did_not_understand_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "dispute_opened": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "dispute_opened"
+        },
+        "payload": {
+          "$ref": "#/$defs/dispute_opened_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "observation"
+        },
+        "payload": {
+          "$ref": "#/$defs/observation_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "recheck_completed": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "recheck_completed"
+        },
+        "payload": {
+          "$ref": "#/$defs/recheck_completed_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "catalog_version_loaded": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "catalog_version_loaded"
+        },
+        "payload": {
+          "$ref": "#/$defs/catalog_version_loaded_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_frozen": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_frozen"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_frozen_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_marked": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_marked"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_marked_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_moved": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_moved"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_moved_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_cancelled": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_cancelled"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_cancelled_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_skipped": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_skipped"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_skipped_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_carried_over": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_carried_over"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_carried_over_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "consent_given": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "consent_given"
+        },
+        "payload": {
+          "$ref": "#/$defs/consent_given_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "consent_revoked": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "consent_revoked"
+        },
+        "payload": {
+          "$ref": "#/$defs/consent_revoked_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "student_archived": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "student_archived"
+        },
+        "payload": {
+          "$ref": "#/$defs/student_archived_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "student_unarchived": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "student_unarchived"
+        },
+        "payload": {
+          "$ref": "#/$defs/student_unarchived_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "student_anonymised": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "student_anonymised"
+        },
+        "payload": {
+          "$ref": "#/$defs/student_anonymised_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "account_bound": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "account_bound"
+        },
+        "payload": {
+          "$ref": "#/$defs/account_bound_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "session_revoked": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "session_revoked"
+        },
+        "payload": {
+          "$ref": "#/$defs/session_revoked_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "device_confirmed": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "device_confirmed"
+        },
+        "payload": {
+          "$ref": "#/$defs/device_confirmed_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "dispute_resolved_payload": {
+      "type": "object",
+      "properties": {
+        "dispute_id": {
+          "$ref": "#/$defs/id"
+        },
+        "resolution": {
+          "enum": [
+            "key_corrected",
+            "manual_verdict",
+            "rejected"
+          ]
+        },
+        "correction_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 300
+        }
+      },
+      "required": [
+        "dispute_id",
+        "resolution"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_added_payload": {
+      "type": "object",
+      "properties": {
+        "lesson_id": {
+          "$ref": "#/$defs/id"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "starts_at": {
+          "$ref": "#/$defs/ts"
+        }
+      },
+      "required": [
+        "lesson_id",
+        "subject",
+        "starts_at"
+      ],
+      "additionalProperties": false
+    },
+    "plan_reordered_payload": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "lesson_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "subject",
+        "lesson_ids"
+      ],
+      "additionalProperties": false
+    },
+    "schedule_rule_set_payload": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "type": "string"
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "minItems": 1
+        },
+        "start_time": {
+          "type": "string"
+        },
+        "duration_min": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "subject",
+        "weekdays",
+        "start_time",
+        "duration_min"
+      ],
+      "additionalProperties": false
+    },
+    "tutor_rebound_payload": {
+      "type": "object",
+      "properties": {
+        "tutor_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "tutor_id"
+      ],
+      "additionalProperties": false
+    },
+    "consent_revocation_cancelled_payload": {
+      "type": "object",
+      "properties": {
+        "consent_id": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "consent_id"
+      ],
+      "additionalProperties": false
+    },
+    "dispute_resolved": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "dispute_resolved"
+        },
+        "payload": {
+          "$ref": "#/$defs/dispute_resolved_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_added": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "lesson_added"
+        },
+        "payload": {
+          "$ref": "#/$defs/lesson_added_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "plan_reordered": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "plan_reordered"
+        },
+        "payload": {
+          "$ref": "#/$defs/plan_reordered_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "schedule_rule_set": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "schedule_rule_set"
+        },
+        "payload": {
+          "$ref": "#/$defs/schedule_rule_set_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    },
+    "tutor_rebound": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "tutor_rebound"
+        },
+        "payload": {
+          "$ref": "#/$defs/tutor_rebound_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "consent_revocation_cancelled": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "occurred_at": {
+          "$ref": "#/$defs/ts"
+        },
+        "actor": {
+          "type": "object",
+          "properties": {
+            "role": {
+              "enum": [
+                "student",
+                "tutor",
+                "system"
+              ]
+            },
+            "id": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "required": [
+            "role"
+          ],
+          "additionalProperties": false
+        },
+        "student_id": {
+          "$ref": "#/$defs/id"
+        },
+        "event_type": {
+          "const": "consent_revocation_cancelled"
+        },
+        "payload": {
+          "$ref": "#/$defs/consent_revocation_cancelled_payload"
+        }
+      },
+      "required": [
+        "schema_version",
+        "journal_seq",
+        "occurred_at",
+        "actor",
+        "event_type",
+        "payload",
+        "student_id"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

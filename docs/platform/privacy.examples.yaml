@@ -1,0 +1,91 @@
+# Примеры к platform/privacy.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: privacy-01
+  rule: PV-R1
+  given: попытка записать в `student_pii` поле «школа»
+  expect: отказ схемы
+- id: privacy-02
+  rule: PV-R3
+  given: роль `worker` читает `core.student_pii`
+  expect: отказ базы
+- id: privacy-03
+  rule: PV-R6
+  given: создан ученик
+  expect: в `student_pseudonym` код из 8 символов base32, уникальный
+- id: privacy-04
+  rule: PV-R10
+  given: токен ссылки через 15 дней
+  expect: '`410`'
+- id: privacy-05
+  rule: PV-R11
+  given: бот предпросмотра открыл ссылку
+  expect: состояние не изменилось
+- id: privacy-06
+  rule: PV-R12
+  given: ученику 16 лет, репетитор создаёт ссылку вида `student`
+  expect: отказ
+- id: privacy-07
+  rule: PV-R12
+  given: ученику 18 лет, ссылка вида `parent`
+  expect: отказ
+- id: privacy-08
+  rule: PV-R14
+  given: приглашение ученику без согласия
+  expect: '`423 consent_missing`'
+- id: privacy-09
+  rule: PV-R15
+  given: опубликована версия 3, у ученика согласие версии 2
+  expect: через 14 дней вход закрыт
+- id: privacy-10
+  rule: PV-R16
+  given: ученику исполнилось 18
+  expect: согласие `needs_personal`, 14 дней на собственное
+- id: privacy-11
+  rule: PV-R17
+  given: родитель нажал «Отозвать»
+  expect: вход закрыт, сеансы отозваны, репетитору сообщение, `anonymise_at` через 7 дней
+- id: privacy-12
+  rule: PV-R18
+  given: отмена отзыва на 3-й день
+  expect: вход вернулся, согласие действует
+- id: privacy-13
+  rule: PV-R19
+  given: прошло 7 дней
+  expect: ПДн и псевдоним удалены, попытки остались, ожидающие сообщения отменены
+- id: privacy-14
+  rule: PV-R20
+  given: репетитор подтвердил удаление немедленно
+  expect: 'обезличивание сразу, `source: tutor_on_request`'
+- id: privacy-15
+  rule: PV-R22
+  given: архивация
+  expect: ПДн сохранены, вход закрыт, `unarchive` возвращает
+- id: privacy-16
+  rule: PV-R23
+  given: восстановление из копии на 5 дней старше
+  expect: обезличивание применено заново
+- id: privacy-17
+  rule: PV-R24
+  given: 'текст «Маша не поняла» при `display_name: Маша`, псевдоним K7MQ2XP4'
+  expect: '`replaced`: «K7MQ2XP4 не поняла»'
+- id: privacy-18
+  rule: PV-R24
+  given: текст с номером +375 29 123-45-67
+  expect: '`blocked`'
+- id: privacy-19
+  rule: PV-R24
+  given: текст с `@ivan_petrov`
+  expect: '`blocked`'
+- id: privacy-20
+  rule: PV-R26
+  given: спор ученика с текстом
+  expect: в контекст агента не попадает
+- id: privacy-21
+  rule: PV-R27
+  given: запись лога с полем `telegram_id`
+  expect: запрещена тестом
+- id: privacy-22
+  rule: PV-R28
+  given: сообщение «Маша сдала ДЗ» в outbox
+  expect: хранится шаблон + `student_id`, имя не сохранено

@@ -1,0 +1,79 @@
+# Примеры к platform/recheck.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: recheck-01
+  rule: RC-R2
+  given: дважды вызов с `correction_id = 8`
+  expect: один пакет, второй вызов возвращает его состояние
+- id: recheck-02
+  rule: RC-R3
+  given: уже принят пакет 9, приходит 8
+  expect: '`409 stale_correction`'
+- id: recheck-03
+  rule: RC-R4
+  given: в списке id, которого нет в версии
+  expect: '`422 variant_unknown`, ничего не принято'
+- id: recheck-04
+  rule: RC-R7
+  given: 1 200 попыток к проверке
+  expect: 'три порции: 500, 500, 200; курсор после каждой'
+- id: recheck-05
+  rule: RC-R7
+  given: '`core` перезапущен после второй порции'
+  expect: пакет продолжен с курсора, повторов нет
+- id: recheck-06
+  rule: RC-R8
+  given: порция падает 5 раз подряд
+  expect: пакет `failed`, тревога в служебный чат
+- id: recheck-07
+  rule: RC-R10
+  given: ключ был 12, стал 14, ответ 14
+  expect: wrong → correct, баллы 0 → 2
+- id: recheck-08
+  rule: RC-R10
+  given: ключ был 12, стал 14, ответ 12
+  expect: correct → wrong
+- id: recheck-09
+  rule: RC-R11
+  given: ключ исправлен, ответ 15
+  expect: вердикт wrong не изменился, записи нет
+- id: recheck-10
+  rule: RC-R12
+  given: вердикт изменился
+  expect: добавлен `attempt_verdict` (recheck), прежний остаётся
+- id: recheck-11
+  rule: RC-R13
+  given: у попытки ручной вердикт
+  expect: не пересчитана, `skipped_manual +1`
+- id: recheck-12
+  rule: RC-R15
+  given: 'часть В: попытка 1 была wrong, 2 — correct; новый ключ делает 1 correct'
+  expect: 'наблюдение revision 2: балл первой 2, итог 2'
+- id: recheck-13
+  rule: RC-R16
+  given: элемент final с верным ответом, новый ключ его отвергает
+  expect: элемент остаётся final, итог wrong, ученик видит ключ и решение
+- id: recheck-14
+  rule: RC-R17
+  given: 'то же: попытка 2 есть'
+  expect: в итог не входит
+- id: recheck-15
+  rule: RC-R18
+  given: выдача на версии 6, ключ исправлен в 8, ученик сдаёт
+  expect: при «Сдать» элемент перепроверен по версии 8
+- id: recheck-16
+  rule: RC-R19
+  given: пакет `done`, у ученика Б изменены 3 элемента
+  expect: одно `recheck_completed` с тремя элементами
+- id: recheck-17
+  rule: RC-R20
+  given: изменено у двух учеников одного репетитора
+  expect: одно сообщение репетитору
+- id: recheck-18
+  rule: RC-R20
+  given: изменений нет
+  expect: сообщения нет
+- id: recheck-19
+  rule: RC-R21
+  given: затронутая попытка у архивного ученика
+  expect: пересчитана

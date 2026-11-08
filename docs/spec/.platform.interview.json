@@ -1,0 +1,1257 @@
+{
+  "specName": "platform",
+  "timestamp": "2026-11-08",
+  "status": "review-r4-done",
+  "capturedAtCommit": "c4c32b1",
+  "sources": [
+    "tutoring@9b576d8:docs/platform/decisions-log.md (D1-D71, I1, Q1-Q3)",
+    "tutoring@9b576d8:docs/platform/preview.html (artifact DYZ13S36NCJ1LenpMZgwMP, 2026-11-03)",
+    "ai-mentor@c4c32b1:README.md (coursework concept)",
+    "ai-mentor@c4c32b1:docs/mvp/DESIGN.md (MVP, superseded except H1-H4)"
+  ],
+  "coverageMap": {
+    "methodology": "done",
+    "docs-structure": "done",
+    "roles": "done",
+    "service-boundaries": "done",
+    "q1-answer-check": "done",
+    "composer-i1-q3-dashed": "done",
+    "start-order": "done",
+    "security": "done"
+  },
+  "qaLog": [
+    {
+      "area": "stack",
+      "q": "Q2: core language",
+      "a": "Go core (teammate leads Go) + Python for catalog CI, composer, symbolic checking. Supersedes D34."
+    },
+    {
+      "area": "methodology",
+      "q": "Who writes and approves tests before code?",
+      "a": "AI writes both example tables and tests; humans review. Patterns repeat across CT, so derive the principle once. Tests also needed for services, not only answer checking."
+    },
+    {
+      "area": "methodology",
+      "q": "Which safeguards stay?",
+      "a": "AI lists ambiguous cases as questions to humans instead of guessing; tests and code written by different agent sessions; accepted tests frozen. User reviews tables, teammate reviews Go tests. Levels: domain, contract, integration, e2e."
+    },
+    {
+      "area": "docs-structure",
+      "q": "How to split specs into files?",
+      "a": "File per module, grouped by domain area, owner in header."
+    },
+    {
+      "area": "roles",
+      "q": "(volunteered)",
+      "a": "Both write everything. Teammate leans Go/backend; user leads idea, architecture, infra."
+    },
+    {
+      "area": "docs-structure",
+      "q": "(clarification) how many modules, folder per module?",
+      "a": "Clarified catalog vs knowledge model vs optimizer; ~16 modules in 3 areas; start one file per module, split into folder past ~300 lines; glossary mandatory."
+    },
+    {
+      "area": "service-boundaries",
+      "q": "Which process runs knowledge model and optimizer?",
+      "a": "Python worker consuming the PostgreSQL queue; Go owns transactions, Python writes derived tables."
+    },
+    {
+      "area": "service-boundaries",
+      "q": "Who picks the next diagnostic item?",
+      "a": "Go, deterministic rule over the prerequisite graph"
+    },
+    {
+      "area": "q1-answer-check",
+      "q": "Symbolic checking?",
+      "a": "Remove ambiguity at the source: tasks designed with unambiguous CT-style answers; no symbolic checking"
+    },
+    {
+      "area": "service-boundaries",
+      "q": "When is homework 'submitted' for recalculation?",
+      "a": "Only the submit button; unsubmitted homework is not treated as failed; plan adapts after later submission. Also two lesson marks: theory and practice"
+    },
+    {
+      "area": "composer-i1-q3-dashed",
+      "q": "Keep the composer?",
+      "a": "MVP: skill in chat to build catalog for real students now; approved catalog = gold; later LangGraph/skill compared against it"
+    },
+    {
+      "area": "composer-i1-q3-dashed",
+      "q": "Protect the gold standard from leakage?",
+      "a": "Later; separate evaluation module run in isolation. Plus record tutor remarks while generating materials as a corpus"
+    },
+    {
+      "area": "start-order",
+      "q": "Biggest current pain?",
+      "a": "Assembling lesson materials (one big HTML per lesson); HW checked by students themselves; planning not done yet"
+    },
+    {
+      "area": "start-order",
+      "q": "Release order?",
+      "a": "Blocks + HW autocheck -> plan -> knowledge model -> agent"
+    },
+    {
+      "area": "security",
+      "q": "Login in release 1?",
+      "a": "Telegram first, other methods later"
+    },
+    {
+      "area": "red-team",
+      "q": "RT1 triggers",
+      "a": "Two classes; also import RT results: tasks mapped to types and difficulty, fed into the model; solved on RT likely solved on exam, failed on RT -> review"
+    },
+    {
+      "area": "red-team",
+      "q": "What RT data exists?",
+      "a": "RIKZ answer sheet with the student's answers plus the tasks"
+    },
+    {
+      "area": "red-team",
+      "q": "RT2 lost update",
+      "a": "Understood via git analogy: apply only if branch has not moved ahead"
+    },
+    {
+      "area": "red-team",
+      "q": "RT3 skip rule",
+      "a": "Part B at once, part A after two; diagnostics must be dynamic, binary search per branch; two early failures -> do not give the top"
+    },
+    {
+      "area": "red-team",
+      "q": "RT4 agent isolation",
+      "a": "Asked what a worker is and why not async; after explanation chose two instances with own queues"
+    },
+    {
+      "area": "red-team",
+      "q": "RT5 DB rights",
+      "a": "Asked for common patterns; asked what SKIP LOCKED is; chose shared DB with schema per owner, single writer"
+    },
+    {
+      "area": "red-team",
+      "q": "RT6 consent",
+      "a": "Default: parent confirms via link"
+    },
+    {
+      "area": "red-team",
+      "q": "RT7 bot links",
+      "a": "Asked what cookies are, why not normal auth, is Telegram reliable; after explanation kept Telegram"
+    },
+    {
+      "area": "red-team",
+      "q": "RT8 state for release 2 plan",
+      "a": "Diagnostic test plus tutor corrections"
+    },
+    {
+      "area": "red-team",
+      "q": "RT9 tasks for unexplained theory",
+      "a": "Move with the theory to the next lesson"
+    },
+    {
+      "area": "red-team",
+      "q": "RT10 contracts",
+      "a": "Schemas in contracts/, code generated"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-A1 who assembles lesson and HW in R1",
+      "a": "Tutor does not want to assemble by hand and there is no library yet; chose static plan import + skill builds blocks + system builds HW"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-A2 variants in R1",
+      "a": "Ready variants, templates later"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-A3 notifications R1",
+      "a": "Student: new homework; tutor: homework submitted (plus mandatory D93 ones)"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-B1 partial credit",
+      "a": "Official RIKZ rules, tutor verifies"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-C1 homework flow",
+      "a": "Tests are checked at the end, simple homework can be checked at once"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-G1 calendar",
+      "a": "Rule + per-lesson edits"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-G2 cancelled lesson",
+      "a": "Move it, make up later if needed"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-G3 homework size",
+      "a": "Individually per student (message truncated)"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-M1 roles",
+      "a": "Student + tutor, one owner per student"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-M2 leaving vs revocation",
+      "a": "Leaving = archive, revocation = anonymisation"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-M3 consent identity",
+      "a": "Button is enough, tutor is responsible"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-N1 database location",
+      "a": "Container on own server + copies off-site"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-F1 glossary",
+      "a": "Accepted table as is"
+    },
+    {
+      "area": "review-r3",
+      "q": "Q-P1 coursework",
+      "a": "Asked for a simpler explanation; accepted: same model, two approaches, two tasks"
+    },
+    {
+      "area": "review-r3",
+      "q": "Bucket 2: 26 technical defaults",
+      "a": "Accept all"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q1 release-1 weight",
+      "a": "Batches ahead + fallback"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q2 before 2027 spec",
+      "a": "2026 rules with version, reconcile on release"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q3 public repo",
+      "a": "Catalog in a private repo; scrub student details from docs"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q4 server loss",
+      "a": "Up to a day + quarterly drill"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q5 review bottleneck",
+      "a": "All engineering by teammate; tutor owns content and subject rules"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q6 revocation",
+      "a": "Button + 7-day delay"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q7 homework structure",
+      "a": "Recipe from L-file: A/B/C/D/E by days"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q8 coursework plan",
+      "a": "Not now; focus on MVP; paid server is fine later"
+    },
+    {
+      "area": "review-r4",
+      "q": "R4-Q9 numbers",
+      "a": "Accept all"
+    },
+    {
+      "area": "review-r4",
+      "q": "53 defaults",
+      "a": "Accept all"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D72",
+      "topic": "Methodology",
+      "decision": "Spec-driven: spec -> example tables -> tests -> code -> review; AI writes tables and tests and raises ambiguous cases as questions; separate sessions for tests and code; frozen tests (D30)",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D73",
+      "topic": "Docs structure",
+      "decision": "Layers: vision, architecture, contracts, module specs, decisions, agent briefs. One file per domain module in catalog/, platform/, personalization/; header names owner and implementing services; each rule has one home and an ID",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D74",
+      "topic": "Roles",
+      "decision": "Both write all parts; teammate leads Go backend and reviews Go tests; user leads product idea, architecture, infra and reviews example tables. Owner field = approver, not sole author",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D75",
+      "topic": "Core language",
+      "decision": "Go core; Python for catalog CI and composer (symbolic checking dropped by D80). Supersedes D34",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D76",
+      "topic": "Compute boundary",
+      "decision": "Knowledge model and optimizer run in a Python worker fed by the PostgreSQL queue; Go core owns all student transactions (attempts, lesson marks, edits); Python owns derived tables (p, forecast, plan). Worker down = stale plan, no data loss (D35)",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D78",
+      "topic": "Adaptive diagnostics",
+      "decision": "Go core picks the next diagnostic item by a deterministic rule over the prerequisite graph and current test answers (D7); no Python call during the test; on completion the worker seeds the knowledge model",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D79",
+      "topic": "Agent placement (default, open to objection)",
+      "decision": "AI agent runs in the Python worker and shares one LLM adapter with the composer (D36); Go validates every proposal on save (schema, allowed_actions, rights, plan version D24); approved proposals reach the optimizer as constraints",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D80",
+      "topic": "Q1 answer checking (closed)",
+      "decision": "Only CT answer formats, checked synchronously in Go. Ambiguity is removed at the source: every template must yield an unambiguous answer (integer, or the statement says how to scale it), enforced by CI task_rules (D27). Symbolic checking is not planned",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D81",
+      "topic": "Recalculation triggers",
+      "decision": "Model and plan are recalculated only on: homework submitted with the explicit 'submit' button, lesson marked by tutor, diagnostics finished. No per-answer recalculation. Unsubmitted homework is not treated as failed: plan stays as is until submission, then adapts (one lesson later). Raw attempts are visible to the tutor before submission",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D82",
+      "topic": "Lesson marks (amends D9)",
+      "decision": "Tutor records two marks per lesson: last theory block explained and last practice task solved",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D83",
+      "topic": "Composer I1 and Q3 (approved, phased)",
+      "decision": "Phase 1 (now): CT catalog is built with a Claude skill run by the tutor in chat; used with real students; the tutor-approved catalog becomes the gold standard. Phase 2 (coursework): composer as an explicit LangGraph graph (pipeline) vs the skill (agent), both measured against the gold. Evaluation is a separate module (catalog/eval) running the composer in isolation with no access to the catalog; details deferred",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D84",
+      "topic": "Tutor feedback log",
+      "decision": "While generating lesson materials and catalog changes, the tutor's remarks to the agent (what was produced, what was changed, why) are recorded as structured notes next to the change; this corpus later shapes the composer graph or skill and its evaluation. Storage format to be fixed in the catalog spec",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D85",
+      "topic": "Release order (supersedes D38 'first release' scope)",
+      "decision": "Release 1: block library (D43) + lesson assembly + mobile site + PDF + homework from ready variants with Go autocheck, 'submit', tutor sees results; catalog limited to near-term topics but in final catalog format with permanent ids. Release 2: catalog frequencies + rough plan for the goal. Release 3: knowledge model worker. Release 4: agent. First spec: catalog schema, then answer check, attempts log. Tracks run in parallel: catalog via skill (user), platform skeleton (teammate)",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D86",
+      "topic": "Login in release 1",
+      "decision": "Telegram Login on the site: tutor creates the student and sends a one-time expiring invite link; first login binds Telegram; session in an httpOnly cookie for 90 days, revocable by the tutor; bot links open the site directly. No passwords. Server verifies the Telegram login hash (HMAC with the bot token) and auth_date freshness; Telegram id is personal data stored with PII (D17). Mini App and other methods later",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D77",
+      "topic": "Glossary and module template",
+      "decision": "docs/spec/glossary.md defines every domain term once; all module specs share one template (purpose, IO via contract, numbered rules, example tables, errors, out of scope); one file per module, folder only past ~300 lines",
+      "source": "Interview",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D87",
+      "topic": "Recalculation triggers (amends D81, RT1)",
+      "decision": "Two classes of triggers. New facts (homework submitted, checkpoint test, mock exam, diagnostics finished, lesson marked, recheck after key correction, imported RT results) -> recalculate knowledge model and plan. New constraints (tutor edit, approved agent proposal, goal, exam date, hours budget, new catalog version) -> recalculate plan only. Nothing per single answer",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D88",
+      "topic": "RT results import",
+      "decision": "RIKZ sends the answer sheet and the variant. (1) Variant markup is shared catalog work, once per RT variant: tasks mapped to types and difficulty by the two-AI markup with tutor resolving disagreements. (2) Student answers enter the attempt log with source=RT and mock-level weight (D45); our checker computes correct/incorrect against the key, wrong answers are matched to traps (D11). Entry: tutor form for 30 answers first; later AI pre-fills from the PDF and the tutor confirms. Not in release 1",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D89",
+      "topic": "Recalc ordering (RT2)",
+      "decision": "At most one recalculation per student at a time (per-student lock). Each job records the id of the last journal event it read; derived results (p, forecast, plan) are written only if no newer event for that student exists, otherwise the job restarts from fresh state (fast-forward-only semantics). Covered by a concurrency test",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D90",
+      "topic": "Adaptive diagnostics algorithm (amends D7/D78, RT3)",
+      "decision": "Per branch of the prerequisite graph, the boundary of knowledge is located by binary search: start mid-branch; success moves up, failure moves down. Trust rule (matches D46): one correct part-B answer, or two correct part-A answers on different tasks, counts the level and the prerequisites below it as known. Two failures at a level mark everything above it as not mastered without asking. An abandoned test seeds the model with what was solved, the rest stays 'not checked'; the test can be resumed. The rule is one example table shared by the Go diagnostics and the Python model. Branches are DAG paths: how the middle is chosen is fixed in the diagnostics spec",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D91",
+      "topic": "Worker isolation (amends D79, RT4)",
+      "decision": "One Python worker codebase, two running instances with separate queues: recalc (knowledge model, optimizer, plan) and agent (LLM calls with a hard timeout). Plain synchronous code, no asyncio. Tutor cabinet shows 'plan as of <time>' for every student; if recalc lags a submitted event by more than N minutes, the tutor gets a Telegram alert",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D92",
+      "topic": "Database ownership (RT5)",
+      "decision": "One PostgreSQL, schema per owner: core.* written only by Go (journal, lesson marks, edits, students, PII), compute.* written only by the Python worker (p, forecast, plan). Single-writer rule per table. Worker DB role reads the journal and catalog through views without PII and has no access to PII tables. Queue jobs are claimed with FOR UPDATE SKIP LOCKED. Agent proposals reach Go through an internal API that validates and answers accepted/rejected with a reason. A CI test asserts the role grants. Pattern: CQRS (facts in core, derived views in compute)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D93",
+      "topic": "Consent and account protection (amends D86, RT6)",
+      "decision": "Parental consent: before the student invite, the tutor sends the parent a link with a short 'what we store and why' text and an 'I agree' button; the system records date, text version and method; the student invite does not work without consent; consent can be revoked via the same link. Invite binding: the tutor is notified in Telegram which account was bound and can unbind and reissue in one action. Tutor account: 7-day session, every login from a new device is confirmed in Telegram and reported",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D94",
+      "topic": "Bot links and login transport (amends D86, RT7)",
+      "decision": "Telegram login stays for release 1. Bot links carry no secrets and are safe to forward. With a valid cookie the link opens the page directly; without one (e.g. Telegram in-app browser cleared it) the page offers one-tap 'Log in with Telegram'. Login data travels only in the request body, never in the URL, and never reaches logs. Documented procedure to rotate the bot token (invalidates login signatures; sessions survive). Password login and Mini App are later options",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D95",
+      "topic": "Diagnostics in release 2 (amends D85, RT8)",
+      "decision": "Release 2 = catalog frequencies + rough plan + adaptive diagnostics (D90). Student state for the plan before the knowledge model exists = diagnostics result plus tutor overrides per type ('base mastered' / 'automatism', D71); tutor overrides win. From release 3 the knowledge model keeps this state current. Diagnostic types catalog package is prepared for release 2 (moves D41's 'before release 1')",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D96",
+      "topic": "Carry-over with two lesson marks (amends D9/D82, RT9)",
+      "decision": "Every practice task is linked to the theory block it depends on. After the two marks: unsolved tasks whose theory was explained -> homework (plus D39 reinforcement); tasks whose theory was not explained move with that theory to the start of the next lesson. Homework is assembled and issued only after the tutor's marks",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D97",
+      "topic": "Single source of contracts (supersedes S3/D57 'TS schemas', RT10)",
+      "decision": "docs/contracts holds OpenAPI (HTTP APIs, incl. the internal proposals API) and JSON Schema (queue events, catalog format). Go, Python and TS types are generated from them; hand-written duplicates are forbidden. All DB migrations (core and compute schemas) live in one place with one ordering. CI on every PR checks that generated code matches the contracts and runs contract tests",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D98",
+      "topic": "Phase-1 catalog path and notes privacy (RT11)",
+      "decision": "Catalog produced by the skill follows the normal path: PR -> CI -> key checks (D56) -> tutor merge; no shortcut into the database. Tutor notes (D84) refer to students by pseudonym and pass a PII filter before storage. Gold-standard independence for the composer comparison stays open for the catalog/eval spec (user deferred it)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D99",
+      "topic": "Test review for Python (RT12)",
+      "decision": "User reviews Python tests (knowledge model, optimizer); teammate reviews Go tests; the module owner from the spec header merges. Expected values in reference tests never come from the code under test: hand-computed small examples or an independent second solver",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D100",
+      "topic": "Release-1 lesson and homework assembly (R3 Q-A1)",
+      "decision": "Release-1 plan = import of the existing static plan from ct-2027 (PLAN.md + plan/L*.md frontmatter: lesson, week, phase, kind, topics, review). Before each lesson the composer skill converts the L-file into library blocks and the lesson composition (PR -> tutor review); the library grows lesson by lesson. Homework is assembled by the system after the two lesson marks (D96 + D39), reviewed and issued by the tutor. Lesson marks and carry-over are in release 1. From release 2 the optimizer adapts this static plan; the static plan doubles as the expert reference to compare the optimizer against",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D101",
+      "topic": "Variants in release 1 (R3 Q-A2)",
+      "decision": "Release 1 uses ready variants only: the skill prepares 5-10 variants per type for each lesson; independent key check in CI is mandatory and blocks the PR on mismatch. The catalog schema already models templates; template expansion arrives in release 2. When a student has no unseen variant of a type left, the tutor gets a 'variants needed' warning and the type is left out of the homework (no repeats, D27)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D102",
+      "topic": "Release-1 notifications (R3 Q-A3)",
+      "decision": "Release-1 Telegram messages: to the tutor - account bound to a student, login from a new device (D93), student submitted homework (score + link); to the student - new homework issued (link). No reminders in release 1. Sent from Go through an outbox table with retry; a failed send never blocks the triggering action",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D103",
+      "topic": "Partial credit and input normalisation (R3 Q-B1)",
+      "decision": "Scoring for B1, B2 and multi-answer A6/A10 follows the official RIKZ rules (2026 spec, then 2027). An agent transcribes them into an example table with a reference to the spec clause; the tutor verifies it. Rules live in the CT subject package as data, not in Go code; the same package holds input normalisation (spaces, separators, digit order, empty answer)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D104",
+      "topic": "Attempt lifecycle by assignment kind (R3 Q-C1, Q-C2; refines D11/D12)",
+      "decision": "Homework: every answer is sent and checked at once and becomes an immutable attempt; part B: after a wrong first attempt only 'wrong' is shown, answer and solution after the second; part A: one attempt. Submit is allowed with unanswered tasks after a confirmation ('N left'), is final, shows the summary (per-task result, solutions to failed tasks, a 'did not understand' button that adds the task to the 'discuss at lesson' list) and notifies the tutor. Tests (checkpoint, mock, diagnostics): one attempt per task, results shown to the student only at the end; diagnostics checks each answer internally to choose the next item (D90) without showing it",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D105",
+      "topic": "Lesson calendar (R3 Q-G1)",
+      "decision": "Per student and subject the tutor sets a schedule rule (weekdays, time, duration in minutes). The system expands it into dated lessons up to the exam date; single lessons can be moved, cancelled or added. For the current student the schedule is taken from the imported ct-2027 PLAN.md",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D106",
+      "topic": "Cancelled lesson (R3 Q-G2)",
+      "decision": "A cancelled lesson moves as a whole to the next date and every later lesson shifts by one; no homework is issued; the cancellation is recorded as its own event (distinct from 'nothing covered'). If the plan no longer fits before the exam, the tutor is warned and can add a make-up lesson (D105); from release 2 the optimizer compresses the plan instead",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D107",
+      "topic": "Homework size and deadline (R3 Q-G3)",
+      "decision": "Homework size is set per student: each task has a minutes estimate and homework fits the student's own homework time budget between lessons (D42). Fill order: unsolved tasks -> D39 reinforcement -> new tasks; what did not fit is shown to the tutor in the review. Default deadline is the start of the next lesson in that subject, adjustable per student. Interpretation of a truncated answer ('под каждого ученика индивидуально, в...'), open to correction",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D108",
+      "topic": "Roles (R3 Q-M1)",
+      "decision": "Release 1 has two roles: student and tutor. Every student has exactly one owning tutor; a tutor sees and acts only on own students (checked in Go on every request). The owner field exists in the schema from day one; admin role and transferring a student are later. The parent is not a role: only the giver of consent (D93). The first tutor account is created by a server CLI command",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D109",
+      "topic": "Student leaving and consent revocation (R3 Q-M2; makes D18 concrete)",
+      "decision": "Leaving = archive: login blocked, all sessions revoked, data kept, reversible by the tutor. Consent revocation = anonymisation: the PII row and Telegram id are deleted at once, sessions revoked; attempts stay under a random pseudonym no longer linked to anyone; tutor notes go through the same pseudonym rule (D98). PII disappears from backups when the backup copies expire (retention set in the backup spec)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D110",
+      "topic": "Consent identity (R3 Q-M3) - ACCEPTED RISK",
+      "decision": "Consent is the 'I agree' button on the link the tutor sends to the parent (D93); the parent's identity is not verified, the tutor is responsible for sending the link to the parent. Accepted risk: a student pressing the button via a forwarded link cannot be detected. Kept: consent is asked again on a new text version; at 18 the student consents personally. Upgrade path (parent Telegram login) stays possible without redesign. Interviewer recommended parent Telegram login; user chose the simpler button",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D111",
+      "topic": "Database hosting and backups (R3 Q-N1; supersedes S4 'managed PostgreSQL' and 'one backend service')",
+      "decision": "PostgreSQL runs as a container in Docker Compose on the project server. WAL archive and a daily encrypted full copy go to S3-compatible storage at a different provider (e.g. pgBackRest), giving point-in-time recovery (S6). A nightly restore drill runs in a throwaway container and recalculates derived data from the journal. The backup encryption key is also kept outside the server (user's password manager). Service layout follows D33/D91, not S4",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D112",
+      "topic": "Core glossary terms (R3 Q-F1; seeds glossary.md, D77)",
+      "decision": "блок = library piece (theory, rule, worked example, typical error, widget); этап урока = timed part of a lesson; серия = consecutive tasks of one type; вариант = concrete task instance with numbers and a permanent id; тест (сессия) = a whole CT/CE/RT paper; опция = an answer option in part A; элемент = knowledge element within a topic (D70); пункт спецификации = RIKZ spec item; тип задания = what is checked (D3); позиция = place in the test (A1..B20); задача = UI word only, docs say вариант. Earlier decisions are read through this table",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D113",
+      "topic": "Coursework experiment design (R3 Q-P1; amends D83 phase 2)",
+      "decision": "Phase 2 compares two approaches on the same models: agent = free tool-calling loop over the composer's tools; pipeline = explicit LangGraph graph. Both use the shared LLM adapter and run on local models (Ollama) and on Claude; the phase-1 Claude skill is only an upper reference. Two tasks: (1) build a curriculum catalog from sources, (2) check a curriculum with deliberately seeded errors (missing topic, wrong prerequisite order, uncited element) and report them - this matches the topic 'checking study programs'. Phase 2 starts after release 1; milestone spring 2027",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D114",
+      "topic": "Catalog ids (R3 default 01#3)",
+      "decision": "Permanent id on every level (topic, element, type, subvariant, variant, block); ids are never reused",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D115",
+      "topic": "Catalog edit rules (R3 default 01#4, 02#2)",
+      "decision": "Typo/formatting keeps the id; changed numbers or statement = new variant, old one retired from issue but kept for history; fixing a wrong key keeps the id and triggers recheck (D22)",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D116",
+      "topic": "Split/merge map (R3 default 01#2)",
+      "decision": "Transfer map states explicitly which old ids map to which new ids; past attempts follow the map",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D117",
+      "topic": "Open homework vs new catalog version (R3 default 01#1)",
+      "decision": "Issued but unsubmitted homework stays on the catalog version it was issued with; key fixes reach it through recheck",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D118",
+      "topic": "Catalog tables owner (R3 default 15#4)",
+      "decision": "Separate catalog.* schema; its only writer is the CI loader",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D119",
+      "topic": "Key check blocks PR (R3 default 02#3)",
+      "decision": "Any key-check mismatch blocks the PR until the tutor resolves it",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D120",
+      "topic": "Lesson publish snapshot (R3 default 16#7)",
+      "decision": "Publishing a lesson stores an immutable snapshot: block ids, order, catalog_version",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D121",
+      "topic": "Idempotency (R3 default 16#4, 09#2)",
+      "decision": "Every answer and Submit request carries an idempotency key; a retry returns the original result without a new attempt",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D122",
+      "topic": "RT import key (R3 default 16#5)",
+      "decision": "Unique key student+sitting+test; re-import is an idempotent upsert",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D123",
+      "topic": "Recheck contract (R3 default 16#1)",
+      "decision": "Key correction triggers recheck through an internal Go API with correction_id and batch state; resumes after failure",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D124",
+      "topic": "Catalog version in plan (R3 default 16#2)",
+      "decision": "catalog_version is part of the recalc job input and the stored plan; a plan from an older version cannot overwrite a newer one",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D125",
+      "topic": "Queue leases (R3 default 12#1)",
+      "decision": "Jobs are claimed with a lease and attempt counter; on worker crash the lease expires and another instance takes it; after N failures status=failed and alert",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D126",
+      "topic": "No worker in release 1 (R3 default 13#2)",
+      "decision": "Release 1 runs without the Python worker: Go writes the journal; queue and compute.* arrive in release 2; key recheck runs synchronously in Go in release 1",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D127",
+      "topic": "Migrations and deploy (R3 default 10#2)",
+      "decision": "A one-shot migrate step runs before services start; migrations are expand-only; rollback = previous image tags",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D128",
+      "topic": "Environments (R3 default 10#3)",
+      "decision": "prod and staging on one server on subdomains, staging has its own test bot; local dev uses a test login without Telegram",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D129",
+      "topic": "Ops alerts (R3 default 10#4)",
+      "decision": "A service Telegram chat for the user: service down, disk > 80%, backup or restore drill failed, LLM budget exhausted; recalc lag alert to the tutor",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D130",
+      "topic": "Secrets (R3 default 10#5)",
+      "decision": "Secrets live in a file on the server outside git (mode 600, Compose secrets), with a copy in the user's password manager; rotation checklist per secret",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D131",
+      "topic": "Frozen tests (R3 default 11#1)",
+      "decision": "Frozen test paths are listed in CODEOWNERS; CI blocks a code PR that changes them; a wrong test is fixed in a separate PR approved by the module owner",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D132",
+      "topic": "Open questions channel (R3 default 11#2)",
+      "decision": "AI raises an ambiguity as 'Open question Q-n' in the module spec; it blocks tests for that rule; the owner's answer becomes an example-table row with the rule id",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D133",
+      "topic": "Example tables format (R3 default 11#3)",
+      "decision": "Example tables are YAML next to the spec; Go and Python tests are generated from them",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D134",
+      "topic": "Integration tests (R3 default 11#3)",
+      "decision": "Integration tests (incl. D89 concurrency) run against a real PostgreSQL container, synthetic pseudonymous data only",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D135",
+      "topic": "Block content format (R3 default 09#4)",
+      "decision": "Block text is Markdown + LaTeX (KaTeX); widget = {widget, params} per JSON Schema; figures SVG; PDF rendered on the server, every widget has a static print version",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D136",
+      "topic": "Answer input components (R3 default 09#5)",
+      "decision": "One input component per CT answer format; malformed input is rejected client-side and does not count as an attempt",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D137",
+      "topic": "Attempt source and place (R3 default 03#5)",
+      "decision": "Attempt has two fields: source (homework, lesson, checkpoint, mock, diagnostics, RT) sets weight; place (home/lesson) is stored only",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D138",
+      "topic": "Disputes (R3 default 03#4)",
+      "decision": "The tutor resolves a dispute either by fixing the key for everyone or by a 'manual verdict' event for one attempt; verdicts are always derived from the journal",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D139",
+      "topic": "Pseudonym and PII filter (R3 default 08#5)",
+      "decision": "Pseudonym = permanent random short code; PII = name, Telegram id, parent contact, school; the notes filter replaces known names and blocks phone numbers and @usernames",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D140",
+      "topic": "Release-1 content cadence and fallback (R4-Q1; amends D100)",
+      "decision": "The skill prepares lessons in batches 2-4 weeks ahead in one PR, not one PR per lesson. If a lesson's blocks are not ready, the site shows the lesson from its L-file as is (PDF/HTML) and the tutor picks homework from already loaded variants; automatic homework assembly applies whenever blocks and variants exist. A lesson is never blocked by the content pipeline",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D141",
+      "topic": "Working before the 2027 spec (R4-Q2)",
+      "decision": "Catalog and scoring rules are tagged with the spec version they follow ('RIKZ 2026') and work proceeds now. When the 2027 spec is published, one reconciliation PR records what changed, what is retired and what is added, using the transfer map (D116) and versioned scoring rules (D103); students are not blocked",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D142",
+      "topic": "Public code repo vs private catalog (R4-Q3; replaces S8 premise)",
+      "decision": "knowgap-lab/ai-mentor (public) holds code, specs and a small synthetic demo catalog only. The real catalog with answer keys and the tutor notes (D84) live in a separate private repository. No student details (name, city, goal, scores, class) are ever committed to the public repo. Pre-push rule: the local docs/platform-spec branch is squashed before its first push so commits that contained such details never reach GitHub",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D143",
+      "topic": "Server loss: RTO and rebuild drill (R4-Q4; extends D111)",
+      "decision": "Single server stays. Target RTO <= 24 h after total server loss: the whole stack is rebuilt on a clean machine by a script from git plus the off-site backup. Once a quarter the user performs a real rebuild on a new machine and records the time. During an outage homework continues via PDF",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D144",
+      "topic": "Review ownership (R4-Q5; refines D74, D99, D131)",
+      "decision": "The user (tutor) must approve only subject matter: catalog content and keys, scoring and normalisation rules and subject example tables, consent text. Engineering PRs (code, infra, technical tests, contracts) are merged by the teammate on green CI without the tutor. Encoded in CODEOWNERS",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D145",
+      "topic": "Safe consent revocation (R4-Q6; amends D93, D109)",
+      "decision": "Opening a consent link never changes state; giving or revoking consent requires pressing a button (POST), so link-preview bots cannot trigger it. On revocation the student's login is blocked and sessions revoked immediately and the tutor is notified; PII deletion/anonymisation runs after 7 days, during which a mistaken revocation can be undone. Link tokens are stored hashed, never logged, rate-limited per IP",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D146",
+      "topic": "Homework recipe (R4-Q7; replaces the D107 fill rule, confirms the D107 budget meaning)",
+      "decision": "Homework follows the lesson's recipe from its L-file, turned into data by the skill together with the lesson blocks: A = new topic series by rising difficulty; B = interleaved review of the plan's review topics; C = CT-format mixed tasks with a timer (autochecked, results at the end like a test); D = flashcards and E = re-read/checklist (shown as a checklist, not checked). Distributed by days (Mon-Fri, Saturday as reserve). Unsolved tasks from the lesson and D39 reinforcement go first into block A. Budget = the student's weekly homework time (currently about 6 h); per-variant minutes come from the skill. Deadline = next lesson in the subject",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D147",
+      "topic": "Coursework planning deferred (R4-Q8)",
+      "decision": "DEFERRED: focus is the MVP for real students. Open items recorded for later: phase-2 timeline (parallel on a catalog snapshot vs after release 1), hardware for local models (a paid server is acceptable), seeded-error dataset (>= 40 samples, no real student data), README rewrite to match D113, agreeing the topic interpretation with the supervisor. Revisit after release 1 is defined in specs",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D148",
+      "topic": "Operational numbers (R4-Q9; makes D8, D86, D91, D93, D101, D111, D125 testable)",
+      "decision": "Invite link: 72 h, single use (expired/used -> 410, no session). Telegram login rejected if now - auth_date > 300 s or HMAC mismatch (401). Tutor new-device: unknown device_id cookie -> pending session, confirm in Telegram within 10 min else rejected. Variants: CI blocks a lesson PR if a used type has < 5 active variants (pool_too_small); skill default 8. Recalc lag alert: oldest unprocessed event older than 15 min -> one alert per student until recovered. Queue: lease 120 s, backoff 30 s x 2^(attempt-1), failed after 5 attempts + ops alert. Plan horizon: lessons 1-2 frozen, lessons up to +42 days planned by blocks, beyond = weekly milestones only. Backup retention: 30 days. All are configuration values",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D149",
+      "topic": "Type-element link (R3 01#5/15#2)",
+      "decision": "A task type has one primary knowledge element; other elements are prerequisites. Subvariant is its own entity with a permanent id. The checkpoint reserve is a flag on the variant",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D150",
+      "topic": "Task rules (R3 02#4)",
+      "decision": "B3-B20: exact integer, no rounding; scaling only via a phrase from a fixed list; B1: bijection; B2: digits ascending without repeats; violations fail CI",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D151",
+      "topic": "Part-A options (R3 02#5)",
+      "decision": "5 distinct options; no distractor equals the key; number of correct options explicit (A6/A10); every distractor carries a trap id",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D152",
+      "topic": "Lesson capacity (R3 06#3)",
+      "decision": "Every lesson stage has a minutes estimate; capacity = duration minus error review; after carry-over the overflow from the end moves to the first unfrozen lesson",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D153",
+      "topic": "Checkpoint placement (R3 06#5)",
+      "decision": "A checkpoint is a lesson stage; its contents are fixed when the lesson freezes",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D154",
+      "topic": "Session lifecycle (R3 08#4)",
+      "decision": "Fixed expiry from login; unbind and invite reissue revoke all student sessions; tutor access recovery via a server CLI command",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D155",
+      "topic": "Agent briefs (R3 11#5)",
+      "decision": "Briefs are assembled by a script from the module spec header (rules, tables, contracts, glossary, allowed paths); test paths are write-protected for code sessions",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D156",
+      "topic": "Queue job shape (R3 12#2)",
+      "decision": "Thin job {student_id, model|plan, trigger_event_id}; pending jobs of one student merge (model absorbs plan); watermark = single core journal sequence covering facts and constraints",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D157",
+      "topic": "Compute views contract (R3 12#3)",
+      "decision": "Go reads v_plan_current and v_forecast described by JSON Schema; plan is an immutable snapshot with plan_version, based_on_event_id, computed_at; Go role has SELECT only",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D158",
+      "topic": "Proposals API (R3 12#4, release 4)",
+      "decision": "POST /internal/proposals with idempotency_key, based_on_plan_version; stale -> rejected stale_plan, agent regenerates once; approval writes a constraint event; service token",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D159",
+      "topic": "Walking skeleton (R3 13#5)",
+      "decision": "Release-1 build order: catalog contract -> loader -> variant page -> Go check -> journal -> tutor screen (local dev login); then Telegram login and consent; then conspect and PDF",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D160",
+      "topic": "Skill PR contents and ids (R3 14#3)",
+      "decision": "Citation required for every element/topic/type, task_rules and element-level prerequisites; the skill uses temporary keys, CI mints permanent ids at merge; profile sits next to the catalog",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D161",
+      "topic": "Diagnostic events (R3 16#3)",
+      "decision": "diagnostic_abandoned and diagnostic_resumed are journal events with a session version; abandonment triggers seeding",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D162",
+      "topic": "AgentTrigger (R3 16#6, release 4)",
+      "decision": "After a recalc commit the worker enqueues AgentTrigger carrying journal and plan revisions",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D163",
+      "topic": "Ownership of lessons, plan, homework (R4 01#1/#2, 03#1, 09#1)",
+      "decision": "Lesson template in the catalog; per-student lesson composition, calendar and homework in core.* written by Go; the optimizer writes only compute.plan and Go applies it to unfrozen lessons; the imported static plan lives in core.* as version 0 and expert reference",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D164",
+      "topic": "Assignment events and snapshots (R4 11#4, 03#2)",
+      "decision": "Issue, approve, withdraw and submit of an assignment are immutable core events with a full snapshot of variants and rules; lesson snapshot includes practice variants and stages",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D165",
+      "topic": "Pseudonym storage (R4 01#3, 03#3)",
+      "decision": "Attempts reference the internal student id; the pseudonym and its link live next to PII and are deleted with it",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D166",
+      "topic": "Cookies and CSRF (R4 05#4)",
+      "decision": "__Host- cookies, SameSite=Lax, CSRF token and Origin check on all POSTs, new session id at login and binding; staging on a separate registrable domain",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D167",
+      "topic": "Content XSS (R4 05#5)",
+      "decision": "CI rejects raw HTML and dangerous SVG elements; KaTeX trust:false; sanitiser at render; strict CSP without inline scripts",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D168",
+      "topic": "PII outside the PII table (R4 05#6)",
+      "decision": "Messages and logs reference only the pseudonym; a revocation log is re-applied after any restore",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D169",
+      "topic": "Authorization layer (R4 05#7)",
+      "decision": "Single authorization layer in Go over (role, tutor_id, student_id) for every object; idempotency keys bound to the user; permission table generates tests",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D170",
+      "topic": "Internal API scope (R4 05#8)",
+      "decision": "Per-service and per-environment tokens with narrow method sets; separate Docker networks for prod and staging; external texts in prompts marked as data",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D171",
+      "topic": "RT PDF pre-fill (R4 01#5)",
+      "decision": "AI pre-fill of RT sheets runs only on a local model and name fields are cut out before the call",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D172",
+      "topic": "Queue schema (R4 04#5)",
+      "decision": "Queue lives in its own schema queue.*: insertion via a function by Go and worker; lease and status changed only by the worker; grants checked in CI",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D173",
+      "topic": "Catalog version event (R4 04#4)",
+      "decision": "The loader calls a Go internal API; Go writes one global event and per-student jobs keyed student+catalog_version",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D174",
+      "topic": "Outbox rules (R4 04#6)",
+      "decision": "Outbox key = type + event id + recipient; Telegram id read at send time; pending messages cancelled on archive or anonymisation",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D175",
+      "topic": "Event classes (R4 04#3)",
+      "decision": "Manual verdict and tutor type override = facts; lesson cancellation and schedule change = constraints; archiving cancels the student's queued jobs",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D176",
+      "topic": "Recheck notification (R4 04#7)",
+      "decision": "One event per student and correction_id; one message to the tutor listing changed homework; the student is not messaged",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D177",
+      "topic": "Alert emitters (R4 04#8)",
+      "decision": "A periodic Go check emits alerts through the outbox; warnings are a cabinet banner plus Telegram to the tutor",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D178",
+      "topic": "Worker bootstrap (R4 04#1, 09#4)",
+      "decision": "On first start the worker replays each student's journal from zero; until then Go shows the imported plan marked 'not recalculated'; lag alerts only for events after launch",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D179",
+      "topic": "Release 2 without model (R4 04#2)",
+      "decision": "Until the knowledge model (release 3), a simple rule applies: a failed type gets a review in the plan",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D180",
+      "topic": "Canonical observation (R4 11#6)",
+      "decision": "Go writes a versioned canonical observation event per attempt; Python only consumes it; replay vectors test both",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D181",
+      "topic": "Human acceptance suite (R4 11#7)",
+      "decision": "A small hand-confirmed acceptance suite from official rules and real tutor cases can overrule AI-written tables",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D182",
+      "topic": "Attempt-assignment link (R4 03#6)",
+      "decision": "An attempt references its assignment or RT import; source is derived from the assignment kind",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D183",
+      "topic": "Test entity (R4 03#7)",
+      "decision": "A test (CT/CE/RT paper) is a catalog entity with 1:N appearances; the sitting date is stored in core",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D184",
+      "topic": "Exam per subject (R4 03#4)",
+      "decision": "Exam date and hours budget are set per student+subject; a shared budget is their sum with a minimum share",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D185",
+      "topic": "D80 scope (R4 01#6)",
+      "decision": "D80 applies to the CT package only; answer checking is a subject-package interface",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D186",
+      "topic": "Agent actions (R4 01#7; resolves D5 vs D50)",
+      "decision": "Agent actions per P8/D50: swap_hw_tasks and marking error causes; repetitions and ordering are planner-only; insert_review and reorder removed",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D187",
+      "topic": "Frequency window (R4 01#8; resolves D1 vs D61)",
+      "decision": "Frequencies from CT and CE 2023-2026, window rolls yearly; RT is marked up but not counted; older appearances = 'seen'",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D188",
+      "topic": "Reinforcement pool (R4 01#4)",
+      "decision": "At least 2 variants per subvariant for each lesson topic so D39 is always possible; CI blocks the PR otherwise",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D189",
+      "topic": "Bot write access (R4 02#2)",
+      "decision": "Telegram login widget requests write access; undelivered messages are flagged in the cabinet, homework link stays there",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D190",
+      "topic": "Plan import (R4 02#1)",
+      "decision": "Static plan import is one-time from L-file frontmatter; topic codes (M01...) map to catalog ids via a table in the catalog package",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D191",
+      "topic": "Loader deployment (R4 02#3)",
+      "decision": "CI builds a signed catalog artifact; a one-shot loader container on the server applies it to staging, then to prod on command",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D192",
+      "topic": "Diagnostic/test lessons in R1 (R4 02#5)",
+      "decision": "Lessons of kind diagnostic or test from the static plan are normal lessons in release 1; forms are printed as PDF, answers not entered",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D193",
+      "topic": "L-file conditionals (R4 02#6)",
+      "decision": "The skill flattens conditional steps into a linear order; each practice variant links to its theory block; variants used in class count as seen, no attempts recorded",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D194",
+      "topic": "Consent details (R4 02#7, R3 08#3)",
+      "decision": "Birth date stored as PII; consent text versioned in the repo; the tutor copies the parent link from the cabinet; the current student also goes through consent",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D195",
+      "topic": "Homework review actions (R4 02#8)",
+      "decision": "Before issue the tutor can remove/add a variant from the pool, change the deadline, issue; after issue only withdraw as a whole before the first answer",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D196",
+      "topic": "Optimizer start (R4 09#2)",
+      "decision": "From release 2 the optimizer starts from the static plan; frozen, published lessons and manual shifts are constraints; it deviates only when the gain exceeds hysteresis",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D197",
+      "topic": "Static plan reference (R4 09#3)",
+      "decision": "An immutable import snapshot (file hashes) is kept; a divergence report for the tutor is monitoring, not a test oracle",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D198",
+      "topic": "Diagnostics for enrolled students (R4 09#5)",
+      "decision": "Covered topics are seeded by tutor marks; diagnostics runs only on uncovered branches with unseen variants",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D199",
+      "topic": "Ready variants and templates (R4 09#6)",
+      "decision": "Ready variants get a subvariant at load; CI drops generated duplicates; pool and reserve counted per type",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D200",
+      "topic": "Glossary additions (R4 07)",
+      "decision": "Add: подвариант, ловушка, уровень освоения, пакет предмета, профиль, срез, пробник, сессия (exam sitting; login = сеанс входа, AI = сессия агента), выдача, шаблон, страховка, попытка. Extract D44-D67 into the decisions log",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    },
+    {
+      "id": "D201",
+      "topic": "Explicit deferrals (R4 08)",
+      "decision": "Bucket-3 items (knowledge-model formulas, optimizer objective and constants incl. D69/D71 quantities, diagnostics branch middle, agent details, eval) are recorded as DEFERRED to their module specs",
+      "source": "Red Team",
+      "date": "2026-11-08"
+    }
+  ],
+  "previewUrl": null,
+  "sourceIssue": null,
+  "feedbackRounds": [],
+  "redTeamStatus": "completed",
+  "redTeamFindings": [
+    {
+      "id": "RT1",
+      "summary": "RT1 critical: D81 trigger list misses checkpoint tests, mocks, key rechecks, edits, goal/date/budget, catalog versions",
+      "status": "resolved: D87"
+    },
+    {
+      "id": "RT2",
+      "summary": "RT2 critical: no per-student ordering/input watermark between Go writes and worker derived writes",
+      "status": "resolved: D89"
+    },
+    {
+      "id": "RT3",
+      "summary": "RT3 major: D78 hard skip in diagnostics contradicts D46 soft inference; abandoned diagnostic undefined",
+      "status": "resolved: D90"
+    },
+    {
+      "id": "RT4",
+      "summary": "RT4 major: agent shares worker with model/optimizer, reverses D33 isolation; no stale-plan signal",
+      "status": "resolved: D91"
+    },
+    {
+      "id": "RT5",
+      "summary": "RT5 major: worker DB rights and proposal path into Go undefined",
+      "status": "resolved: D92"
+    },
+    {
+      "id": "RT6",
+      "summary": "RT6 major: D86 lacks parental consent step and tutor login protection; invite hijack",
+      "status": "resolved: D93"
+    },
+    {
+      "id": "RT7",
+      "summary": "RT7 major: Telegram in-app browser cookies, login data in URL/logs, bot token rotation",
+      "status": "resolved: D94"
+    },
+    {
+      "id": "RT8",
+      "summary": "RT8 major: D85 omits diagnostics (D41); release 2 plan has no student state",
+      "status": "resolved: D95"
+    },
+    {
+      "id": "RT9",
+      "summary": "RT9 major: D82 two marks vs D9/D39 carry-over and HW assembly order",
+      "status": "resolved: D96"
+    },
+    {
+      "id": "RT10",
+      "summary": "RT10 major: no single contract source (S3/D57 TS vs D75); D75 vs D80 symbolic",
+      "status": "resolved: D97"
+    },
+    {
+      "id": "RT11",
+      "summary": "RT11 major: gold built by the skill it judges; D84 notes PII",
+      "status": "resolved: D98 (gold independence deferred to catalog/eval)"
+    },
+    {
+      "id": "RT12",
+      "summary": "RT12 minor: no reviewer for Python tests; independent expected values",
+      "status": "resolved: D99"
+    }
+  ]
+}

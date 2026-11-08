@@ -1,0 +1,51 @@
+# Примеры к personalization/plan.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: plan-01
+  rule: PL-R1
+  given: попытка изменить план 0
+  expect: 'отказ: снимок неизменяем'
+- id: plan-02
+  rule: PL-R2
+  given: репетитор перенёс урок 9
+  expect: событие, план 0 цел, текущий план изменён
+- id: plan-03
+  rule: PL-R3
+  given: урок 9 стал третьим по порядку
+  expect: id остался `ct-math:L09`
+- id: plan-04
+  rule: PL-R4
+  given: смена порядка заморожённого урока
+  expect: '`409 lesson_frozen`'
+- id: plan-05
+  rule: PL-R4
+  given: смена порядка не замороженного урока
+  expect: принята
+- id: plan-06
+  rule: PL-R4a
+  given: урок 12 помечен «пропущен»
+  expect: урок остался в плане с пометкой, ДЗ нет, уроки после него на одно занятие раньше
+- id: plan-07
+  rule: PL-R5
+  given: урок темы M14 поставлен раньше урока темы M13
+  expect: принято, предупреждение `prereq_order`
+- id: plan-08
+  rule: PL-R7
+  given: '`shift_weeks: 4`'
+  expect: недели сдвинуты на 4, номера те же
+- id: plan-09
+  rule: PL-R8
+  given: урок перенесён
+  expect: пометка «перенесено»
+- id: plan-10
+  rule: PL-R9
+  given: два переноса и одно добавление
+  expect: отчёт перечисляет все три
+- id: plan-11
+  rule: PL-R10
+  given: занятий на 2 меньше, чем уроков
+  expect: '`plan_does_not_fit`, недостаёт 2'
+- id: plan-12
+  rule: PL-R11
+  given: сдан ДЗ с низким результатом
+  expect: порядок уроков не меняется сам

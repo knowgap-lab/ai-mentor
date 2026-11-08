@@ -1,0 +1,1105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowgap-lab.example/contracts/catalog.schema.json",
+  "title": "Формат каталога в git (catalog/schema.md, D97)",
+  "description": "Каждый файл исходников проверяется по своему определению в $defs: package.yaml → package, topics/*.yaml → topic, variants/*/*.yaml → variants_file, frontmatter блока → block_frontmatter, tests/*.yaml → test, lessons/L*.yaml → lesson_template, transfer-map.yaml → transfer_map, notes/*.yaml → note. Связи между файлами (висячие ссылки, циклы, порядок часов, уникальность id) схема выразить не может: их проверяет CI по schema.md и variants.md.",
+  "$defs": {
+    "topic_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/topic_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: тема | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "element_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/element_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: элемент | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "type_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/type_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: тип | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "subvariant_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/subvariant_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: подвариант | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "variant_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/variant_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: вариант | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "block_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/block_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R1: блок | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "test_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/test_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R3 | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "lesson_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/lesson_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R30 | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "stage_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/stage_id_final"
+        },
+        {
+          "$ref": "#/$defs/tmp_key"
+        }
+      ],
+      "description": "CS-R30 | в PR допускается временный ключ tmp:… (CS-R6); в main его запрещает CI (tmp_key_in_main)"
+    },
+    "tmp_key": {
+      "type": "string",
+      "pattern": "^tmp:.+$",
+      "description": "CS-R6: временный ключ, только в PR"
+    },
+    "citation": {
+      "type": "object",
+      "properties": {
+        "doc": {
+          "type": "string"
+        },
+        "item": {
+          "type": "string"
+        },
+        "ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "doc"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "item"
+          ]
+        },
+        {
+          "required": [
+            "ref"
+          ]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/citation"
+      },
+      "minItems": 1
+    },
+    "position": {
+      "type": "string",
+      "pattern": "^[AB][1-9][0-9]?$",
+      "description": "CS-R14: позиция в тесте"
+    },
+    "package": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "spec_version": {
+          "type": "string"
+        },
+        "answer_rules": {
+          "type": "string",
+          "description": "путь к файлу правил (subject-package.schema.json)"
+        },
+        "score_conversion": {
+          "type": "object",
+          "description": "перевод первичных баллов в тестовые (answer-rules §6); данные пакета",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "subject",
+        "spec_version",
+        "answer_rules"
+      ],
+      "additionalProperties": false
+    },
+    "topic": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/topic_id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "section": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "retired_reason": {
+          "type": "string"
+        },
+        "spec_version": {
+          "type": "string"
+        },
+        "foundation_level": {
+          "type": "string"
+        },
+        "topic_hours": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "prerequisite_elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element_id"
+          }
+        },
+        "citations": {
+          "$ref": "#/$defs/citations"
+        },
+        "elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element"
+          },
+          "minItems": 1
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/type"
+          }
+        },
+        "ct_positions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "справочное поле (LP-R4)"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "section",
+        "citations",
+        "elements"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "element": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/element_id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "retired_reason": {
+          "type": "string"
+        },
+        "citations": {
+          "$ref": "#/$defs/citations"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "citations"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "level_hours": {
+      "type": "object",
+      "properties": {
+        "hours": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "required": [
+        "hours"
+      ],
+      "additionalProperties": false
+    },
+    "subvariant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/subvariant_id"
+        },
+        "given": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "retired_reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "given"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "type": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/type_id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "exam",
+            "skill"
+          ]
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "retired_reason": {
+          "type": "string"
+        },
+        "primary_element": {
+          "$ref": "#/$defs/element_id"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/element_id"
+          }
+        },
+        "answer_format": {
+          "type": "string",
+          "pattern": "^[a-z]+\\.[a-zA-Z0-9]+$"
+        },
+        "difficulty": {
+          "enum": [
+            1,
+            2,
+            3
+          ]
+        },
+        "levels": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "$ref": "#/$defs/level_hours"
+            },
+            "automatism": {
+              "$ref": "#/$defs/level_hours"
+            }
+          },
+          "required": [
+            "base",
+            "automatism"
+          ],
+          "additionalProperties": false
+        },
+        "citations": {
+          "$ref": "#/$defs/citations"
+        },
+        "subvariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subvariant"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "primary_element",
+        "prerequisites",
+        "answer_format",
+        "difficulty",
+        "levels",
+        "citations",
+        "subvariants"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "trap": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "answer": {
+          "type": "string",
+          "description": "нормализованный неверный ответ части B"
+        }
+      },
+      "required": [
+        "id",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "option": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "text": {
+          "type": "string"
+        },
+        "trap_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "n",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "variant": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/variant_id"
+        },
+        "subvariant": {
+          "$ref": "#/$defs/subvariant_id"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "key": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "minItems": 1
+            }
+          ],
+          "description": "ct.integer — целое; ct.digits — строка цифр; ct.match — строка вида А1Б3В4; ct.choice1/N — номера верных опций"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/option"
+          },
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "traps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/trap"
+          }
+        },
+        "minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "checkpoint_reserve": {
+          "type": "boolean",
+          "default": false
+        },
+        "theory_block": {
+          "$ref": "#/$defs/block_id"
+        },
+        "source": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "retired_reason": {
+          "type": "string"
+        },
+        "calculator_exception": {
+          "type": "string",
+          "minLength": 1,
+          "description": "VR-R12: причина исключения из правила «без калькулятора»"
+        }
+      },
+      "required": [
+        "id",
+        "subvariant",
+        "statement",
+        "key",
+        "minutes",
+        "theory_block"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "variants_file": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/type_id"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variant"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "variants"
+      ],
+      "additionalProperties": false
+    },
+    "block_frontmatter": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/block_id"
+        },
+        "kind": {
+          "enum": [
+            "theory",
+            "rule",
+            "summary",
+            "worked_example",
+            "typical_error",
+            "flashcard",
+            "widget"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/citation"
+          }
+        },
+        "widget": {
+          "type": "object",
+          "properties": {
+            "widget": {
+              "type": "string"
+            },
+            "params": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "widget",
+            "params"
+          ],
+          "additionalProperties": false
+        },
+        "topic_id": {
+          "$ref": "#/$defs/topic_id"
+        },
+        "minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "retired_reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "topic_id",
+        "kind",
+        "title"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "test": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/test_id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year": {
+          "type": "integer"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "retired"
+          ]
+        },
+        "appearances": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "position": {
+                "$ref": "#/$defs/position"
+              },
+              "type": {
+                "$ref": "#/$defs/type_id"
+              }
+            },
+            "required": [
+              "position",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "retired_reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "year",
+        "stage",
+        "appearances"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "status": {
+            "const": "retired"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "retired_reason"
+        ]
+      }
+    },
+    "practice_item": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/type_id"
+        },
+        "subvariant": {
+          "$ref": "#/$defs/subvariant_id"
+        },
+        "role": {
+          "enum": [
+            "solve_together",
+            "solve_alone",
+            "teacher_solves",
+            "scaffolded"
+          ]
+        },
+        "theory_block": {
+          "$ref": "#/$defs/block_id"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "subvariant",
+        "role",
+        "theory_block"
+      ],
+      "additionalProperties": false
+    },
+    "stage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stage_id"
+        },
+        "minutes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "title": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "warmup",
+            "homework_review",
+            "theory",
+            "practice",
+            "exit_test",
+            "homework_handout"
+          ]
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/block_id"
+          }
+        },
+        "practice": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/practice_item"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "minutes",
+        "title",
+        "kind",
+        "blocks",
+        "practice"
+      ],
+      "additionalProperties": false
+    },
+    "homework_item": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "enum": [
+            "new_topic",
+            "review",
+            "ct_format"
+          ]
+        },
+        "series": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/type_id"
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "type",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "difficulty": {
+          "type": "array",
+          "items": {
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "source",
+        "series"
+      ],
+      "additionalProperties": false
+    },
+    "lesson_template": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/lesson_id"
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/topic_id"
+          },
+          "minItems": 1
+        },
+        "review": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/topic_id"
+          }
+        },
+        "duration_min": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "stages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stage"
+          },
+          "minItems": 1
+        },
+        "homework": {
+          "type": "object",
+          "properties": {
+            "budget_hours": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/homework_item"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "budget_hours",
+            "items"
+          ],
+          "additionalProperties": false
+        },
+        "generation_notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "topics",
+        "review",
+        "duration_min",
+        "stages",
+        "homework"
+      ],
+      "additionalProperties": false
+    },
+    "transfer_map": {
+      "type": "object",
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "to": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "reason": {
+                "type": "string"
+              },
+              "subvariants_to": {
+                "$ref": "#/$defs/type_id"
+              }
+            },
+            "required": [
+              "from",
+              "to",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "entries"
+      ],
+      "additionalProperties": false
+    },
+    "note": {
+      "type": "object",
+      "properties": {
+        "change": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "ai_output": {
+          "type": "string"
+        },
+        "fixed": {
+          "type": "string"
+        },
+        "why": {
+          "type": "string"
+        },
+        "pseudonym": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "change",
+        "ai_output",
+        "fixed",
+        "why"
+      ],
+      "additionalProperties": false
+    },
+    "topic_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*$",
+      "description": "CS-R1: тема"
+    },
+    "element_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*\\.E[1-9][0-9]?$",
+      "description": "CS-R1: элемент"
+    },
+    "type_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*\\.T(0[1-9]|[1-9][0-9])$",
+      "description": "CS-R1: тип"
+    },
+    "subvariant_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*\\.T(0[1-9]|[1-9][0-9])\\.S[1-9][0-9]?$",
+      "description": "CS-R1: подвариант"
+    },
+    "variant_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*\\.T(0[1-9]|[1-9][0-9])\\.S[1-9][0-9]?\\.V(00[1-9]|0[1-9][0-9]|[1-9][0-9]{2})$",
+      "description": "CS-R1: вариант"
+    },
+    "block_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Z][A-Z0-9]*\\.B(0[1-9]|[1-9][0-9])$",
+      "description": "CS-R1: блок"
+    },
+    "test_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:TEST\\.[0-9]{4}-[A-Z]+-[A-Za-z0-9]+$",
+      "description": "CS-R3"
+    },
+    "lesson_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:L(0[1-9]|[1-9][0-9]{1,2})$",
+      "description": "CS-R30"
+    },
+    "stage_id_final": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:L(0[1-9]|[1-9][0-9]{1,2})\\.G[1-9][0-9]?$",
+      "description": "CS-R30"
+    }
+  }
+}

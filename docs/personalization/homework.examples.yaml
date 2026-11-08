@@ -1,0 +1,91 @@
+# Примеры к personalization/homework.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: homework-01
+  rule: HW-R1
+  given: поставлена только первая отметка
+  expect: черновика нет
+- id: homework-02
+  rule: HW-R1
+  given: урок отменён
+  expect: ДЗ нет
+- id: homework-03
+  rule: HW-R4
+  given: есть закрепление, недорешённое, новая тема, повторение
+  expect: 'порядок: недорешённое и закрепление, новая тема, повторение'
+- id: homework-04
+  rule: HW-R6
+  given: на уроке решены 3 задачи разных подвариантов
+  expect: 3 варианта `reinforcement` тех же подвариантов, числа другие
+- id: homework-05
+  rule: HW-R7
+  given: недорешённая задача, теория не объяснена
+  expect: в ДЗ нет, переходит на следующий урок
+- id: homework-06
+  rule: HW-R8
+  given: у подварианта нет свободного второго варианта
+  expect: закрепление пропущено, `variants_needed`
+- id: homework-07
+  rule: HW-R9
+  given: в `review` темы M05 и M10
+  expect: задачи этих тем вперемешку, репетитор может убрать
+- id: homework-08
+  rule: HW-R10
+  given: вариант с `checkpoint_reserve`
+  expect: в ДЗ не берётся
+- id: homework-09
+  rule: HW-R11
+  given: все варианты типа уже видел
+  expect: тип пропущен, `variants_needed`
+- id: homework-10
+  rule: HW-R12
+  given: 'тема: 10 задач, у 6 первая попытка полная'
+  expect: доля 60 %
+- id: homework-11
+  rule: HW-R13
+  given: 'тема: 10 задач, 7 верно с первой попытки (70 %)'
+  expect: добавлено 3 задачи по теме
+- id: homework-12
+  rule: HW-R13
+  given: доля 80 %
+  expect: добавления нет
+- id: homework-13
+  rule: HW-R14
+  given: доля 50 %
+  expect: добавление и пометка «разобрать на уроке»
+- id: homework-14
+  rule: HW-R14
+  given: доля 60 %
+  expect: пометки нет
+- id: homework-15
+  rule: HW-R15
+  given: объяснено всё запланированное, рецепт на 16 задач
+  expect: в ДЗ 16 вариантов
+- id: homework-16
+  rule: HW-R15
+  given: один из двух типов урока не объяснён
+  expect: в ДЗ только задачи объяснённого типа, остальные не добавлены
+- id: homework-17
+  rule: HW-R15a
+  given: на уроке решено 5 задач, в ДЗ 16
+  expect: в черновике подсказка «решено 5, в ДЗ 16», ДЗ не изменено
+- id: homework-18
+  rule: HW-R16
+  given: сумма минут 9 часов
+  expect: ДЗ собрано без ограничения
+- id: homework-19
+  rule: HW-R17
+  given: ДЗ выдано, ответов нет
+  expect: можно отозвать
+- id: homework-20
+  rule: HW-R17
+  given: ДЗ выдано, есть ответ
+  expect: '`409 has_answers`'
+- id: homework-21
+  rule: HW-R18
+  given: срока в правках нет
+  expect: начало следующего урока
+- id: homework-22
+  rule: HW-R20
+  given: два запуска с теми же данными
+  expect: одинаковый черновик

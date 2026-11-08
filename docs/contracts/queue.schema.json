@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowgap-lab.example/contracts/queue.schema.json",
+  "title": "Задания очереди (platform/queue.md, D156, D162)",
+  "description": "job — тонкое задание пересчёта (QU-R4); agent_trigger — повод для очереди agent (выпуск 4, QU-R13).",
+  "$defs": {
+    "job": {
+      "type": "object",
+      "properties": {
+        "job_id": {
+          "$ref": "events.schema.json#/$defs/id"
+        },
+        "student_id": {
+          "$ref": "events.schema.json#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "model",
+            "plan"
+          ]
+        },
+        "trigger_event_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "journal_seq события-повода (максимум при слиянии, D252)"
+        },
+        "catalog_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "state": {
+          "enum": [
+            "pending",
+            "running",
+            "done",
+            "failed",
+            "cancelled"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lease_until": {
+          "oneOf": [
+            {
+              "$ref": "events.schema.json#/$defs/ts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_attempt_at": {
+          "oneOf": [
+            {
+              "$ref": "events.schema.json#/$defs/ts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_read_seq": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "job_id",
+        "student_id",
+        "kind",
+        "trigger_event_id",
+        "state",
+        "attempts",
+        "catalog_version"
+      ],
+      "additionalProperties": false
+    },
+    "agent_trigger": {
+      "type": "object",
+      "properties": {
+        "student_id": {
+          "$ref": "events.schema.json#/$defs/id"
+        },
+        "journal_seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "plan_version": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "student_id",
+        "journal_seq",
+        "plan_version"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

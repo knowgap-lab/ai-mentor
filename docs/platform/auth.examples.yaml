@@ -1,0 +1,99 @@
+# Примеры к platform/auth.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: auth-01
+  rule: AU-R4
+  given: репетитор А запрашивает ученика репетитора Б
+  expect: '`403`'
+- id: auth-02
+  rule: AU-R4
+  given: репетитор А запрашивает несуществующий id
+  expect: '`403`, тот же ответ'
+- id: auth-03
+  rule: AU-R5
+  given: новый маршрут без записи в таблице прав
+  expect: тест CI падает
+- id: auth-04
+  rule: AU-R8
+  given: приглашение для ученика без согласия
+  expect: '`423 consent_missing`'
+- id: auth-05
+  rule: AU-R10
+  given: приглашение через 73 часа
+  expect: '`410`'
+- id: auth-06
+  rule: AU-R10
+  given: приглашение использовано второй раз
+  expect: '`410`'
+- id: auth-07
+  rule: AU-R10
+  given: открытие страницы приглашения ботом-превью
+  expect: состояние не меняется
+- id: auth-08
+  rule: AU-R11
+  given: перевыпуск приглашения
+  expect: прежнее приглашение, привязка и сеансы ученика отозваны
+- id: auth-09
+  rule: AU-R12
+  given: данные виджета с неверным `hash`
+  expect: '`401 login_invalid`'
+- id: auth-10
+  rule: AU-R13
+  given: '`auth_date` 299 с назад / 301 с назад'
+  expect: принято / `401 login_stale`
+- id: auth-11
+  rule: AU-R15
+  given: Telegram прислал имя и username
+  expect: сохранён только `telegram_id`
+- id: auth-12
+  rule: AU-R16
+  given: вход аккаунтом, привязанным к другому ученику
+  expect: '`409 telegram_already_bound`'
+- id: auth-13
+  rule: AU-R17
+  given: первый вход по приглашению
+  expect: привязка, приглашение погашено, сеанс 90 дней, сообщение репетитору
+- id: auth-14
+  rule: AU-R18
+  given: вход ученика с отозванным согласием
+  expect: '`423`'
+- id: auth-15
+  rule: AU-R20
+  given: 11-й запрос за минуту с одного IP
+  expect: '`429`'
+- id: auth-16
+  rule: AU-R23
+  given: сеанс ученика на 91-й день
+  expect: недействителен
+- id: auth-17
+  rule: AU-R23
+  given: сеанс репетитора на 8-й день
+  expect: недействителен
+- id: auth-18
+  rule: AU-R24
+  given: POST без `X-CSRF-Token`
+  expect: '`403 csrf`'
+- id: auth-19
+  rule: AU-R24
+  given: POST с `Origin` чужого сайта
+  expect: '`403 csrf`'
+- id: auth-20
+  rule: AU-R26
+  given: шестой вход ученика
+  expect: самый старый сеанс отозван
+- id: auth-21
+  rule: AU-R29
+  given: вход репетитора с неизвестным устройством
+  expect: сеанс `pending`; без подтверждения за 10 мин отклонён
+- id: auth-22
+  rule: AU-R30
+  given: «Это не я»
+  expect: все сеансы и доверие отозваны, тревога
+- id: auth-23
+  rule: AU-R31
+  given: первый вход репетитора
+  expect: устройство подтверждено автоматически
+- id: auth-24
+  rule: AU-R36
+  given: '`AUTH_DEV_MODE=true`, окружение `prod`'
+  expect: сервер не стартует

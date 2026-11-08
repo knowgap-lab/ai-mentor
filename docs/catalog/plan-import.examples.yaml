@@ -1,0 +1,59 @@
+# Примеры к catalog/plan-import.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: plan-import-01
+  rule: LP-R1
+  given: 'карточка `id: M14`, предмет `math`'
+  expect: тема `ct-math:M14`, элемент `ct-math:M14.E1`
+- id: plan-import-02
+  rule: LP-R1
+  given: 'карточка `id: P05`, предмет `physics`'
+  expect: тема `ct-phys:P05`, элемент `ct-phys:P05.E1`
+- id: plan-import-03
+  rule: LP-R3
+  given: 'карточка M14, `prereqs: [M13]`, у M14 пока нет типов'
+  expect: 'в теме `prerequisite_elements: [ct-math:M13.E1]`'
+- id: plan-import-04
+  rule: LP-R4
+  given: 'карточка с `tier: B`'
+  expect: '`tier` не попадает в каталог'
+- id: plan-import-05
+  rule: LP-R6
+  given: '`lesson: 7, week: 2026-11-23, kind: new, topics: [M10], review: [M04, M08, M06, M09]`'
+  expect: урок 7 плана 0 с теми же полями, `planned_week = 2026-11-23`
+- id: plan-import-06
+  rule: LP-R7
+  given: '`kind: seminar`'
+  expect: ошибка `kind_unknown`, импорт заблокирован
+- id: plan-import-07
+  rule: LP-R9
+  given: урок 3 ссылается в `review` на тему, введённую в уроке 5
+  expect: ошибка `review_before_intro`
+- id: plan-import-08
+  rule: LP-R10
+  given: уроки 1, 2, 4
+  expect: ошибка `lesson_gap`
+- id: plan-import-09
+  rule: LP-R10
+  given: '`week: 2026-11-24` (вторник)'
+  expect: ошибка `week_not_monday`
+- id: plan-import-10
+  rule: LP-R11
+  given: '`shift_weeks: 4`, урок 1 с `week: 2026-10-12`'
+  expect: '`planned_week = 2026-11-09`'
+- id: plan-import-11
+  rule: LP-R13
+  given: второй запуск для той же пары
+  expect: ошибка `already_imported`
+- id: plan-import-12
+  rule: LP-R13
+  given: второй запуск с `--dry-run`
+  expect: отчёт расхождений, база не тронута
+- id: plan-import-13
+  rule: LP-R17
+  given: 'текущая неделя 2026-11-09, урок 4 с `week: 2026-11-02`'
+  expect: состояние `held`, без снимка и отметок
+- id: plan-import-14
+  rule: LP-R18
+  given: в `graph.json` 82 темы, импорт нашёл 81
+  expect: предупреждение с id пропавшей темы

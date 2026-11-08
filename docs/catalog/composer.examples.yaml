@@ -1,0 +1,75 @@
+# Примеры к catalog/composer.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: composer-01
+  rule: CP-R4
+  given: строка банка M14 №7, «Функция от арка»
+  expect: тип с ключом `tmp:ct-math:M14.T07`, после слияния `ct-math:M14.T07`
+- id: composer-02
+  rule: CP-R5
+  given: позиция ЦТ «А8»
+  expect: '`answer_format: ct.choice1`, `kind: exam`'
+- id: composer-03
+  rule: CP-R5
+  given: позиция «В17» в математике
+  expect: '`ct.integer`'
+- id: composer-04
+  rule: CP-R5
+  given: строка банка без позиции ЦТ
+  expect: '`kind: skill`'
+- id: composer-05
+  rule: CP-R6
+  given: '`T = 4,5`, типы сложностей 1, 2, 3 (W = 6)'
+  expect: 'тип сложности 2: `base = 4,5·2/6/3 = 0,5`, `automatism = 1,0`'
+- id: composer-06
+  rule: CP-R6
+  given: '`T = 0,5`, один тип сложности 1'
+  expect: '`base = 0,25` (минимум), `automatism = 0,5`'
+- id: composer-07
+  rule: CP-R8
+  given: карточка с шагами 1–10 теории
+  expect: 10 блоков `theory`
+- id: composer-08
+  rule: CP-R11
+  given: таблица «Ход урока», суммарно 0–60 мин
+  expect: этапы без пропусков, итог 60
+- id: composer-09
+  rule: CP-R11
+  given: строки таблицы дают 0–58
+  expect: ошибка `stages_gap`
+- id: composer-10
+  rule: CP-R12
+  given: пункт «Практика, сам. M10 §Банк 12 × 1»
+  expect: '`practice` с `type: …M10.T12`, `role: solve_alone`, `theory_block` обязателен'
+- id: composer-11
+  rule: CP-R13
+  given: «если шаг 3 не объясняли — вместо типа 5 …»
+  expect: линейный порядок, условие в `note`
+- id: composer-12
+  rule: CP-R14
+  given: урок использует тип с 3 готовыми вариантами
+  expect: скилл допускает до 8
+- id: composer-13
+  rule: CP-R17
+  given: скилл пытается сам подтвердить ключ
+  expect: запрещено; нужен отчёт независимой сессии
+- id: composer-14
+  rule: CP-R18
+  given: в файле урока ДЗ по дням Пн–Пт с частями A–E
+  expect: в шаблоне один список `items`, без дней и частей
+- id: composer-15
+  rule: CP-R18
+  given: в файле урока «D (10 мин) карточки» и «E (10 мин) перечитать»
+  expect: в рецепт не попадают
+- id: composer-16
+  rule: CP-R19
+  given: заявлено 6 ч, сумма рецепта 6 ч 45 мин
+  expect: предупреждение `homework_budget_mismatch`
+- id: composer-17
+  rule: CP-R21
+  given: замечание «не давай примеры, где минус съел только первый член»
+  expect: '`notes/…yaml` с `change`, `fixed`, `why` без имён'
+- id: composer-18
+  rule: CP-R25
+  given: в уже слитом варианте нужно поменять числа
+  expect: новый вариант, старый `retired`

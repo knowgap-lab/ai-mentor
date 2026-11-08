@@ -1,0 +1,896 @@
+# Проверочные примеры events.schema.json и queue.schema.json (D133). Основа сгенерирована из спецификаций attempts, lessons, privacy, auth, recheck; дальше правится вручную.
+- name: событие assignment_issued
+  schema: events.schema.json
+  def: assignment_issued
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: assignment_issued
+    payload:
+      assignment_id: a1
+      kind: homework
+      subject: math
+      catalog_version: 6
+      rules_version: rikz-2026
+      deadline: '2026-11-09T10:00:00Z'
+      place: home
+      items:
+      - item_id: i1
+        variant_id: ct-math:M10.T01.S1.V001
+        answer_format: ct.integer
+        max_points: 2
+        source: new_topic
+    student_id: s1
+- name: событие assignment_withdrawn
+  schema: events.schema.json
+  def: assignment_withdrawn
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 2
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: assignment_withdrawn
+    payload:
+      assignment_id: a1
+      reason: ошибка в подборе
+    student_id: s1
+- name: событие assignment_submitted
+  schema: events.schema.json
+  def: assignment_submitted
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 3
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: assignment_submitted
+    payload:
+      assignment_id: a1
+      answered: 8
+      skipped: 2
+    student_id: s1
+- name: событие deadline_changed
+  schema: events.schema.json
+  def: deadline_changed
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 4
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: deadline_changed
+    payload:
+      assignment_id: a1
+      deadline: '2026-11-09T10:00:00Z'
+    student_id: s1
+- name: событие attempt_recorded
+  schema: events.schema.json
+  def: attempt_recorded
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 5
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: attempt_recorded
+    payload:
+      attempt_id: t1
+      assignment_id: a1
+      item_id: i1
+      variant_id: ct-math:M10.T01.S1.V001
+      catalog_version: 6
+      raw_input: ' 12 '
+      normalized_input: '12'
+      attempt_no: 1
+      verdict: correct
+      points: 2
+      source: homework
+      place: home
+      rules_version: rikz-2026
+      idempotency_key: k1
+    student_id: s1
+- name: событие attempt_verdict
+  schema: events.schema.json
+  def: attempt_verdict
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 6
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: attempt_verdict
+    payload:
+      attempt_id: t1
+      origin: recheck
+      verdict: correct
+      points: 2
+      max_points: 2
+      correction_id: 8
+      previous_verdict: wrong
+      previous_points: 0
+    student_id: s1
+- name: событие manual_verdict
+  schema: events.schema.json
+  def: manual_verdict
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 7
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: manual_verdict
+    payload:
+      attempt_id: t1
+      verdict: correct
+      points: 2
+      reason: эквивалентный ответ
+    student_id: s1
+- name: событие did_not_understand
+  schema: events.schema.json
+  def: did_not_understand
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 8
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: did_not_understand
+    payload:
+      assignment_id: a1
+      item_id: i1
+    student_id: s1
+- name: событие dispute_opened
+  schema: events.schema.json
+  def: dispute_opened
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 9
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: dispute_opened
+    payload:
+      assignment_id: a1
+      item_id: i1
+      reason: key_wrong
+      text: мой ответ 0,5
+      dispute_id: d1
+    student_id: s1
+- name: событие observation
+  schema: events.schema.json
+  def: observation
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 10
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: observation
+    payload:
+      observation_id: o1
+      item_id: i1
+      revision: 1
+      type_id: ct-math:M10.T01
+      subvariant_id: ct-math:M10.T01.S1
+      variant_id: ct-math:M10.T01.S1.V001
+      source: homework
+      place: home
+      first_attempt_points: 2
+      total_points: 2
+      max_points: 2
+      trap_ids: []
+      skipped: false
+      late: false
+      catalog_version: 6
+      rules_version: rikz-2026
+    student_id: s1
+- name: событие recheck_completed
+  schema: events.schema.json
+  def: recheck_completed
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 11
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: recheck_completed
+    payload:
+      correction_id: 8
+      changed_items:
+      - i1
+    student_id: s1
+- name: событие catalog_version_loaded
+  schema: events.schema.json
+  def: catalog_version_loaded
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 12
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: catalog_version_loaded
+    payload:
+      catalog_version: 8
+- name: событие lesson_frozen
+  schema: events.schema.json
+  def: lesson_frozen
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 13
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_frozen
+    payload:
+      lesson_id: l7
+      template_id: ct-math:L07
+      catalog_version: 6
+      blocks:
+      - ct-math:M10.B05
+      stages:
+      - stage_id: ct-math:L07.G3
+        minutes:
+        - 13
+        - 30
+      practice:
+      - stage_id: ct-math:L07.G4
+        position: 1
+        variant_id: ct-math:M10.T01.S1.V001
+        type_id: ct-math:M10.T01
+        role: solve_alone
+    student_id: s1
+- name: событие lesson_marked
+  schema: events.schema.json
+  def: lesson_marked
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 14
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_marked
+    payload:
+      lesson_id: l7
+      last_theory_block: ct-math:M10.B05
+      last_practice:
+        stage_id: ct-math:L07.G4
+        position: 3
+    student_id: s1
+- name: событие lesson_moved
+  schema: events.schema.json
+  def: lesson_moved
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 15
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_moved
+    payload:
+      lesson_id: l7
+      from: '2026-11-09T10:00:00Z'
+      to: '2026-11-10T10:00:00Z'
+    student_id: s1
+- name: событие lesson_cancelled
+  schema: events.schema.json
+  def: lesson_cancelled
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 16
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_cancelled
+    payload:
+      lesson_id: l7
+      date: '2026-11-09T10:00:00Z'
+    student_id: s1
+- name: событие lesson_skipped
+  schema: events.schema.json
+  def: lesson_skipped
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 17
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_skipped
+    payload:
+      lesson_id: l12
+    student_id: s1
+- name: событие lesson_carried_over
+  schema: events.schema.json
+  def: lesson_carried_over
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 18
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: lesson_carried_over
+    payload:
+      from_lesson_id: l7
+      to_lesson_id: l8
+      blocks:
+      - ct-math:M10.B06
+      practice:
+      - stage_id: ct-math:L07.G4
+        position: 5
+    student_id: s1
+- name: событие consent_given
+  schema: events.schema.json
+  def: consent_given
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 19
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: consent_given
+    payload:
+      consent_id: c1
+      kind: parent
+      text_version: '1'
+    student_id: s1
+- name: событие consent_revoked
+  schema: events.schema.json
+  def: consent_revoked
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 20
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: consent_revoked
+    payload:
+      consent_id: c1
+      anonymise_at: '2026-11-16T10:00:00Z'
+    student_id: s1
+- name: событие student_archived
+  schema: events.schema.json
+  def: student_archived
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 21
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: student_archived
+    payload: {}
+    student_id: s1
+- name: событие student_unarchived
+  schema: events.schema.json
+  def: student_unarchived
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 22
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: student_unarchived
+    payload: {}
+    student_id: s1
+- name: событие student_anonymised
+  schema: events.schema.json
+  def: student_anonymised
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 23
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: student_anonymised
+    payload:
+      source: schedule
+    student_id: s1
+- name: событие account_bound
+  schema: events.schema.json
+  def: account_bound
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 24
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: account_bound
+    payload:
+      user_id: u1
+      role: student
+    student_id: s1
+- name: событие session_revoked
+  schema: events.schema.json
+  def: session_revoked
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 25
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: session_revoked
+    payload:
+      user_id: u1
+      reason: archived
+    student_id: s1
+- name: событие device_confirmed
+  schema: events.schema.json
+  def: device_confirmed
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 26
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: system
+    event_type: device_confirmed
+    payload:
+      tutor_id: u2
+      method: telegram
+- name: спор с текстом 301 символ (AT-R18)
+  schema: events.schema.json
+  def: dispute_opened
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: dispute_opened
+    payload:
+      assignment_id: a1
+      item_id: i1
+      reason: other
+      text: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      dispute_id: d1
+- name: попытка без idempotency_key (AC-R10)
+  schema: events.schema.json
+  def: attempt_recorded
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_recorded
+    payload:
+      attempt_id: t1
+      assignment_id: a1
+      item_id: i1
+      variant_id: ct-math:M10.T01.S1.V001
+      catalog_version: 6
+      raw_input: ' 12 '
+      normalized_input: '12'
+      attempt_no: 1
+      verdict: correct
+      points: 2
+      source: homework
+      place: home
+      rules_version: rikz-2026
+- name: schema_version 2
+  schema: events.schema.json
+  def: lesson_skipped
+  valid: false
+  doc:
+    schema_version: 2
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: lesson_skipped
+    payload:
+      lesson_id: l1
+- name: неизвестный вид события
+  schema: events.schema.json
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: cookie_eaten
+    payload: {}
+- name: вердикт «maybe»
+  schema: events.schema.json
+  def: manual_verdict
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: manual_verdict
+    payload:
+      attempt_id: t1
+      verdict: maybe
+      points: 1
+      reason: r
+- name: лишнее поле в нагрузке (имя ученика)
+  schema: events.schema.json
+  def: student_anonymised
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 1
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: student_anonymised
+    payload:
+      source: schedule
+      name: Иван
+- name: задание очереди
+  schema: queue.schema.json
+  def: job
+  valid: true
+  doc:
+    job_id: j1
+    student_id: s1
+    kind: model
+    trigger_event_id: 42
+    catalog_version: 8
+    state: pending
+    attempts: 0
+- name: задание очереди kind agent (QU-R4)
+  schema: queue.schema.json
+  def: job
+  valid: false
+  doc:
+    job_id: j1
+    student_id: s1
+    kind: agent
+    trigger_event_id: 42
+    state: pending
+    attempts: 0
+- name: AgentTrigger
+  schema: queue.schema.json
+  def: agent_trigger
+  valid: true
+  doc:
+    student_id: s1
+    journal_seq: 42
+    plan_version: 3
+- name: событие dispute_resolved
+  schema: events.schema.json
+  def: dispute_resolved
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: dispute_resolved
+    payload:
+      dispute_id: d1
+      resolution: key_corrected
+      correction_id: 8
+- name: событие lesson_added
+  schema: events.schema.json
+  def: lesson_added
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: lesson_added
+    payload:
+      lesson_id: l30
+      subject: math
+      starts_at: '2026-11-09T10:00:00Z'
+- name: событие plan_reordered
+  schema: events.schema.json
+  def: plan_reordered
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: plan_reordered
+    payload:
+      subject: math
+      lesson_ids:
+      - l8
+      - l7
+- name: событие schedule_rule_set
+  schema: events.schema.json
+  def: schedule_rule_set
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: schedule_rule_set
+    payload:
+      subject: math
+      weekdays:
+      - 1
+      - 4
+      start_time: '18:00'
+      duration_min: 60
+- name: событие consent_revocation_cancelled
+  schema: events.schema.json
+  def: consent_revocation_cancelled
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: consent_revocation_cancelled
+    payload:
+      consent_id: c1
+- name: событие tutor_rebound (глобальное)
+  schema: events.schema.json
+  def: tutor_rebound
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    event_type: tutor_rebound
+    payload:
+      tutor_id: u2
+- name: попытка РТ без выдачи (AT-R10, RI-R7)
+  schema: events.schema.json
+  def: attempt_recorded
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_recorded
+    payload:
+      attempt_id: t9
+      variant_id: ct-math:M10.T01.S1.V001
+      catalog_version: 6
+      raw_input: '12'
+      normalized_input: '12'
+      attempt_no: 1
+      verdict: correct
+      points: 2
+      source: rt
+      place: home
+      rules_version: rikz-2026
+      idempotency_key: rt-1
+      rt_import:
+        test_id: ct-math:TEST.2025-RT-V2
+        sitting: 2025-RT-1
+        position: B3
+- name: попытка РТ-пропуск (RI-R6)
+  schema: events.schema.json
+  def: attempt_recorded
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_recorded
+    payload:
+      attempt_id: t10
+      variant_id: ct-math:M10.T01.S1.V001
+      catalog_version: 6
+      raw_input: ''
+      normalized_input: ''
+      attempt_no: 1
+      verdict: wrong
+      points: 0
+      source: rt
+      place: home
+      rules_version: rikz-2026
+      idempotency_key: rt-2
+      skipped: true
+      rt_import:
+        test_id: ct-math:TEST.2025-RT-V2
+        sitting: 2025-RT-1
+        position: B4
+- name: попытка без выдачи и без РТ — нельзя
+  schema: events.schema.json
+  def: attempt_recorded
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_recorded
+    payload:
+      attempt_id: t11
+      variant_id: ct-math:M10.T01.S1.V001
+      catalog_version: 6
+      raw_input: '1'
+      normalized_input: '1'
+      attempt_no: 1
+      verdict: wrong
+      points: 0
+      source: homework
+      place: home
+      rules_version: rikz-2026
+      idempotency_key: x
+- name: событие ученика без student_id (AC-R10)
+  schema: events.schema.json
+  def: lesson_skipped
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    event_type: lesson_skipped
+    payload:
+      lesson_id: l1
+- name: перепроверка без correction_id (RC-R12)
+  schema: events.schema.json
+  def: attempt_verdict
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_verdict
+    payload:
+      attempt_id: t1
+      origin: recheck
+      verdict: correct
+      points: 2
+      max_points: 2
+- name: ручной вердикт без причины (AT-R19)
+  schema: events.schema.json
+  def: attempt_verdict
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: attempt_verdict
+    payload:
+      attempt_id: t1
+      origin: manual
+      verdict: correct
+      points: 2
+      max_points: 2
+- name: причина отзыва длиннее 300 (PV-R24)
+  schema: events.schema.json
+  def: assignment_withdrawn
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: assignment_withdrawn
+    payload:
+      assignment_id: a1
+      reason: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+- name: причина закрытия сеанса logout (AU-R25)
+  schema: events.schema.json
+  def: session_revoked
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor:
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: session_revoked
+    payload:
+      user_id: u1
+      reason: logout
+- name: 'отметка урока без снимка: coverage (LS-R20)'
+  schema: events.schema.json
+  def: lesson_marked
+  valid: true
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor: &id001
+      role: tutor
+      id: u2
+    student_id: s1
+    event_type: lesson_marked
+    payload:
+      lesson_id: l3
+      coverage: all
+- name: отметка урока без отметок и без coverage
+  schema: events.schema.json
+  def: lesson_marked
+  valid: false
+  doc:
+    schema_version: 1
+    journal_seq: 99
+    occurred_at: '2026-11-09T10:00:00Z'
+    actor: *id001
+    student_id: s1
+    event_type: lesson_marked
+    payload:
+      lesson_id: l3
