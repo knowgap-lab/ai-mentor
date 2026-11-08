@@ -1,0 +1,55 @@
+# Примеры к catalog/loader.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: loader-01
+  rule: LD-R1
+  given: артефакт из ветки PR
+  expect: CI отказывается собирать
+- id: loader-02
+  rule: LD-R2
+  given: подпись не совпадает
+  expect: загрузчик отказывается, тревога, база не тронута
+- id: loader-03
+  rule: LD-R4
+  given: новая версия убирает тип
+  expect: старая ревизия остаётся, тип помечен `retired` в новой версии
+- id: loader-04
+  rule: LD-R5
+  given: версия 7 загружена, новый коммит меняет одну опечатку
+  expect: '`catalog_version = 8`, добавлена одна ревизия'
+- id: loader-05
+  rule: LD-R8
+  given: тот же артефакт версии 8 загружен второй раз
+  expect: ничего не изменилось, `core` не вызван
+- id: loader-06
+  rule: LD-R7
+  given: урок опубликован на версии 6, сейчас версия 8
+  expect: урок показывает блоки версии 6
+- id: loader-07
+  rule: LD-R10
+  given: транзакция упала на середине
+  expect: строк версии нет, `core` не вызван, тревога
+- id: loader-08
+  rule: LD-R12
+  given: у V003 исправлен ключ 12 → 14
+  expect: вызов перепроверки с `correction_id = 8`, `[ct-math:M14.T07.S1.V003]`
+- id: loader-09
+  rule: LD-R13
+  given: вызов «новая версия 8» повторён после таймаута
+  expect: одно событие в журнале
+- id: loader-10
+  rule: LD-R15
+  given: попытка загрузить в prod версию, которой нет в staging
+  expect: отказ `not_in_staging`
+- id: loader-11
+  rule: LD-R22
+  given: версия 8 загружена в staging без ошибок в 12:00
+  expect: в 12:10 автоматически загружена в prod
+- id: loader-12
+  rule: LD-R22
+  given: в 12:05 владелец дал `hold`
+  expect: в prod не идёт до команды `release`
+- id: loader-13
+  rule: LD-R22
+  given: автопроверки staging не прошли
+  expect: в prod не идёт, тревога

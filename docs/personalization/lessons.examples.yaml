@@ -1,0 +1,87 @@
+# Примеры к personalization/lessons.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: lessons-01
+  rule: LS-R2
+  given: пн и чт в 18:00, 60 минут; экзамен через 2 недели
+  expect: 4 занятия, уроки 1–4 по датам по порядку
+- id: lessons-02
+  rule: LS-R3
+  given: правила нет
+  expect: «неделя с понедельника…»
+- id: lessons-03
+  rule: LS-R4
+  given: урок 5 перенесён на другой день
+  expect: событие `lesson_moved`, номера не изменились
+- id: lessons-04
+  rule: LS-R6
+  given: занятие отменено
+  expect: урок на следующую дату, все следующие сдвинуты, ДЗ нет
+- id: lessons-05
+  rule: LS-R7
+  given: занятий на 2 меньше, чем уроков
+  expect: '`plan_does_not_fit`, недостаёт 2'
+- id: lessons-06
+  rule: LS-R9
+  given: не проведены уроки 7, 8, 9
+  expect: заморожены 7 и 8
+- id: lessons-07
+  rule: LS-R10
+  given: урок 7 заморожен
+  expect: 'снимок: блоки, этапы, практика, версия каталога'
+- id: lessons-08
+  rule: LS-R11
+  given: вариант виден ученику
+  expect: в практику не берётся
+- id: lessons-09
+  rule: LS-R11
+  given: вариант использован на уроке
+  expect: считается виденным, попыток нет
+- id: lessons-10
+  rule: LS-R12
+  given: попытка изменить блок в снимке
+  expect: отказ
+- id: lessons-11
+  rule: LS-R13
+  given: блоков нет
+  expect: урок по файлу урока, ДЗ вручную
+- id: lessons-12
+  rule: LS-R15
+  given: перенесено 10 минут, вместимость занята
+  expect: 10 минут с конца уходят на первый не замороженный урок
+- id: lessons-13
+  rule: LS-R16
+  given: теория объяснена до блока 2, решена задача 3
+  expect: урок `held`, событие `lesson_marked`
+- id: lessons-14
+  rule: LS-R17
+  given: обе отметки «нет»
+  expect: весь урок переносится, ДЗ нет
+- id: lessons-15
+  rule: LS-R18
+  given: блок 3 не объяснён, задача к нему не решена
+  expect: блок 3 и задача — на начало следующего урока
+- id: lessons-16
+  rule: LS-R18
+  given: задача 5 не решена, теория объяснена
+  expect: задача 5 в ДЗ
+- id: lessons-17
+  rule: LS-R19
+  given: отметка с чужим блоком
+  expect: '`422 mark_not_in_lesson`'
+- id: lessons-18
+  rule: LS-R19a
+  given: отметки исправлены, ДЗ не выдано
+  expect: перенос и черновик пересчитаны
+- id: lessons-19
+  rule: LS-R19a
+  given: отметки исправлены, ДЗ выдано
+  expect: '`409 already_marked`'
+- id: lessons-20
+  rule: LS-R20
+  given: урок до импорта, выбор «пройдено всё»
+  expect: принят, ДЗ не собирается, перенос не строится
+- id: lessons-21
+  rule: LS-R22
+  given: урок вида `diagnostic`
+  expect: PDF-бланк, ответы не вносятся

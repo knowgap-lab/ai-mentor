@@ -1,0 +1,49 @@
+# Примеры к catalog/answer-rules.md (D133). Ожидаемые значения записаны вручную из таблицы спецификации.
+# Поля случая: id, rule, format, key, input, [traps: {нормализованный неверный ответ: trap_id}], expect.
+# expect.status: malformed | scored; для scored: normalized, verdict, points, [trap_id].
+# input: строка (integer, digits, match) или список номеров опций (choice1, choiceN).
+- {id: ar-01, rule: AR-R8,  format: ct.integer, key: 12, input: "12",     expect: {status: scored, normalized: "12", verdict: correct, points: 2}}
+- {id: ar-02, rule: AR-R6,  format: ct.integer, key: 12, input: " 12 ",   expect: {status: scored, normalized: "12", verdict: correct, points: 2}}
+- {id: ar-03, rule: AR-R6,  format: ct.integer, key: 12, input: "1 2",    expect: {status: scored, normalized: "12", verdict: correct, points: 2}}
+- {id: ar-04, rule: AR-R7,  format: ct.integer, key: -3, input: "−3",     expect: {status: scored, normalized: "-3", verdict: correct, points: 2}}
+- {id: ar-05, rule: AR-R7,  format: ct.integer, key: -3, input: "–3",     expect: {status: scored, normalized: "-3", verdict: correct, points: 2}}
+- {id: ar-06, rule: AR-R7,  format: ct.integer, key: -3, input: "‐3",     expect: {status: scored, normalized: "-3", verdict: correct, points: 2}}
+- {id: ar-07, rule: AR-R7,  format: ct.integer, key: 5,  input: "+5",     expect: {status: scored, normalized: "5", verdict: correct, points: 2}}
+- {id: ar-08, rule: AR-R7,  format: ct.integer, key: 0,  input: "-0",     expect: {status: scored, normalized: "0", verdict: correct, points: 2}}
+- {id: ar-09, rule: AR-R8,  format: ct.integer, key: 7,  input: "007",    expect: {status: scored, normalized: "7", verdict: correct, points: 2}}
+- {id: ar-10, rule: AR-R8,  format: ct.integer, key: 12, input: "12,0",   expect: {status: malformed}}
+- {id: ar-11, rule: AR-R8,  format: ct.integer, key: 12, input: "12.5",   expect: {status: malformed}}
+- {id: ar-12, rule: AR-R8,  format: ct.integer, key: 12, input: "1/2",    expect: {status: malformed}}
+- {id: ar-13, rule: AR-R8,  format: ct.integer, key: 12, input: "1e3",    expect: {status: malformed}}
+- {id: ar-14, rule: AR-R8,  format: ct.integer, key: 12, input: "١٢",     expect: {status: malformed}}
+- {id: ar-15, rule: AR-R8,  format: ct.integer, key: 12, input: "13",     expect: {status: scored, normalized: "13", verdict: wrong, points: 0}}
+- {id: ar-16, rule: AR-R11, format: ct.integer, key: 12, input: "",       expect: {status: malformed}}
+- {id: ar-17, rule: AR-R11, format: ct.integer, key: 12, input: "   ",    expect: {status: malformed}}
+- {id: ar-18, rule: AR-R14, format: ct.integer, key: 12, input: "21", traps: {"21": digits_swapped}, expect: {status: scored, normalized: "21", verdict: wrong, points: 0, trap_id: digits_swapped}}
+- {id: ar-20, rule: AR-R4,  format: ct.choice1, key: [3], input: [3],    expect: {status: scored, normalized: "3", verdict: correct, points: 1}}
+- {id: ar-21, rule: AR-R14, format: ct.choice1, key: [3], input: [2], traps: {"2": sign_swapped}, expect: {status: scored, normalized: "2", verdict: wrong, points: 0, trap_id: sign_swapped}}
+- {id: ar-22, rule: AR-R4,  format: ct.choice1, key: [3], input: [2, 3], expect: {status: malformed}}
+- {id: ar-23, rule: AR-R11, format: ct.choice1, key: [3], input: [],     expect: {status: malformed}}
+- {id: ar-24, rule: AR-R4,  format: ct.choice1, key: [3], input: [6],    expect: {status: malformed}}
+- {id: ar-30, rule: AR-R5,  format: ct.choiceN, key: [2, 4], input: [2],       expect: {status: scored, normalized: "2", verdict: wrong, points: 0}}
+- {id: ar-31, rule: AR-R5,  format: ct.choiceN, key: [2, 4], input: [2, 4],    expect: {status: scored, normalized: "2,4", verdict: correct, points: 1}}
+- {id: ar-32, rule: AR-R5,  format: ct.choiceN, key: [2, 4], input: [4, 2],    expect: {status: scored, normalized: "2,4", verdict: correct, points: 1}}
+- {id: ar-33, rule: AR-R5,  format: ct.choiceN, key: [2, 4], input: [2, 4, 5], expect: {status: scored, normalized: "2,4,5", verdict: wrong, points: 0}}
+- {id: ar-34, rule: AR-R11, format: ct.choiceN, key: [2, 4], input: [],        expect: {status: malformed}}
+- {id: ar-40, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "А1Б3В4", expect: {status: scored, normalized: "А1Б3В4", verdict: correct, points: 2}}
+- {id: ar-41, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "в4а1б3", expect: {status: scored, normalized: "А1Б3В4", verdict: correct, points: 2}}
+- {id: ar-42, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "A1Б3B4", expect: {status: scored, normalized: "А1Б3В4", verdict: correct, points: 2}}
+- {id: ar-43, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "А1Б3",   expect: {status: malformed}}
+- {id: ar-44, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "А1А2Б3В4", expect: {status: malformed}}
+- {id: ar-45, rule: AR-R9,  format: ct.match, key: "А1Б3В4", input: "А1Б3Г4", expect: {status: malformed}}
+- {id: ar-46, rule: AR-R13, format: ct.match, key: "А1Б3В4", input: "А1Б3В5", expect: {status: scored, normalized: "А1Б3В5", verdict: partial, points: 1}}
+- {id: ar-47, rule: AR-R13, format: ct.match, key: "А1Б3В4", input: "А2Б3В5", expect: {status: scored, normalized: "А2Б3В5", verdict: wrong, points: 0}}
+- {id: ar-48, rule: AR-R18, format: ct.match, key: "А1Б1В4", input: "А1Б1В4", expect: {status: scored, normalized: "А1Б1В4", verdict: correct, points: 2}}
+- {id: ar-50, rule: AR-R10, format: ct.digits, key: "124", input: "124",  expect: {status: scored, normalized: "124", verdict: correct, points: 2}}
+- {id: ar-51, rule: AR-R10, format: ct.digits, key: "124", input: "421",  expect: {status: scored, normalized: "124", verdict: correct, points: 2}}
+- {id: ar-52, rule: AR-R10, format: ct.digits, key: "124", input: "1124", expect: {status: malformed}}
+- {id: ar-53, rule: AR-R10, format: ct.digits, key: "124", input: "1a2",  expect: {status: malformed}}
+- {id: ar-54, rule: AR-R13, format: ct.digits, key: "124", input: "12",   expect: {status: scored, normalized: "12", verdict: partial, points: 1}}
+- {id: ar-55, rule: AR-R13, format: ct.digits, key: "124", input: "1245", expect: {status: scored, normalized: "1245", verdict: partial, points: 1}}
+- {id: ar-56, rule: AR-R13, format: ct.digits, key: "124", input: "15",   expect: {status: scored, normalized: "15", verdict: wrong, points: 0}}
+- {id: ar-57, rule: AR-R11, format: ct.digits, key: "124", input: "",     expect: {status: malformed}}

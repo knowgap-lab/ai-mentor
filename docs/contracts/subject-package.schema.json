@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knowgap-lab.example/contracts/subject-package.schema.json",
+  "title": "Правила ответа пакета предмета (catalog/answer-rules.md, D103, D185)",
+  "description": "Таблица форматов пакета как данные: Go и CI читают одну и ту же таблицу. Функция оценки — в answer-rules.md (AR-R15).",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string"
+    },
+    "subject": {
+      "type": "string"
+    },
+    "spec_version": {
+      "type": "string"
+    },
+    "max_points_note": {
+      "type": "string"
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[AB][1-9][0-9]?$"
+      },
+      "minItems": 1
+    },
+    "scale_phrases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AR-R16: фразы масштаба ответа"
+    },
+    "answer_formats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z]+\\.[a-zA-Z0-9]+$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "applies_to": {
+            "type": "string"
+          },
+          "input": {
+            "type": "string"
+          },
+          "max_points": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "partial_points": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "applies_to",
+          "input",
+          "max_points"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "score_conversion": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "перевод первичных баллов в тестовые (данные пакета)"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "subject",
+    "spec_version",
+    "positions",
+    "answer_formats"
+  ],
+  "additionalProperties": false
+}

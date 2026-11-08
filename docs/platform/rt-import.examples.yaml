@@ -1,0 +1,43 @@
+# Примеры к platform/rt-import.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: rt-import-01
+  rule: RI-R1
+  given: тест РТ без разметки
+  expect: '`422 test_not_marked`'
+- id: rt-import-02
+  rule: RI-R3
+  given: форма теста из 30 задач
+  expect: 30 полей по форматам
+- id: rt-import-03
+  rule: RI-R4
+  given: чужой ученик
+  expect: '`403 forbidden`'
+- id: rt-import-04
+  rule: RI-R5
+  given: повторный импорт с тем же ключом, ответ изменён
+  expect: новая ревизия наблюдения, старая запись цела
+- id: rt-import-05
+  rule: RI-R5
+  given: повтор без изменений
+  expect: ничего не добавлено
+- id: rt-import-06
+  rule: RI-R6
+  given: задача без ответа
+  expect: попытка «пропуск», 0 баллов
+- id: rt-import-07
+  rule: RI-R7
+  given: верный ответ части В
+  expect: попытка `rt`, место `home`, полный балл
+- id: rt-import-08
+  rule: RI-R8
+  given: неверный ответ части А, совпал с ловушкой
+  expect: причина по ловушке записана
+- id: rt-import-09
+  rule: RI-R10
+  given: ошибка при записи 17-й задачи
+  expect: не записана ни одна, задания пересчёта нет
+- id: rt-import-10
+  rule: RI-R10
+  given: успешный импорт
+  expect: задание `model` создано в той же транзакции

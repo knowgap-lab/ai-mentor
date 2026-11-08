@@ -1,0 +1,2534 @@
+openapi: 3.1.0
+info:
+  title: 'core: публичный HTTP-API для web'
+  version: 0.1.0
+  description: Формы данных взяты из спецификаций platform/ и personalization/. Семь операций названы в спецификациях (POST /auth/telegram, POST /auth/dev, GET /invite/{token},
+    GET и POST /consent/{token}, POST /assignments/{id}/items/{item}/answer); остальные пути и имена полей выбраны автором контракта и ждут ревью напарника (D144,
+    D269). Изменяющие запросы в сеансе несут X-CSRF-Token; запросы до появления сеанса (вход, согласие) проверяются только по Origin (AU-R24). Ошибки — Error {code}.
+    Коды соответствуют таблицам «Ошибки» спецификаций.
+servers:
+- url: /
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: __Host-session
+      description: httpOnly, Secure, SameSite=Lax (AU-R22); изменяющие запросы дополнительно требуют заголовок X-CSRF-Token и Origin нашего домена
+  parameters:
+    studentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    subject:
+      name: subject
+      in: path
+      required: true
+      schema:
+        type: string
+    lesson:
+      name: lesson
+      in: path
+      required: true
+      schema:
+        type: string
+    assignmentId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    itemId:
+      name: item
+      in: path
+      required: true
+      schema:
+        type: string
+    attemptId:
+      name: attempt
+      in: path
+      required: true
+      schema:
+        type: string
+    correctionId:
+      name: correction
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    testId:
+      name: test
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    Unauthorized:
+      description: Нет сеанса (unauthorized)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: 'Нет прав, csrf или объект чужой либо не существует: ответ одинаков (AU-R4)'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Конфликт состояния; code уточняет причину (item_closed, assignment_closed, has_answers, idempotency_conflict, …)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Invalid:
+      description: Ошибка данных. Для ответа на задачу malformed возвращается телом 200 (AC-R1); для импорта РТ — 422 с кодами malformed, test_not_marked, task_unknown
+        и позицией (RI-R1, RI-R10); для ссылки согласия — consent_kind_invalid (PV-R12)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AccountLocked:
+      description: 'account_locked, consent_missing: вход или приглашение закрыты (AU-R8, AU-R18, PV-R14)'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: rate_limited
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unavailable:
+      description: 'unavailable: сбой записи, откат; повтор с тем же ключом безопасен'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+      additionalProperties: false
+      required:
+      - code
+    Me:
+      type: object
+      properties:
+        user_id:
+          type: string
+        role:
+          enum:
+          - student
+          - tutor
+        display_name:
+          type: string
+      additionalProperties: false
+      required:
+      - user_id
+      - role
+    TelegramLogin:
+      type: object
+      properties:
+        id:
+          type: string
+        auth_date:
+          type: integer
+        hash:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        username:
+          type: string
+        photo_url:
+          type: string
+        invite_token:
+          type: string
+      additionalProperties: false
+      required:
+      - id
+      - auth_date
+      - hash
+      description: Поля виджета Telegram; сервер сохраняет только id (AU-R15)
+    SessionInfo:
+      type: object
+      properties:
+        session_id:
+          type: string
+        device:
+          type: string
+        created_at:
+          type: string
+        expires_at:
+          type: string
+        state:
+          enum:
+          - active
+          - pending
+        current:
+          type: boolean
+      additionalProperties: false
+      required:
+      - session_id
+      - created_at
+      - expires_at
+      - state
+    Link:
+      type: object
+      properties:
+        url:
+          type: string
+        expires_at:
+          type: string
+      additionalProperties: false
+      required:
+      - url
+      - expires_at
+    ConsentPage:
+      type: object
+      properties:
+        text_version:
+          type: string
+        text:
+          type: string
+        kind:
+          enum:
+          - parent
+          - student
+        state:
+          enum:
+          - none
+          - given
+          - revoked
+          - outdated
+          - needs_personal
+        anonymise_at:
+          type: string
+      additionalProperties: false
+      required:
+      - text_version
+      - text
+      - kind
+      - state
+    StudentCreate:
+      type: object
+      properties:
+        display_name:
+          type: string
+        birth_date:
+          type: string
+        subjects:
+          type: array
+          items:
+            type: string
+        exam_kind:
+          enum:
+          - ct
+          - ce
+        exam_date:
+          type: string
+      additionalProperties: false
+      required:
+      - display_name
+      - birth_date
+      - subjects
+    Warning:
+      type: object
+      properties:
+        type:
+          enum:
+          - variants_needed
+          - plan_does_not_fit
+          - consent_outdated
+          - not_delivered
+        text:
+          type: string
+        params:
+          type: object
+      additionalProperties: false
+      required:
+      - type
+    StudentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        next_lesson_at:
+          type: string
+        homework_waiting_review:
+          type: integer
+        homework_submitted:
+          type: integer
+        homework_overdue:
+          type: integer
+        open_disputes:
+          type: integer
+        not_delivered:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      additionalProperties: false
+      required:
+      - id
+      - display_name
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        birth_date:
+          type: string
+        status:
+          enum:
+          - active
+          - archived
+          - anonymised
+        consent:
+          enum:
+          - none
+          - given
+          - revoked
+          - outdated
+          - needs_personal
+        telegram_bound:
+          type: boolean
+        subjects:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      additionalProperties: false
+      required:
+      - id
+      - display_name
+      - status
+      - consent
+    DiscussItem:
+      type: object
+      properties:
+        item_id:
+          type: string
+        variant_id:
+          type: string
+        assignment_id:
+          type: string
+        added_at:
+          type: string
+      additionalProperties: false
+      required:
+      - item_id
+      - variant_id
+      - assignment_id
+    ScheduleRule:
+      type: object
+      properties:
+        weekdays:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+          minItems: 1
+        start_time:
+          type: string
+          pattern: ^([01][0-9]|2[0-3]):[0-5][0-9]$
+        duration_min:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+      required:
+      - weekdays
+      - start_time
+      - duration_min
+    Lesson:
+      type: object
+      properties:
+        id:
+          type: string
+        template_id:
+          type: string
+        place_no:
+          type: integer
+        title:
+          type: string
+        kind:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+        state:
+          enum:
+          - planned
+          - frozen
+          - held
+          - skipped
+        starts_at:
+          type: string
+        planned_week:
+          type: string
+        marks:
+          oneOf:
+          - $ref: '#/components/schemas/Marks'
+          - type: 'null'
+        moved:
+          type: boolean
+        added:
+          type: boolean
+      additionalProperties: false
+      required:
+      - id
+      - template_id
+      - place_no
+      - title
+      - state
+    PlanView:
+      type: object
+      properties:
+        lessons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lesson'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+      additionalProperties: false
+      required:
+      - lessons
+    Divergence:
+      type: object
+      properties:
+        lesson_id:
+          type: string
+        change:
+          enum:
+          - moved
+          - added
+          - cancelled
+          - skipped
+          - reordered
+          - week_shift
+        detail:
+          type: string
+      additionalProperties: false
+      required:
+      - lesson_id
+      - change
+    Marks:
+      type: object
+      properties:
+        last_theory_block:
+          type:
+          - string
+          - 'null'
+        last_practice:
+          oneOf:
+          - $ref: '#/components/schemas/PracticeRef'
+          - type: 'null'
+      additionalProperties: false
+      required:
+      - last_theory_block
+      - last_practice
+    PracticeRef:
+      type: object
+      properties:
+        stage_id:
+          type: string
+        position:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+      required:
+      - stage_id
+      - position
+    MarksRequest:
+      oneOf:
+      - $ref: '#/components/schemas/Marks'
+      - type: object
+        additionalProperties: false
+        required:
+        - coverage
+        properties:
+          coverage:
+            enum:
+            - all
+            - none
+        description: Для урока без снимка (LS-R20, D273)
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        kind:
+          type: string
+        minutes:
+          type: array
+          items:
+            type: integer
+        blocks:
+          type: array
+          items:
+            type: string
+        practice:
+          type: array
+          items:
+            type: object
+            properties:
+              variant_id:
+                type: string
+              type_id:
+                type: string
+              role:
+                type: string
+              position:
+                type: integer
+            additionalProperties: false
+            required:
+            - variant_id
+            - type_id
+      additionalProperties: false
+      required:
+      - id
+      - title
+      - kind
+    LessonDetail:
+      type: object
+      properties:
+        lesson:
+          $ref: '#/components/schemas/Lesson'
+        carried_in:
+          type: object
+          properties:
+            blocks:
+              type: array
+              items:
+                type: string
+            practice:
+              type: array
+              items:
+                $ref: '#/components/schemas/PracticeRef'
+            from_lesson_id:
+              type: string
+          additionalProperties: false
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stage'
+        source:
+          enum:
+          - snapshot
+          - l_file
+      additionalProperties: false
+      required:
+      - lesson
+      - stages
+    Block:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        title:
+          type: string
+        markdown:
+          type: string
+        widget:
+          type: object
+          properties:
+            widget:
+              type: string
+            params:
+              type: object
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - markdown
+    Conspect:
+      type: object
+      properties:
+        lesson_id:
+          type: string
+        catalog_version:
+          type: integer
+        carried_over:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+        blocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+      additionalProperties: false
+      required:
+      - lesson_id
+      - catalog_version
+      - blocks
+    PreparationItem:
+      type: object
+      properties:
+        variant_id:
+          type: string
+        statement:
+          type: string
+        key: {}
+        solution_block:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              n:
+                type: integer
+              text:
+                type: string
+              correct:
+                type: boolean
+            additionalProperties: false
+      additionalProperties: false
+      required:
+      - variant_id
+      - statement
+      - key
+    Preparation:
+      type: object
+      properties:
+        lesson_id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreparationItem'
+      additionalProperties: false
+      required:
+      - lesson_id
+      - items
+      description: Единственный ответ API, где репетитор видит ключи до ученика (WB-R22)
+    DraftItem:
+      type: object
+      properties:
+        variant_id:
+          type: string
+        type_id:
+          type: string
+        answer_format:
+          type: string
+        minutes:
+          type: integer
+        source:
+          enum:
+          - new_topic
+          - review
+          - ct_format
+          - reinforcement
+          - unsolved
+          - threshold
+        statement:
+          type: string
+      additionalProperties: false
+      required:
+      - variant_id
+      - type_id
+      - source
+    HomeworkDraft:
+      type: object
+      properties:
+        lesson_id:
+          type: string
+        deadline:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DraftItem'
+        hints:
+          type: array
+          items:
+            type: string
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+        discuss_topics:
+          type: array
+          items:
+            type: string
+        issued:
+          type: boolean
+      additionalProperties: false
+      required:
+      - lesson_id
+      - items
+      - issued
+    DraftPatch:
+      type: object
+      properties:
+        remove:
+          type: array
+          items:
+            type: string
+        add:
+          type: array
+          items:
+            type: string
+        deadline:
+          type: string
+      additionalProperties: false
+    AssignmentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          enum:
+          - homework
+          - checkpoint
+          - mock
+          - diagnostics
+        subject:
+          type: string
+        state:
+          enum:
+          - issued
+          - submitted
+          - withdrawn
+        deadline:
+          type: string
+        answered:
+          type: integer
+        total:
+          type: integer
+        student_id:
+          type: string
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - subject
+      - state
+      - total
+    ItemState:
+      type: object
+      properties:
+        item_id:
+          type: string
+        position:
+          type: integer
+        type_id:
+          type: string
+        answer_format:
+          type: string
+        statement:
+          type: string
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              n:
+                type: integer
+              text:
+                type: string
+            additionalProperties: false
+            required:
+            - n
+            - text
+        item_state:
+          enum:
+          - open
+          - final
+        attempts_left:
+          type: integer
+        last_verdict:
+          enum:
+          - correct
+          - partial
+          - wrong
+          - accepted
+      additionalProperties: false
+      required:
+      - item_id
+      - statement
+      - answer_format
+      - item_state
+    AssignmentStudentView:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        subject:
+          type: string
+        state:
+          type: string
+        deadline:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemState'
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - state
+      - items
+    AssignmentTutorView:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        state:
+          type: string
+        deadline:
+          type: string
+        item_count:
+          type: integer
+        can_withdraw:
+          type: boolean
+      additionalProperties: false
+      required:
+      - id
+      - kind
+      - state
+    AnswerRequest:
+      type: object
+      properties:
+        answer:
+          oneOf:
+          - type: string
+          - type: array
+            items:
+              type: integer
+          description: Строка для ct.integer, ct.digits, ct.match; массив номеров опций для ct.choice1 и ct.choiceN
+        idempotency_key:
+          type: string
+      additionalProperties: false
+      required:
+      - answer
+      - idempotency_key
+    AnswerResponse:
+      type: object
+      properties:
+        status:
+          enum:
+          - malformed
+          - accepted
+          - scored
+        hint:
+          type: string
+        item_state:
+          enum:
+          - open
+          - final
+        attempts_left:
+          type: integer
+        verdict:
+          enum:
+          - correct
+          - partial
+          - wrong
+        points:
+          type: integer
+        max_points:
+          type: integer
+        show:
+          type: object
+          properties:
+            key:
+              type: string
+            solution_block:
+              type: string
+          additionalProperties: false
+      additionalProperties: false
+      required:
+      - status
+      - item_state
+    SubmitResult:
+      type: object
+      properties:
+        assignment_id:
+          type: string
+        answered:
+          type: integer
+        skipped:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+              verdict:
+                enum:
+                - correct
+                - partial
+                - wrong
+                - skipped
+              points:
+                type: integer
+              max_points:
+                type: integer
+              show:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  solution_block:
+                    type: string
+                additionalProperties: false
+            additionalProperties: false
+            required:
+            - item_id
+        total_points:
+          type: integer
+        max_points:
+          type: integer
+      additionalProperties: false
+      required:
+      - assignment_id
+      - items
+    DisputeRequest:
+      type: object
+      properties:
+        reason:
+          enum:
+          - key_wrong
+          - statement_error
+          - equivalent_answer
+          - other
+        text:
+          type: string
+          maxLength: 300
+      additionalProperties: false
+      required:
+      - reason
+    Dispute:
+      type: object
+      properties:
+        id:
+          type: string
+        state:
+          enum:
+          - open
+          - resolved
+      additionalProperties: false
+      required:
+      - id
+      - state
+    AttemptView:
+      type: object
+      properties:
+        attempt_id:
+          type: string
+        item_id:
+          type: string
+        attempt_no:
+          type: integer
+        raw_input:
+          type: string
+        verdict:
+          enum:
+          - correct
+          - partial
+          - wrong
+        points:
+          type: integer
+        trap_id:
+          type: string
+        late:
+          type: boolean
+        submitted:
+          type: boolean
+        answered_at:
+          type: string
+      additionalProperties: false
+      required:
+      - attempt_id
+      - item_id
+      - attempt_no
+      - raw_input
+      - verdict
+      - points
+    ManualVerdictRequest:
+      type: object
+      properties:
+        verdict:
+          enum:
+          - correct
+          - partial
+          - wrong
+        points:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+        dispute_id:
+          type: string
+      additionalProperties: false
+      required:
+      - verdict
+      - points
+      - reason
+    RecheckReport:
+      type: object
+      properties:
+        correction_id:
+          type: integer
+        state:
+          enum:
+          - pending
+          - running
+          - done
+          - failed
+        total:
+          type: integer
+        processed:
+          type: integer
+        changed:
+          type: integer
+        skipped_manual:
+          type: integer
+        changed_assignments:
+          type: array
+          items:
+            type: object
+            properties:
+              assignment_id:
+                type: string
+              student_id:
+                type: string
+              items_changed:
+                type: integer
+            additionalProperties: false
+            required:
+            - assignment_id
+            - student_id
+            - items_changed
+        skipped_manual_attempts:
+          type: array
+          items:
+            type: string
+          description: id попыток с ручным вердиктом, не пересчитанных (RC-R13)
+      additionalProperties: false
+      required:
+      - correction_id
+      - state
+    RtImportRequest:
+      type: object
+      properties:
+        test_id:
+          type: string
+        sitting:
+          type: string
+        answers:
+          type: object
+          additionalProperties:
+            type:
+            - string
+            - array
+          description: позиция задачи → ответ; отсутствующая позиция = пропуск (D253)
+      additionalProperties: false
+      required:
+      - test_id
+      - sitting
+      - answers
+    RtImportResult:
+      type: object
+      properties:
+        attempts_written:
+          type: integer
+        skipped:
+          type: integer
+        updated:
+          type: boolean
+      additionalProperties: false
+      required:
+      - attempts_written
+      - skipped
+      - updated
+    DisputeView:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - assignment_id
+      - item_id
+      - reason
+      - state
+      properties:
+        id:
+          type: string
+        assignment_id:
+          type: string
+        item_id:
+          type: string
+        reason:
+          enum:
+          - key_wrong
+          - statement_error
+          - equivalent_answer
+          - other
+        text:
+          type: string
+          maxLength: 300
+        state:
+          enum:
+          - open
+          - resolved
+        resolution:
+          enum:
+          - key_corrected
+          - manual_verdict
+          - rejected
+        correction_id:
+          type: integer
+        opened_at:
+          type: string
+security:
+- session: []
+paths:
+  /auth/telegram:
+    post:
+      operationId: loginTelegram
+      summary: Вход через Telegram (AU-R12…R19)
+      tags:
+      - auth
+      responses:
+        '200':
+          description: Сеанс создан, cookie выставлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '423':
+          $ref: '#/components/responses/AccountLocked'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '401':
+          description: login_invalid, login_stale или device_pending (сеанс репетитора ждёт подтверждения в Telegram, AU-R29)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '410':
+          description: 'invite_gone: приглашение просрочено или использовано'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramLogin'
+      security: []
+  /auth/dev:
+    post:
+      operationId: loginDev
+      summary: Вход без Telegram, только окружение local (AU-R36)
+      tags:
+      - auth
+      responses:
+        '200':
+          description: Сеанс создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                telegram_id:
+                  type: string
+                role:
+                  enum:
+                  - student
+                  - tutor
+              additionalProperties: false
+              required:
+              - telegram_id
+              - role
+      security: []
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: Выход, текущий сеанс отзывается
+      tags:
+      - auth
+      responses:
+        '204':
+          description: Сеанс отозван
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /me:
+    get:
+      operationId: getMe
+      summary: Кто я (роль, id)
+      tags:
+      - auth
+      responses:
+        '200':
+          description: Текущий пользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /me/sessions:
+    get:
+      operationId: listSessions
+      summary: Мои сеансы и устройства
+      tags:
+      - auth
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SessionInfo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /me/sessions/revoke-all:
+    post:
+      operationId: revokeAllSessions
+      summary: Отозвать все мои сеансы (кроме текущего)
+      tags:
+      - auth
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /invite/{token}:
+    get:
+      operationId: getInvite
+      summary: Страница приглашения; ничего не меняет (AU-R10, D145)
+      tags:
+      - auth
+      responses:
+        '200':
+          description: Состояние приглашения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  student_display_name:
+                    type: string
+                  valid:
+                    type: boolean
+                additionalProperties: false
+                required:
+                - valid
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '410':
+          description: invite_gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      security: []
+  /consent/{token}:
+    get:
+      operationId: getConsent
+      summary: Страница согласия; состояние не меняет (PV-R11)
+      tags:
+      - privacy
+      responses:
+        '200':
+          description: Текст и состояние
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentPage'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '410':
+          description: consent_link_gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      security: []
+    post:
+      operationId: postConsent
+      summary: Дать, отозвать или отменить отзыв согласия (PV-R11, R17, R18)
+      tags:
+      - privacy
+      responses:
+        '200':
+          description: Новое состояние
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentPage'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '410':
+          description: consent_link_gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  enum:
+                  - give
+                  - revoke
+                  - cancel_revoke
+              additionalProperties: false
+              required:
+              - action
+      security: []
+  /students:
+    get:
+      operationId: listStudents
+      summary: Мои ученики с показателями (WB-R21)
+      tags:
+      - students
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    post:
+      operationId: createStudent
+      summary: Создать ученика (PV-R1)
+      tags:
+      - students
+      responses:
+        '201':
+          description: Создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentCreate'
+  /students/{id}:
+    get:
+      operationId: getStudent
+      summary: Карточка ученика
+      tags:
+      - students
+      responses:
+        '200':
+          description: Карточка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/archive:
+    post:
+      operationId: studentArchive
+      summary: Архивировать ученика (PV-R22)
+      tags:
+      - students
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/unarchive:
+    post:
+      operationId: studentUnarchive
+      summary: Вернуть из архива
+      tags:
+      - students
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/unbind-telegram:
+    post:
+      operationId: studentUnbindTelegram
+      summary: Отвязать Telegram
+      tags:
+      - students
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/revoke-sessions:
+    post:
+      operationId: studentRevokeSessions
+      summary: Отозвать сеансы ученика (AU-R25)
+      tags:
+      - students
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/anonymise:
+    post:
+      operationId: anonymiseStudent
+      summary: Обезличить сейчас по просьбе родителя, с подтверждением (PV-R20)
+      tags:
+      - students
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '409':
+          description: 'confirmation_required: без confirm=true обезличивание не выполняется (PV-R20)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirm:
+                  type: boolean
+              additionalProperties: false
+  /students/{id}/consent-links:
+    post:
+      operationId: createConsentLink
+      summary: Создать ссылку согласия (PV-R10, R12)
+      tags:
+      - privacy
+      responses:
+        '201':
+          description: Ссылка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '422':
+          $ref: '#/components/responses/Invalid'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  enum:
+                  - parent
+                  - student
+              additionalProperties: false
+              required:
+              - kind
+  /students/{id}/invites:
+    post:
+      operationId: createInvite
+      summary: Создать или перевыпустить приглашение (AU-R10, R11)
+      tags:
+      - students
+      responses:
+        '201':
+          description: Ссылка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '423':
+          $ref: '#/components/responses/AccountLocked'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/discuss-list:
+    get:
+      operationId: getDiscussList
+      summary: Список «разобрать на уроке» (AT-R17)
+      tags:
+      - students
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiscussItem'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+  /students/{id}/schedules/{subject}:
+    put:
+      operationId: putSchedule
+      summary: Правило расписания (LS-R2)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Правило сохранено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleRule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      - $ref: '#/components/parameters/subject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRule'
+  /students/{id}/plans/{subject}:
+    get:
+      operationId: getPlan
+      summary: 'Текущий план: упорядоченный список уроков (PL-R8)'
+      tags:
+      - plan
+      responses:
+        '200':
+          description: План
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      - $ref: '#/components/parameters/subject'
+  /students/{id}/plans/{subject}/divergence:
+    get:
+      operationId: getPlanDivergence
+      summary: Отчёт расхождений с планом 0 (PL-R9)
+      tags:
+      - plan
+      responses:
+        '200':
+          description: Отчёт
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Divergence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      - $ref: '#/components/parameters/subject'
+  /students/{id}/plans/{subject}/order:
+    put:
+      operationId: reorderPlan
+      summary: Сменить порядок не замороженных уроков (PL-R4)
+      tags:
+      - plan
+      responses:
+        '200':
+          description: План
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      - $ref: '#/components/parameters/subject'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                lesson_ids:
+                  type: array
+                  items:
+                    type: string
+              additionalProperties: false
+              required:
+              - lesson_ids
+  /students/{id}/lessons:
+    post:
+      operationId: addLesson
+      summary: Добавить занятие (LS-R5)
+      tags:
+      - lessons
+      responses:
+        '201':
+          description: Добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                starts_at:
+                  type: string
+              additionalProperties: false
+              required:
+              - subject
+              - starts_at
+  /lessons/{lesson}:
+    get:
+      operationId: getLesson
+      summary: Состав урока и снимок (LS-R14)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Урок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/move:
+    post:
+      operationId: moveLesson
+      summary: Перенести урок (LS-R4)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Урок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lesson'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                starts_at:
+                  type: string
+              additionalProperties: false
+              required:
+              - starts_at
+  /lessons/{lesson}/cancel:
+    post:
+      operationId: cancelLesson
+      summary: Отменить занятие (LS-R6)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: План
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/skip:
+    post:
+      operationId: skipLesson
+      summary: Пропустить урок (PL-R4a)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: План
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/marks:
+    post:
+      operationId: markLesson
+      summary: Поставить или исправить две отметки (LS-R16, R19a)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Отметки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LessonDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarksRequest'
+  /lessons/{lesson}/conspect:
+    get:
+      operationId: getConspect
+      summary: Конспект урока (CN-R1, R14a)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Конспект
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conspect'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/conspect.pdf:
+    get:
+      operationId: getConspectPdf
+      summary: PDF конспекта (CN-R10)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/preparation:
+    get:
+      operationId: getPreparation
+      summary: Задачи урока с ключами для репетитора (WB-R22)
+      tags:
+      - lessons
+      responses:
+        '200':
+          description: Подготовка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Preparation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /lessons/{lesson}/homework-draft:
+    get:
+      operationId: getHomeworkDraft
+      summary: Черновик ДЗ (HW-R1)
+      tags:
+      - homework
+      responses:
+        '200':
+          description: Черновик
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeworkDraft'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+    patch:
+      operationId: patchHomeworkDraft
+      summary: 'Правка черновика: убрать, добавить вариант, срок (HW-R17)'
+      tags:
+      - homework
+      responses:
+        '200':
+          description: Черновик
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeworkDraft'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftPatch'
+  /lessons/{lesson}/homework-draft/issue:
+    post:
+      operationId: issueHomework
+      summary: Выдать ДЗ (AT-R5)
+      tags:
+      - homework
+      responses:
+        '201':
+          description: Выдано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentTutorView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+        '422':
+          $ref: '#/components/responses/Invalid'
+      parameters:
+      - $ref: '#/components/parameters/lesson'
+  /assignments:
+    get:
+      operationId: listAssignments
+      summary: Мои выдачи (ученик) или выдачи ученика (репетитор, ?student_id)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Список
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssignmentSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - name: student_id
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: false
+        schema:
+          enum:
+          - issued
+          - submitted
+          - withdrawn
+  /assignments/{id}:
+    get:
+      operationId: getAssignment
+      summary: 'Выдача: задачи и их состояния (без ключей, WB-R4)'
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Выдача
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentStudentView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+  /assignments/{id}/withdraw:
+    post:
+      operationId: withdrawAssignment
+      summary: Отозвать выдачу, пока нет ответов (AT-R6)
+      tags:
+      - assignments
+      responses:
+        '204':
+          description: Отозвана
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              additionalProperties: false
+              required:
+              - reason
+  /assignments/{id}/deadline:
+    put:
+      operationId: extendDeadline
+      summary: Продлить срок, сократить нельзя (AT-R7)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Срок изменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignmentTutorView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deadline:
+                  type: string
+              additionalProperties: false
+              required:
+              - deadline
+  /assignments/{id}/items/{item}/answer:
+    post:
+      operationId: answerItem
+      summary: Ответ на задачу (AC-R1…R16)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Результат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      - $ref: '#/components/parameters/itemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerRequest'
+  /assignments/{id}/submit:
+    post:
+      operationId: submitAssignment
+      summary: Сдать выдачу (AT-R12…R15)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Итог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirm_unanswered:
+                  type: boolean
+              additionalProperties: false
+  /assignments/{id}/summary:
+    get:
+      operationId: getSummary
+      summary: Итог сданной выдачи (AT-R16)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Итог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+  /assignments/{id}/items/{item}/did-not-understand:
+    post:
+      operationId: didNotUnderstand
+      summary: Кнопка «не понял» (AT-R17)
+      tags:
+      - assignments
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      - $ref: '#/components/parameters/itemId'
+  /assignments/{id}/items/{item}/dispute:
+    post:
+      operationId: openDispute
+      summary: Оспорить итог элемента (AT-R18)
+      tags:
+      - assignments
+      responses:
+        '201':
+          description: Спор открыт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispute'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+      - $ref: '#/components/parameters/itemId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisputeRequest'
+  /assignments/{id}/attempts:
+    get:
+      operationId: listAttempts
+      summary: Сырые попытки выдачи для репетитора, в том числе до «Сдать» (AT-R24)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Попытки
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttemptView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+  /attempts/{attempt}/manual-verdict:
+    post:
+      operationId: manualVerdict
+      summary: Ручной вердикт по спору (AT-R19)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Новый итог
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/attemptId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualVerdictRequest'
+  /assignments/{id}/sheet.pdf:
+    get:
+      operationId: getSheetPdf
+      summary: Листок ДЗ без ключей (WB-R28)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/assignmentId'
+  /rechecks/{correction}:
+    get:
+      operationId: getRecheckReport
+      summary: Отчёт перепроверки для репетитора (RC-R20)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: Отчёт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecheckReport'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/correctionId'
+  /students/{id}/rt-imports:
+    put:
+      operationId: putRtImport
+      summary: Внести результаты РТ; повтор по ключу ученик+сессия+тест — обновление (RI-R5)
+      tags:
+      - rt
+      responses:
+        '200':
+          description: Импортировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RtImportResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/Invalid'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RtImportRequest'
+  /tests/{test}/form.pdf:
+    get:
+      operationId: getTestFormPdf
+      summary: Бланк среза, пробника или диагностики (WB-R28)
+      tags:
+      - assignments
+      responses:
+        '200':
+          description: PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+      parameters:
+      - $ref: '#/components/parameters/testId'
+  /students/{id}/disputes:
+    get:
+      operationId: listDisputes
+      summary: Споры учеников для репетитора (AT-R18, AT-R19)
+      tags:
+      - assignments
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      responses:
+        '200':
+          description: Споры
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DisputeView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+  /students/{id}/consent/cancel-revoke:
+    post:
+      operationId: cancelConsentRevoke
+      summary: Отменить отзыв согласия в течение 7 дней, репетитор (PV-R18)
+      tags:
+      - privacy
+      parameters:
+      - $ref: '#/components/parameters/studentId'
+      responses:
+        '204':
+          description: Готово
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/Unavailable'

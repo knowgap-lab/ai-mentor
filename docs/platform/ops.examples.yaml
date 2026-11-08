@@ -1,0 +1,51 @@
+# Примеры к platform/ops.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: ops-01
+  rule: OP-R2
+  given: cookie staging предъявлен на prod
+  expect: 'отвергнут: другой домен и другой токен'
+- id: ops-02
+  rule: OP-R7
+  given: миграция удаляет столбец
+  expect: 'CI отклоняет: миграция не expand-only'
+- id: ops-03
+  rule: OP-R7
+  given: откат версии
+  expect: запущены прежние теги, схема совместима
+- id: ops-04
+  rule: OP-R8
+  given: чистая загрузка staging, `hold` не подан
+  expect: prod получает каталог через 10 минут
+- id: ops-05
+  rule: OP-R8
+  given: '`hold` подан в окне'
+  expect: prod не меняется до `release`
+- id: ops-06
+  rule: OP-R10
+  given: копия старше 30 дней
+  expect: удалена
+- id: ops-07
+  rule: OP-R11
+  given: ночная проверка не восстановилась
+  expect: тревога в служебный чат
+- id: ops-08
+  rule: OP-R12
+  given: восстановление из копии до отзыва согласия
+  expect: журнал отзыва применён, ПДн отсутствуют
+- id: ops-09
+  rule: OP-R16
+  given: диск 85 %
+  expect: тревога один раз
+- id: ops-10
+  rule: OP-R17
+  given: три неудачных проверки подряд
+  expect: тревога
+- id: ops-11
+  rule: OP-R18
+  given: журнал старше 30 дней
+  expect: удалён
+- id: ops-12
+  rule: OP-R19
+  given: вход по паролю
+  expect: отказ

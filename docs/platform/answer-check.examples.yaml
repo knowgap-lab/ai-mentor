@@ -1,0 +1,130 @@
+# Примеры к platform/answer-check.md (D133). Сценарии: given (состояние) → steps (вызов операции core-api.yaml → ожидание).
+# step: {op: operationId, request: тело, expect: {http, body | error{code, details?}, headers?, journal?}}
+# Запросы и тела ответов проверяет tools/examples/check_scenarios.py по core-api.yaml.
+- id: ac-01
+  rule: AC-R5, AC-R7
+  title: Часть А, верный ответ
+  given: {assignment: {kind: homework, state: issued}, item: {part: A, format: ct.choice1, key: [3], state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: [3], idempotency_key: k1}
+      expect: {http: 200, body: {status: scored, item_state: final, attempts_left: 0, verdict: correct, points: 1, max_points: 1}}
+- id: ac-02
+  rule: AC-R7
+  title: Часть А, неверный ответ — ключ и решение сразу
+  given: {assignment: {kind: homework, state: issued}, item: {part: A, format: ct.choice1, key: [3], state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: [2], idempotency_key: k1}
+      expect: {http: 200, body: {status: scored, item_state: final, attempts_left: 0, verdict: wrong, points: 0, max_points: 1, show: {key: "3", solution_block: "ct-math:M10.B09"}}}
+- id: ac-03
+  rule: AC-R7
+  title: Часть В, первая попытка неверна — без ключа, осталась одна
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: "13", idempotency_key: k1}
+      expect: {http: 200, body: {status: scored, item_state: open, attempts_left: 1, verdict: wrong, points: 0, max_points: 2}, no_fields: [show]}
+- id: ac-04
+  rule: AC-R7
+  title: Часть В, вторая попытка неверна — ключ и решение
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 1, verdicts: [wrong]}}
+  steps:
+    - op: answerItem
+      request: {answer: "14", idempotency_key: k2}
+      expect: {http: 200, body: {status: scored, item_state: final, attempts_left: 0, verdict: wrong, points: 0, max_points: 2, show: {key: "12", solution_block: "ct-math:M10.B09"}}}
+- id: ac-05
+  rule: AC-R7, AC-R11
+  title: Часть В, вторая попытка верна — одно наблюдение, первая 0, итог 2
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 1, verdicts: [wrong]}}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k2}
+      expect: {http: 200, body: {status: scored, item_state: final, attempts_left: 0, verdict: correct, points: 2, max_points: 2}, journal: {observations: 1, first_attempt_points: 0, total_points: 2}}
+- id: ac-06
+  rule: AC-R5
+  title: Ввод не по формату — попытка не создана
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: "12,0", idempotency_key: k1}
+      expect: {http: 200, body: {status: malformed, hint: "введите целое число", item_state: open, attempts_left: 2}, journal: {attempts: 0}}
+- id: ac-07
+  rule: AC-R6
+  title: Ответ на закрытый элемент
+  given: {assignment: {kind: homework, state: issued}, item: {state: final}}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k1}
+      expect: {http: 409, error: {code: item_closed}}
+- id: ac-08
+  rule: AC-R6
+  title: Ответ после «Сдать»
+  given: {assignment: {kind: homework, state: submitted}, item: {state: final}}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k1}
+      expect: {http: 409, error: {code: assignment_closed}}
+- id: ac-09
+  rule: AC-R7
+  title: Срез — только «принято»
+  given: {assignment: {kind: checkpoint, state: issued}, item: {part: A, format: ct.choice1, key: [3], state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: [5], idempotency_key: k1}
+      expect: {http: 200, body: {status: accepted, item_state: final}, no_fields: [verdict, points, show]}
+- id: ac-10
+  rule: AC-R4
+  title: Повтор запроса с тем же ключом и телом
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: "13", idempotency_key: k1}
+      expect: {http: 200, body: {status: scored, item_state: open, attempts_left: 1, verdict: wrong, points: 0, max_points: 2}}
+    - op: answerItem
+      request: {answer: "13", idempotency_key: k1}
+      expect: {http: 200, same_as_step: 1, journal: {attempts: 1}}
+- id: ac-11
+  rule: AC-R4
+  title: Тот же ключ, другой ответ
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: "13", idempotency_key: k1}
+      expect: {http: 200}
+    - op: answerItem
+      request: {answer: "14", idempotency_key: k1}
+      expect: {http: 409, error: {code: idempotency_conflict}}
+- id: ac-12
+  rule: AC-R2
+  title: Два параллельных ответа на часть В
+  given: {assignment: {kind: homework, state: issued}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - parallel:
+        - {op: answerItem, request: {answer: "13", idempotency_key: ka}, expect: {http: 200}}
+        - {op: answerItem, request: {answer: "14", idempotency_key: kb}, expect: {http: 200}}
+      expect: {journal: {attempt_numbers: [1, 2]}}
+- id: ac-13
+  rule: AC-R3
+  title: Чужая выдача
+  given: {assignment: {kind: homework, state: issued, owner: student_a}, actor: student_b}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k1}
+      expect: {http: 403, error: {code: forbidden}}
+- id: ac-15
+  rule: AC-R15
+  title: 61-й запрос за минуту
+  given: {assignment: {kind: homework, state: issued}, requests_in_last_minute: 60}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k61}
+      expect: {http: 429, error: {code: rate_limited}, headers: {Retry-After: present}}
+- id: ac-16
+  rule: AC-R16
+  title: Ответ после срока принимается
+  given: {assignment: {kind: homework, state: issued, deadline_passed: true}, item: {part: B, format: ct.integer, key: 12, state: open, attempts: 0}}
+  steps:
+    - op: answerItem
+      request: {answer: "12", idempotency_key: k1}
+      expect: {http: 200, body: {status: scored, item_state: final, verdict: correct, points: 2, max_points: 2}, journal: {late: true}}

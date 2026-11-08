@@ -1,0 +1,3 @@
+# Структурная проверка OpenAPI-файлов (openapi-spec-validator).
+- {openapi: core-api.yaml, valid: true}
+- {openapi: internal-api.yaml, valid: true}

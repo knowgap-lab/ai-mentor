@@ -1,0 +1,63 @@
+# Примеры к catalog/variants.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: variants-01
+  rule: VR-R1
+  given: в уроке используется тип с 4 активными вариантами
+  expect: 'CI: `pool_too_small`'
+- id: variants-02
+  rule: VR-R1
+  given: у типа 5 активных и 3 `retired`
+  expect: валиден
+- id: variants-03
+  rule: VR-R2
+  given: на уроке разобран подвариант S1, у S1 один вариант
+  expect: 'CI: `reinforcement_impossible`'
+- id: variants-04
+  rule: VR-R3
+  given: ДЗ собирается, у типа остались только резервные варианты
+  expect: тип исключён, предупреждение «нужны варианты»
+- id: variants-05
+  rule: VR-R5
+  given: вариант был в PDF урока, попыток нет
+  expect: считается показанным
+- id: variants-06
+  rule: VR-R6
+  given: V003 показан ученику в ДЗ неделю назад
+  expect: V003 не выбирается снова
+- id: variants-07
+  rule: VR-R8
+  given: непоказанные V004 (S1), V005 (S2), прошлый раз был S1
+  expect: выбран V005
+- id: variants-08
+  rule: VR-R10
+  given: минуты = 0
+  expect: 'CI: `minutes_out_of_range`'
+- id: variants-09
+  rule: VR-R11
+  given: у варианта рисунок PNG без исходных чисел
+  expect: 'CI: `figure_not_generated`'
+- id: variants-10
+  rule: VR-R14
+  given: второй решатель получил 14, ключ 12
+  expect: 'CI: `key_mismatch`, PR заблокирован'
+- id: variants-11
+  rule: VR-R20
+  given: шаблон развернул вариант, равный существующему V002
+  expect: вариант отброшен
+- id: variants-12
+  rule: VR-R3
+  given: выпуск 2, у типа с появлениями 8 вариантов
+  expect: в резерве 2 (20 % вверх)
+- id: variants-13
+  rule: VR-R12
+  given: в эталонном решении промежуточное число 3,1416
+  expect: 'CI: `ct_rule_violation`'
+- id: variants-14
+  rule: VR-R12
+  given: 'то же, `calculator_exception: "формат задания РИКЗ"`'
+  expect: валиден
+- id: variants-15
+  rule: VR-R13
+  given: вторая сессия ИИ получила ключ, подстановка не сошлась
+  expect: 'CI: `key_mismatch`'

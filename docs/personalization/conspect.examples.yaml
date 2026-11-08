@@ -1,0 +1,59 @@
+# Примеры к personalization/conspect.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: conspect-01
+  rule: CN-R1
+  given: снимок на версии 6, сейчас версия 8
+  expect: блоки версии 6
+- id: conspect-02
+  rule: CN-R2
+  given: блок `flashcard` в снимке
+  expect: не выводится
+- id: conspect-03
+  rule: CN-R3
+  given: с прошлого урока перенесён блок
+  expect: раздел «Перенесено с урока N» в начале
+- id: conspect-04
+  rule: CN-R4
+  given: два ученика одного урока
+  expect: одинаковый конспект
+- id: conspect-05
+  rule: CN-R7
+  given: формула `\frac{a}{b}`
+  expect: выведена KaTeX
+- id: conspect-06
+  rule: CN-R7
+  given: блок содержит `<script>`
+  expect: не выводится (CI отклоняет при загрузке)
+- id: conspect-07
+  rule: CN-R8
+  given: виджет с параметрами не по схеме
+  expect: отклонён при загрузке
+- id: conspect-08
+  rule: CN-R10
+  given: PDF урока с виджетом
+  expect: на месте виджета статичная картинка
+- id: conspect-09
+  rule: CN-R11
+  given: PDF конспекта
+  expect: без ключей, решений и имени ученика
+- id: conspect-10
+  rule: CN-R12
+  given: два запроса PDF одного снимка
+  expect: одинаковое содержимое
+- id: conspect-11
+  rule: CN-R13
+  given: блоков урока нет
+  expect: файл урока виден репетитору, ученику ничего не показано
+- id: conspect-12
+  rule: CN-R14
+  given: ученик открывает чужой урок
+  expect: '`403 forbidden`'
+- id: conspect-13
+  rule: CN-R14a
+  given: урок ещё не проведён
+  expect: ученику конспект недоступен, репетитору виден целиком
+- id: conspect-14
+  rule: CN-R14a
+  given: отмечен объяснённым блок 2 из 4
+  expect: ученик видит блоки 1–2 и перенесённое

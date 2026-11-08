@@ -1,0 +1,316 @@
+# Проверочные примеры catalog.schema.json и subject-package.schema.json (D133).
+# Источники: примеры в catalog/schema.md, answer-rules.md, composer.md.
+- name: тема M14 из schema.md
+  schema: catalog.schema.json
+  def: topic
+  valid: true
+  doc:
+    id: ct-math:M14
+    title: Обратные тригонометрические функции и простейшие уравнения
+    section: Тригонометрия
+    status: active
+    spec_version: rikz-2026
+    citations: [{doc: spec-2026, item: "4.3"}]
+    elements:
+      - id: ct-math:M14.E1
+        title: Аркфункции табличных чисел
+        citations: [{doc: spec-2026, item: "4.3.1"}]
+    types:
+      - id: ct-math:M14.T07
+        title: Функция от арка
+        kind: exam
+        primary_element: ct-math:M14.E1
+        prerequisites: [ct-math:M13.E2]
+        answer_format: ct.integer
+        difficulty: 2
+        levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+        citations: [{doc: topic-card, ref: "M14 §Банк 7"}]
+        subvariants:
+          - {id: ct-math:M14.T07.S1, given: "значение тригонометрической функции от аркфункции"}
+- name: тема с полем tier (CS-R29, field_not_allowed)
+  schema: catalog.schema.json
+  def: topic
+  valid: false
+  doc:
+    id: ct-math:M14
+    title: t
+    section: s
+    tier: B
+    citations: [{doc: d, item: "1"}]
+    elements: [{id: ct-math:M14.E1, title: e, citations: [{doc: d, item: "1"}]}]
+- name: тип без цитат (CS-R21)
+  schema: catalog.schema.json
+  def: type
+  valid: false
+  doc:
+    id: ct-math:M14.T07
+    title: t
+    kind: exam
+    primary_element: ct-math:M14.E1
+    prerequisites: []
+    answer_format: ct.integer
+    difficulty: 2
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: []
+    subvariants: [{id: ct-math:M14.T07.S1, given: g}]
+- name: тип с предпосылкой-темой не проходит как элемент (CS-R10)
+  schema: catalog.schema.json
+  def: type
+  valid: false
+  doc:
+    id: ct-math:M14.T07
+    title: t
+    kind: exam
+    primary_element: ct-math:M14.E1
+    prerequisites: [ct-math:M13]
+    answer_format: ct.integer
+    difficulty: 2
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: [{doc: d, ref: r}]
+    subvariants: [{id: ct-math:M14.T07.S1, given: g}]
+- name: сложность 4 (CS-R18)
+  schema: catalog.schema.json
+  def: type
+  valid: false
+  doc:
+    id: ct-math:M14.T07
+    title: t
+    kind: exam
+    primary_element: ct-math:M14.E1
+    prerequisites: []
+    answer_format: ct.integer
+    difficulty: 4
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: [{doc: d, ref: r}]
+    subvariants: [{id: ct-math:M14.T07.S1, given: g}]
+- {name: "id варианта полный путь (CS-R1)", schema: catalog.schema.json, def: variant_id, valid: true, doc: "ct-math:M14.T07.S1.V003"}
+- {name: "id типа ширина 1 (CS-R1)", schema: catalog.schema.json, def: type_id, valid: false, doc: "ct-math:M14.T7"}
+- {name: "S под E (CS-R2)", schema: catalog.schema.json, def: subvariant_id, valid: false, doc: "ct-math:M14.E2.S1"}
+- {name: "V под B (CS-R2)", schema: catalog.schema.json, def: variant_id, valid: false, doc: "ct-math:M14.B05.V001"}
+- {name: "тест (CS-R3)", schema: catalog.schema.json, def: test_id, valid: true, doc: "ct-math:TEST.2025-CT-V2"}
+- {name: "шаблон урока (CS-R30)", schema: catalog.schema.json, def: lesson_id, valid: true, doc: "ct-math:L07"}
+- {name: "этап урока (CS-R30)", schema: catalog.schema.json, def: stage_id, valid: true, doc: "ct-math:L07.G3"}
+- {name: "урок из 1 цифры (CS-R30)", schema: catalog.schema.json, def: stage_id, valid: false, doc: "ct-math:L7.G0"}
+- {name: "временный ключ (CS-R6)", schema: catalog.schema.json, def: tmp_key, valid: true, doc: "tmp:abc"}
+- name: вариант ct.integer
+  schema: catalog.schema.json
+  def: variant
+  valid: true
+  doc:
+    id: ct-math:M14.T07.S1.V001
+    subvariant: ct-math:M14.T07.S1
+    statement: "Найдите значение выражения $\\arcsin\\frac12$ в градусах."
+    key: 30
+    minutes: 3
+    checkpoint_reserve: false
+    theory_block: ct-math:M14.B02
+- name: вариант части А с 5 опциями и ловушкой
+  schema: catalog.schema.json
+  def: variant
+  valid: true
+  doc:
+    id: ct-math:M14.T01.S1.V001
+    subvariant: ct-math:M14.T01.S1
+    statement: "Выберите верное."
+    key: [3]
+    options:
+      - {n: 1, text: "a", trap_id: sign}
+      - {n: 2, text: "b", trap_id: sign}
+      - {n: 3, text: "c"}
+      - {n: 4, text: "d", trap_id: sign}
+      - {n: 5, text: "e", trap_id: sign}
+    traps: [{id: sign, description: "ошибка знака"}]
+    minutes: 2
+    theory_block: ct-math:M14.B01
+- name: вариант с 4 опциями (AR-R19)
+  schema: catalog.schema.json
+  def: variant
+  valid: false
+  doc:
+    id: ct-math:M14.T01.S1.V001
+    subvariant: ct-math:M14.T01.S1
+    statement: "x"
+    key: [3]
+    options: [{n: 1, text: a}, {n: 2, text: b}, {n: 3, text: c}, {n: 4, text: d}]
+    minutes: 2
+    theory_block: ct-math:M14.B01
+- name: вариант с оценкой 90 минут (VR-R10)
+  schema: catalog.schema.json
+  def: variant
+  valid: false
+  doc:
+    id: ct-math:M14.T07.S1.V001
+    subvariant: ct-math:M14.T07.S1
+    statement: "x"
+    key: 1
+    minutes: 90
+    theory_block: ct-math:M14.B02
+- name: блок-виджет
+  schema: catalog.schema.json
+  def: block_frontmatter
+  valid: true
+  doc:
+    id: ct-math:M14.B09
+    topic_id: ct-math:M14
+    kind: widget
+    minutes: 3
+    title: Единичная окружность
+    widget: {widget: unit-circle, params: {angle: 30}}
+- name: блок неизвестного вида (CS-R13)
+  schema: catalog.schema.json
+  def: block_frontmatter
+  valid: false
+  doc: {id: "ct-math:M14.B09", topic_id: "ct-math:M14", kind: video, title: t}
+- name: тест с появлением
+  schema: catalog.schema.json
+  def: test
+  valid: true
+  doc:
+    id: ct-math:TEST.2025-CT-V2
+    title: ЦТ 2025, вариант 2
+    year: 2025
+    stage: CT
+    appearances: [{position: A1, type: "ct-math:M01.T03"}, {position: B20, type: "ct-math:M38.T14"}]
+- name: шаблон урока из composer.md
+  schema: catalog.schema.json
+  def: lesson_template
+  valid: true
+  doc:
+    id: ct-math:L07
+    topics: [ct-math:M10]
+    review: [ct-math:M04, ct-math:M08]
+    duration_min: 60
+    stages:
+      - id: ct-math:L07.G1
+        minutes: [0, 8]
+        title: Разминка-вспоминание
+        kind: warmup
+        blocks: []
+        practice:
+          - {type: "ct-math:M04.T13", subvariant: "ct-math:M04.T13.S1", role: solve_alone, theory_block: "ct-math:M04.B02"}
+      - id: ct-math:L07.G3
+        minutes: [13, 30]
+        title: Новая тема
+        kind: theory
+        blocks: ["ct-math:M10.B05", "ct-math:M10.B06"]
+        practice: []
+    homework:
+      budget_hours: 6
+      items:
+        - {source: new_topic, series: [{type: "ct-math:M10.T01", count: 4}, {type: "ct-math:M10.T02", count: 6}], difficulty: [1, 1]}
+        - {source: review, series: [{type: "ct-math:M04.T13", count: 1}]}
+        - {source: ct_format, series: [{type: "ct-math:M10.T18", count: 1}]}
+    generation_notes: "Числа «чистые»"
+- name: ДЗ с частью E (D230, источник не из списка)
+  schema: catalog.schema.json
+  def: homework_item
+  valid: false
+  doc: {source: flashcards, series: [{type: "ct-math:M10.T01", count: 1}]}
+- name: карта переноса (CS-R25)
+  schema: catalog.schema.json
+  def: transfer_map
+  valid: true
+  doc:
+    entries:
+      - {from: ["ct-math:M14.T07"], to: ["ct-math:M14.T22", "ct-math:M14.T23"], reason: "деление типа", subvariants_to: "ct-math:M14.T22"}
+- name: заметка с именем ученика не проходит (D84)
+  schema: catalog.schema.json
+  def: note
+  valid: false
+  doc: {change: ["ct-math:M14.B05"], ai_output: a, fixed: f, why: w, student_name: Иван}
+- name: пакет предмета ЦТ
+  schema: subject-package.schema.json
+  valid: true
+  doc:
+    id: ct-math
+    title: Математика ЦТ
+    subject: math
+    spec_version: rikz-2026
+    positions: [A1, A10, B1, B20]
+    scale_phrases: ["ответ умножьте на 10"]
+    answer_formats:
+      - {id: ct.choice1, title: один верный, applies_to: часть А, input: "номер опции 1–5", max_points: 1}
+      - {id: ct.match, title: соответствие, applies_to: В1, input: "А1Б3В4", max_points: 2, partial_points: 1}
+- name: пакет без форматов
+  schema: subject-package.schema.json
+  valid: false
+  doc: {id: ct-math, title: t, subject: math, spec_version: rikz-2026, positions: [A1], answer_formats: []}
+- name: формат ct.choiceN допустим (AR-R1)
+  schema: catalog.schema.json
+  def: type
+  valid: true
+  doc:
+    id: ct-math:M14.T08
+    title: t
+    kind: exam
+    primary_element: ct-math:M14.E1
+    prerequisites: []
+    answer_format: ct.choiceN
+    difficulty: 1
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: [{doc: d, ref: r}]
+    subvariants: [{id: ct-math:M14.T08.S1, given: g}]
+- name: временные ключи в PR (CS-R6, CP-R23)
+  schema: catalog.schema.json
+  def: type
+  valid: true
+  doc:
+    id: "tmp:m14-arcsin"
+    title: t
+    kind: exam
+    primary_element: ct-math:M14.E1
+    prerequisites: []
+    answer_format: ct.integer
+    difficulty: 1
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: [{doc: d, ref: r}]
+    subvariants: [{id: "tmp:m14-arcsin-s1", given: g}]
+- name: retired без причины (CS-R23)
+  schema: catalog.schema.json
+  def: type
+  valid: false
+  doc:
+    id: ct-math:M14.T09
+    title: t
+    kind: exam
+    status: retired
+    primary_element: ct-math:M14.E1
+    prerequisites: []
+    answer_format: ct.integer
+    difficulty: 1
+    levels: {base: {hours: 0.5}, automatism: {hours: 1.0}}
+    citations: [{doc: d, ref: r}]
+    subvariants: [{id: ct-math:M14.T09.S1, given: g}]
+- name: тема с ct_positions (LP-R4)
+  schema: catalog.schema.json
+  def: topic
+  valid: true
+  doc:
+    id: ct-math:M14
+    title: t
+    section: s
+    ct_positions: [A5, B3]
+    citations: [{doc: d, item: "1"}]
+    elements: [{id: ct-math:M14.E1, title: e, citations: [{doc: d, item: "1"}]}]
+- name: вариант с исключением из «без калькулятора» (VR-R12)
+  schema: catalog.schema.json
+  def: variant
+  valid: true
+  doc:
+    id: ct-math:M14.T07.S1.V002
+    subvariant: ct-math:M14.T07.S1
+    statement: x
+    key: 3
+    minutes: 2
+    theory_block: ct-math:M14.B02
+    calculator_exception: "формат задания РИКЗ"
+- name: формат ct.choiceN в пакете предмета
+  schema: subject-package.schema.json
+  valid: true
+  doc:
+    id: ct-math
+    title: t
+    subject: math
+    spec_version: rikz-2026
+    positions: [A1]
+    answer_formats: [{id: ct.choiceN, title: несколько верных, applies_to: часть А, input: "набор номеров", max_points: 1}]

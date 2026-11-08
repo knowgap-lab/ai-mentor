@@ -1,0 +1,71 @@
+# Примеры к platform/notifications.md (D133). Перенесено из раздела «Таблицы примеров» без изменения смысла.
+# Поля: id, rule (номера правил спецификации), given (ситуация или вход), expect (ожидаемый результат).
+# Проверяет tools/examples/check_text_examples.py: число строк, наличие правил в спецификации, уникальность id.
+- id: notifications-01
+  rule: NT-R1
+  given: ученик сдал ДЗ
+  expect: строка outbox создана в той же транзакции; если транзакция откатилась, строки нет
+- id: notifications-02
+  rule: NT-R3
+  given: повторная вставка с тем же `key`
+  expect: строка не создана
+- id: notifications-03
+  rule: NT-R4
+  given: параметры содержат `display_name`
+  expect: отказ при записи
+- id: notifications-04
+  rule: NT-R5
+  given: сообщение «<имя> сдал(а) ДЗ», в outbox лишь `student_id`
+  expect: имя подставлено при отправке, текст не сохранён
+- id: notifications-05
+  rule: NT-R6
+  given: два сообщения репетитору A и B
+  expect: отправлены в порядке создания
+- id: notifications-06
+  rule: NT-R8
+  given: сеть упала на 1-й попытке
+  expect: повтор через 30 с; после 5-й неудачи `failed`
+- id: notifications-07
+  rule: NT-R9
+  given: Telegram вернул 429, `retry_after = 20`
+  expect: ожидание 20 с, попытка не засчитана
+- id: notifications-08
+  rule: NT-R10
+  given: бот заблокирован учеником
+  expect: '`failed` без повторов, у ученика `unreachable`, у репетитора пометка «не доставлено»'
+- id: notifications-09
+  rule: NT-R12
+  given: '`display_name` = «<b>Маша</b>»'
+  expect: отправлено как есть, без разметки
+- id: notifications-10
+  rule: NT-R12
+  given: список из 80 изменённых ДЗ
+  expect: 20 строк + «и ещё 60» + ссылка
+- id: notifications-11
+  rule: NT-R13
+  given: обезличивание ученика
+  expect: его `pending`-сообщения → `cancelled`
+- id: notifications-12
+  rule: NT-R14
+  given: результат ученика изменился после перепроверки
+  expect: сообщения ученику нет
+- id: notifications-13
+  rule: NT-R16
+  given: ссылка в `homework_issued`
+  expect: без токена, ведёт на страницу ДЗ
+- id: notifications-14
+  rule: NT-R17
+  given: у ученика кончились варианты типа
+  expect: плашка и одно сообщение
+- id: notifications-15
+  rule: NT-R18
+  given: условие `variants_needed` сохраняется сутки
+  expect: второго сообщения нет, плашка остаётся
+- id: notifications-16
+  rule: NT-R19
+  given: webhook без секретного заголовка
+  expect: '`403`'
+- id: notifications-17
+  rule: NT-R22
+  given: сообщение со staging в чужой чат
+  expect: '`cancelled`'

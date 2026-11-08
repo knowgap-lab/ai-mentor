@@ -1,0 +1,198 @@
+# Примеры к platform/attempts.md (D133). Формат — как в answer-check.examples.yaml.
+# Шаги без op описывают проверку состояния: check: {...}.
+- id: at-01
+  rule: AT-R1
+  title: Журнал только добавляется
+  steps:
+    - check: {db_role: app, statement: "UPDATE attempts SET raw_input = 'x'", expect: denied}
+    - check: {db_role: app, statement: "DELETE FROM attempts", expect: denied}
+- id: at-03
+  rule: AT-R3
+  title: Ручной вердикт добавляется, прежний остаётся
+  given: {attempt: {verdict: wrong}}
+  steps:
+    - op: manualVerdict
+      request: {verdict: correct, points: 2, reason: "эквивалентный ответ"}
+      expect: {http: 200, journal: {attempt_verdicts: [wrong, correct], current: correct}}
+- id: at-04
+  rule: AT-R4
+  title: Черновик не факт — убранный вариант в выдачу не попадёт
+  given: {draft: {items: [v1, v2, v3]}}
+  steps:
+    - op: patchHomeworkDraft
+      request: {remove: [v2]}
+      expect: {http: 200, journal: {events: []}, draft_items: [v1, v3]}
+- id: at-05
+  rule: AT-R5
+  title: Выдача держится на версии каталога выдачи
+  given: {assignment: {state: issued, catalog_version: 6}, catalog_latest: 8}
+  steps:
+    - op: getAssignment
+      expect: {http: 200, statement_from_version: 6}
+- id: at-06a
+  rule: AT-R6
+  title: Нельзя отозвать выдачу с ответами
+  given: {assignment: {state: issued, student_answers: 3}}
+  steps:
+    - op: withdrawAssignment
+      request: {reason: "ошибка"}
+      expect: {http: 409, error: {code: has_answers}}
+- id: at-06b
+  rule: AT-R6
+  title: Отзыв выдачи без ответов
+  given: {assignment: {state: issued, student_answers: 0}}
+  steps:
+    - op: withdrawAssignment
+      request: {reason: "ошибка"}
+      expect: {http: 204, journal: {events: [assignment_withdrawn]}}
+- id: at-07a
+  rule: AT-R7
+  title: Срок можно продлить
+  given: {assignment: {state: issued, deadline: "2026-11-20T00:00:00Z"}}
+  steps:
+    - op: extendDeadline
+      request: {deadline: "2026-11-22T00:00:00Z"}
+      expect: {http: 200, journal: {events: [deadline_changed]}}
+- id: at-07b
+  rule: AT-R7
+  title: Срок нельзя сократить
+  given: {assignment: {state: issued, deadline: "2026-11-20T00:00:00Z"}}
+  steps:
+    - op: extendDeadline
+      request: {deadline: "2026-11-18T00:00:00Z"}
+      expect: {http: 409, error: {code: deadline_shorter}}
+- id: at-08
+  rule: AT-R8
+  title: Источник и место попытки по виду выдачи
+  given: {assignment: {kind: checkpoint, state: issued}}
+  steps:
+    - check: {journal_attempt: {source: checkpoint, place: lesson}}
+- id: at-11a
+  rule: AT-R11
+  title: Итог элемента — по первой верной попытке
+  given: {item: {verdicts: [wrong, correct]}}
+  steps:
+    - check: {item_result: {verdict: correct, first_attempt_points: 0, total_points: 2}}
+- id: at-11b
+  rule: AT-R11
+  title: После ручного вердикта первая попытка стала верной — вторая не входит
+  given: {item: {verdicts: [wrong, correct]}, manual: {attempt_no: 1, verdict: correct}}
+  steps:
+    - check: {item_result: {ends_at_attempt: 1, first_attempt_points: 2, total_points: 2}}
+- id: at-13a
+  rule: AT-R13
+  title: «Сдать» с пропусками требует подтверждения
+  given: {assignment: {state: issued, unanswered: 4}}
+  steps:
+    - op: submitAssignment
+      request: {}
+      headers: {Idempotency-Key: s1}
+      expect: {http: 409, error: {code: unanswered_confirmation_required, details: {left: 4}}}
+- id: at-13b
+  rule: AT-R13
+  title: «Сдать» с подтверждением
+  given: {assignment: {state: issued, unanswered: 4}}
+  steps:
+    - op: submitAssignment
+      request: {confirm_unanswered: true}
+      headers: {Idempotency-Key: s2}
+      expect: {http: 200, body: {assignment_id: a1, answered: 6, skipped: 4, items: [], total_points: 8, max_points: 20}, journal: {events: [assignment_submitted], skipped_items: 4}}
+- id: at-14
+  rule: AT-R14
+  title: Повтор «Сдать» с тем же ключом
+  given: {assignment: {state: issued, unanswered: 0}}
+  steps:
+    - op: submitAssignment
+      request: {}
+      headers: {Idempotency-Key: s1}
+      expect: {http: 200}
+    - op: submitAssignment
+      request: {}
+      headers: {Idempotency-Key: s1}
+      expect: {http: 200, same_as_step: 1, journal: {assignment_submitted_events: 1}}
+- id: at-15
+  rule: AT-R15
+  title: Сдача в выпуске 1 — одно сообщение репетитору, без задания пересчёта
+  given: {release: 1, assignment: {state: issued}}
+  steps:
+    - op: submitAssignment
+      request: {}
+      headers: {Idempotency-Key: s1}
+      expect: {http: 200, outbox: {homework_submitted: 1}, queue_jobs: 0}
+- id: at-16
+  rule: AT-R16
+  title: Пробник — вердикты только после «Сдать»
+  given: {assignment: {kind: mock, state: issued}}
+  steps:
+    - op: getAssignment
+      expect: {http: 200, no_verdicts: true}
+    - op: submitAssignment
+      request: {confirm_unanswered: true}
+      headers: {Idempotency-Key: s1}
+      expect: {http: 200, verdicts_present: true}
+- id: at-17
+  rule: AT-R17
+  title: «Не понял» дважды — один элемент в списке
+  given: {assignment: {state: submitted}}
+  steps:
+    - op: didNotUnderstand
+      expect: {http: 204}
+    - op: didNotUnderstand
+      expect: {http: 204, journal: {discuss_list_items: 1}}
+- id: at-18a
+  rule: AT-R18
+  title: Спор с текстом длиннее 300 символов
+  given: {assignment: {state: submitted}}
+  steps:
+    - op: openDispute
+      request: {reason: other, text: {$repeat: ["а", 400]}}
+      expect: {http: 422, error: {code: dispute_text_invalid}, note: "длина > 300 отвергается схемой запроса"}
+- id: at-18b
+  rule: AT-R18
+  title: Спор с номером телефона в тексте
+  given: {assignment: {state: submitted}}
+  steps:
+    - op: openDispute
+      request: {reason: other, text: "позвоните +375 29 000 00 00"}
+      expect: {http: 422, error: {code: dispute_text_invalid}}
+- id: at-18c
+  rule: AT-R18
+  title: Второй спор на тот же элемент
+  given: {assignment: {state: submitted}, dispute: {open: true}}
+  steps:
+    - op: openDispute
+      request: {reason: key_wrong}
+      expect: {http: 409, error: {code: dispute_exists}}
+- id: at-19
+  rule: AT-R19
+  title: Исправление ключа закрывает спор ссылкой на перепроверку
+  given: {dispute: {state: open, reason: key_wrong}, catalog_correction: {correction_id: 8, variant_fixed: true}}
+  steps:
+    - check: {recheck_done: 8, journal: {new_attempt_verdicts: true}, dispute: {state: resolved, resolved_by: {correction_id: 8}}}
+- id: at-20
+  rule: AT-R20
+  title: Часть В — одно наблюдение при закрытии элемента
+  given: {item: {part: B, verdicts: [wrong, correct]}}
+  steps:
+    - check: {observations: [{revision: 1, first_attempt_points: 0, total_points: 2, max_points: 2}]}
+- id: at-21
+  rule: AT-R21
+  title: Ручной вердикт — новая ревизия наблюдения
+  given: {item: {state: final}, observations: [{revision: 1}]}
+  steps:
+    - op: manualVerdict
+      request: {verdict: correct, points: 2, reason: "эквивалентный ответ"}
+      expect: {http: 200, journal: {observations: [{revision: 1}, {revision: 2}]}}
+- id: at-23
+  rule: AT-R23
+  title: Чужие попытки
+  given: {actor: student_b, assignment: {owner: student_a}}
+  steps:
+    - op: listAttempts
+      expect: {http: 403, error: {code: forbidden}}
+- id: at-25
+  rule: AT-R25
+  title: Обезличивание не меняет журнал
+  given: {student: {consent: revoked, anonymise_due: true}}
+  steps:
+    - check: {after_anonymisation: {journal_rows_changed: 0, pii_rows: 0}}

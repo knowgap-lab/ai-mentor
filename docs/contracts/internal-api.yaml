@@ -1,0 +1,374 @@
+openapi: 3.1.0
+info:
+  title: 'core: внутренний API для служб и бота'
+  version: 0.1.0
+  description: Вызывают content (загрузчик каталога, импорт плана), worker (с выпуска 2), Telegram и внешняя проверка доступности. Пути /internal/rechecks названы
+    в recheck.md; остальные выбраны автором контракта и ждут ревью напарника (D144, D269). Токены служб различаются по окружению и по методам (D170). Предложения
+    агента (POST /internal/proposals, D158) добавятся в выпуске 4.
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      description: Служебный токен службы и окружения; права по методам (D170)
+    telegramSecret:
+      type: apiKey
+      in: header
+      name: X-Telegram-Bot-Api-Secret-Token
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+      additionalProperties: false
+      required:
+      - code
+    RecheckState:
+      type: object
+      properties:
+        correction_id:
+          type: integer
+        state:
+          enum:
+          - pending
+          - running
+          - done
+          - failed
+        total:
+          type: integer
+        processed:
+          type: integer
+        changed:
+          type: integer
+        skipped_manual:
+          type: integer
+        cursor:
+          type: string
+        started_at:
+          type: string
+        finished_at:
+          type: string
+      additionalProperties: false
+      required:
+      - correction_id
+      - state
+    PlanImportLesson:
+      type: object
+      properties:
+        subject:
+          type: string
+        lesson:
+          type: integer
+          minimum: 1
+        planned_week:
+          type: string
+        phase:
+          type: string
+        kind:
+          enum:
+          - diagnostic
+          - new
+          - consolidation
+          - review
+          - mock
+          - analysis
+        topics:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        review:
+          type: array
+          items:
+            type: string
+        title:
+          type: string
+        source_path:
+          type: string
+        source_hash:
+          type: string
+      additionalProperties: false
+      required:
+      - subject
+      - lesson
+      - planned_week
+      - phase
+      - kind
+      - topics
+      - review
+      - title
+      - source_path
+      - source_hash
+    PlanImportRequest:
+      type: object
+      properties:
+        student_id:
+          type: string
+        subject:
+          type: string
+        shift_weeks:
+          type: integer
+          default: 0
+        lessons:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanImportLesson'
+          minItems: 1
+        snapshot:
+          type: object
+          properties:
+            source_hashes:
+              type: object
+              additionalProperties:
+                type: string
+          additionalProperties: false
+          required:
+          - source_hashes
+      additionalProperties: false
+      required:
+      - student_id
+      - subject
+      - lessons
+      - snapshot
+paths:
+  /internal/catalog-versions:
+    post:
+      operationId: announceCatalogVersion
+      summary: Новая версия каталога загружена (LD-R11, LD-R13, D173)
+      tags:
+      - catalog
+      security:
+      - serviceToken:
+        - catalog:announce
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                catalog_version:
+                  type: integer
+                  minimum: 1
+                commit:
+                  type: string
+              additionalProperties: false
+              required:
+              - catalog_version
+      responses:
+        '200':
+          description: Принято; повтор той же версии ничего не создаёт
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  catalog_version:
+                    type: integer
+                  new:
+                    type: boolean
+                additionalProperties: false
+                required:
+                - catalog_version
+                - new
+        '403':
+          description: 'forbidden: у токена нет права'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: stale_version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /internal/rechecks:
+    post:
+      operationId: startRecheck
+      summary: Принять пакет перепроверки (RC-R1…RC-R5)
+      tags:
+      - recheck
+      security:
+      - serviceToken:
+        - recheck:write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                correction_id:
+                  type: integer
+                  minimum: 1
+                variants:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+              additionalProperties: false
+              required:
+              - correction_id
+              - variants
+      responses:
+        '202':
+          description: Принят, состояние pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecheckState'
+        '403':
+          description: forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: stale_correction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: variant_unknown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /internal/rechecks/{correction_id}:
+    get:
+      operationId: getRecheckState
+      summary: Состояние пакета перепроверки (RC-R6)
+      tags:
+      - recheck
+      security:
+      - serviceToken:
+        - recheck:read
+      parameters:
+      - name: correction_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Состояние
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecheckState'
+        '403':
+          description: forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: not_found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /internal/plan-imports:
+    post:
+      operationId: importPlan
+      summary: Записать план 0 ученика и предмета (LP-R6…R16, D197)
+      tags:
+      - plan
+      security:
+      - serviceToken:
+        - plan:import
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanImportRequest'
+      responses:
+        '201':
+          description: Импортировано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lessons:
+                    type: integer
+                additionalProperties: false
+                required:
+                - lessons
+        '403':
+          description: forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: already_imported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: 'Ошибка данных: review_before_intro, lesson_gap, kind_unknown и др.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /telegram/webhook:
+    post:
+      operationId: telegramWebhook
+      summary: 'Обновления бота: /start, подтверждение устройства (NT-R19, NT-R20)'
+      tags:
+      - telegram
+      security:
+      - telegramSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Update Telegram; обрабатываются только message /start и callback_query подтверждения устройства
+      responses:
+        '200':
+          description: Принято
+        '403':
+          description: Нет или неверный X-Telegram-Bot-Api-Secret-Token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /status:
+    get:
+      operationId: getStatus
+      summary: Страница состояния для внешней проверки доступности (OP-R17)
+      tags:
+      - ops
+      security: []
+      responses:
+        '200':
+          description: Сервис работает
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    const: ok
+                additionalProperties: false
+                required:
+                - status
+        '503':
+          description: Сервис недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
