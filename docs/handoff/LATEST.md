@@ -2,7 +2,7 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-09 14:42 (grok)
+**Обновлено:** 2026-11-09 15:10 (grok)
 **Ветка:** `feat/python-block` (от `feat/catalog-ci`, локально, без push); документация влита в `main` (PR №3)
 **Этап:** оркестратор Python-блока запущен. Пакет 1 `content/catalog_ci/` на месте (42 теста). Платформенного кода нет.
 
@@ -10,14 +10,14 @@
 
 | Область | Готово | Не готово |
 |---|---|---|
-| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (274), правила для агентов | схемы в `contracts/` |
+| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (275), правила для агентов | схемы в `contracts/` |
 | `catalog/` | schema, answer-rules, variants, loader, plan-import, composer (на ревью) | eval (отложен) |
 | `platform/` | answer-check, attempts, recheck, auth, privacy, notifications, web, ops, queue, rt-import (на ревью) | — |
 | `personalization/` | обзор, homework, lessons, conspect, plan (на ревью) | 4 модуля (diagnostics, optimizer, knowledge-model, agent) |
 
 ## Что в работе сейчас
 
-Идёт Python-блок по `briefs/ORCHESTRATOR.md`: A0 (разбиение) и B2 (импорт плана) на брифах, B1 ждёт консилиум по хешу артефакта. Состояние — [orchestrator-progress.md](orchestrator-progress.md). Старт: [2026-11-09-1442-grok-orchestrator-python-start](entries/2026-11-09-1442-grok-orchestrator-python-start.md).
+A0 принят и влит в `feat/python-block` (42 теста). Дальше A1, B1 и код B2. Хеш артефакта — D275. Состояние — [orchestrator-progress.md](orchestrator-progress.md).
 
 ## Следующий шаг
 
