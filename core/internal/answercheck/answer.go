@@ -99,9 +99,6 @@ func (s *Service) answerTx(ctx context.Context, user actor, assignmentID, itemID
 	if user.role != "student" || user.id != head.studentID {
 		return nil, fail(http.StatusForbidden, "forbidden")
 	}
-	if err := enforceRate(ctx, tx, user.id); err != nil {
-		return nil, err
-	}
 	hash, err := answerHash(body.Answer)
 	if err != nil {
 		return nil, fail(http.StatusBadRequest, "invalid")
@@ -114,13 +111,10 @@ func (s *Service) answerTx(ctx context.Context, user actor, assignmentID, itemID
 		if stored.Hash != hash {
 			return nil, fail(http.StatusConflict, "idempotency_conflict")
 		}
-		if err := insertRateHit(ctx, tx, user.id); err != nil {
-			return nil, err
-		}
-		if err := tx.Commit(ctx); err != nil {
-			return nil, err
-		}
 		return stored.Body, nil
+	}
+	if err := enforceRate(ctx, tx, user.id); err != nil {
+		return nil, err
 	}
 	if head.state != "issued" {
 		return nil, fail(http.StatusConflict, "assignment_closed")
@@ -197,6 +191,12 @@ func lockAssignment(ctx context.Context, tx pgx.Tx, id string) (assignmentRow, e
 }
 
 func enforceRate(ctx context.Context, tx pgx.Tx, userID string) error {
+	if _, err := tx.Exec(ctx,
+		`SELECT pg_advisory_xact_lock(hashtext('answercheck'), hashtext($1::text))`,
+		userID,
+	); err != nil {
+		return err
+	}
 	var n int
 	var oldest *time.Time
 	err := tx.QueryRow(ctx, `
@@ -270,29 +270,43 @@ func taskFrom(snapshot []byte, itemID string) (task, error) {
 		if item.ItemID != itemID {
 			continue
 		}
-		block := item.SolutionBlock
-		if block == "" {
-			block = solutionBlock
-		}
-		variant := item.VariantID
-		if variant == "" {
-			variant = variantID
-		}
+		format := itemFormat(item)
 		rules := item.RulesVersion
 		if rules == "" {
 			rules = rulesVersion
 		}
 		return task{
-			part:          item.Part,
-			format:        item.Format,
+			part:          itemPart(item, format),
+			format:        format,
 			key:           item.Key,
-			solutionBlock: block,
-			variantID:     variant,
+			solutionBlock: item.SolutionBlock,
+			variantID:     item.VariantID,
 			rulesVersion:  rules,
 			traps:         item.Traps,
 		}, nil
 	}
 	return task{}, fail(http.StatusForbidden, "forbidden")
+}
+
+func itemFormat(item storedItem) string {
+	if item.AnswerFormat != "" {
+		return item.AnswerFormat
+	}
+	return item.Format
+}
+
+func itemPart(item storedItem, format string) string {
+	if item.Part != "" {
+		return item.Part
+	}
+	switch format {
+	case "ct.choice1", "ct.choiceN":
+		return "A"
+	case "ct.integer", "ct.digits", "ct.match":
+		return "B"
+	default:
+		return ""
+	}
 }
 
 func evaluate(task task, answer json.RawMessage) (answerrules.Result, string, error) {
@@ -424,10 +438,13 @@ func buildResponse(kind string, task task, result answerrules.Result, used, limi
 		"max_points":    maxFor(task.format),
 	}
 	if showSolution(result.Verdict, final) {
-		body["show"] = map[string]any{
-			"key":            formatShowKey(task.format, task.key),
-			"solution_block": task.solutionBlock,
+		show := map[string]any{
+			"key": formatShowKey(task.format, task.key),
 		}
+		if task.solutionBlock != "" {
+			show["solution_block"] = task.solutionBlock
+		}
+		body["show"] = show
 	}
 	return body, final
 }
