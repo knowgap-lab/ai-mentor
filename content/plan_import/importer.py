@@ -374,7 +374,6 @@ def _parse_lesson(
     errors: list[dict[str, Any]],
 ) -> Lesson | None:
     data = loaded.data
-    before = len(errors)
     missing = [key for key in LESSON_REQUIRED if key not in data]
     if missing:
         errors.append(
@@ -423,7 +422,8 @@ def _parse_lesson(
                         f"неизвестная тема {code}",
                     )
                 )
-    if len(errors) != before or None in (
+    # kind_unknown и topic_unknown не выкидывают урок из проверок недели и введения.
+    if None in (
         lesson_subject,
         number,
         week,
@@ -570,7 +570,7 @@ def _kind_field(data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str,
         return None
     if value not in KINDS:
         errors.append(_problem("kind_unknown", loaded.relative, line, f"неизвестный вид урока {value}"))
-        return None
+        return value
     return value
 
 
