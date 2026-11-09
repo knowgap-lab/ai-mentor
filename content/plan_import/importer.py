@@ -22,6 +22,7 @@ KINDS = {"diagnostic", "new", "consolidation", "review", "mock", "analysis"}
 CARD_REQUIRED = ("id", "title", "section", "level", "hours_lesson", "hours_home")
 LESSON_REQUIRED = ("subject", "lesson", "week", "phase", "kind", "topics", "review")
 DATE_TEXT = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+CODE_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")
 PLAN_ROW = re.compile(r"^\|\s*(\d+)\s*\|\s*(\d{4}-\d{2}-\d{2})\s*\|")
 KEY_LINE = re.compile(r"^([A-Za-z_][\w-]*)\s*:(.*)$")
 ITEM_LINE = re.compile(r"^(\s+)-\s+(.*)$")
@@ -101,6 +102,9 @@ def import_plan(
         raise ValueError("предмет должен быть math или physics")
     if not (source / subject).is_dir():
         raise ValueError(f"нет каталога {subject}")
+    plan_dir = source / subject / "plan"
+    if not plan_dir.is_dir() or not any(plan_dir.glob("*.md")):
+        raise ValueError("нет файлов уроков")
     if already_imported and not dry_run:
         return _blocked(
             [
@@ -119,10 +123,10 @@ def import_plan(
     errors: list[dict[str, Any]] = []
     cards, known_ids = _load_cards(source, subject, errors)
     _check_prereqs(cards, known_ids, errors)
-    lessons = _load_lessons(source, subject, known_ids, errors)
-    _check_duplicates(lessons, errors)
+    lessons, occupied = _load_lessons(source, subject, known_ids, errors)
+    _check_duplicate_numbers(occupied, errors)
     unique = _without_duplicate_numbers(lessons)
-    _check_lesson_rules(unique, known_ids, errors)
+    _check_lesson_rules(unique, known_ids, errors, {item[2] for item in occupied})
     warnings = _cross_check(source, known_ids, unique)
     if errors:
         return _blocked(errors, warnings)
@@ -202,6 +206,7 @@ def _load_cards(
 ) -> tuple[list[Card], set[str]]:
     cards: list[Card] = []
     known: set[str] = set()
+    seen: set[str] = set()
     topics_dir = source / subject / "topics"
     if not topics_dir.is_dir():
         return cards, known
@@ -210,8 +215,19 @@ def _load_cards(
         if loaded is None:
             continue
         code = loaded.data.get("id")
-        if isinstance(code, str) and code:
-            known.add(code)
+        if isinstance(code, str) and CODE_PATTERN.fullmatch(code):
+            if code in seen:
+                errors.append(
+                    _problem(
+                        "frontmatter_invalid",
+                        loaded.relative,
+                        _key_line(loaded.text, "id"),
+                        f"код темы {code} повторяется",
+                    )
+                )
+            else:
+                seen.add(code)
+                known.add(code)
         card = _parse_card(loaded, errors)
         if card is not None:
             cards.append(card)
@@ -223,19 +239,23 @@ def _load_lessons(
     subject: str,
     known_ids: set[str],
     errors: list[dict[str, Any]],
-) -> list[Lesson]:
+) -> tuple[list[Lesson], list[tuple[str, str, int]]]:
     lessons: list[Lesson] = []
+    occupied: list[tuple[str, str, int]] = []
     plan_dir = source / subject / "plan"
     if not plan_dir.is_dir():
-        return lessons
+        return lessons, occupied
     for path in sorted(plan_dir.glob("*.md")):
         loaded = _read_markdown(source, path, errors)
         if loaded is None:
             continue
+        number = _peek_lesson_number(loaded.data)
+        if number is not None:
+            occupied.append((loaded.relative, loaded.text, number))
         lesson = _parse_lesson(loaded, subject, known_ids, errors)
         if lesson is not None:
             lessons.append(lesson)
-    return lessons
+    return lessons, occupied
 
 
 def _read_markdown(source: Path, path: Path, errors: list[dict[str, Any]]) -> LoadedFile | None:
@@ -292,6 +312,16 @@ def _parse_card(loaded: LoadedFile, errors: list[dict[str, Any]]) -> Card | None
             )
         )
     code = _text_field(data, "id", loaded, errors)
+    if code is not None and CODE_PATTERN.fullmatch(code) is None:
+        errors.append(
+            _problem(
+                "frontmatter_invalid",
+                loaded.relative,
+                _key_line(loaded.text, "id"),
+                "код темы должен состоять из заглавных латинских букв и цифр",
+            )
+        )
+        code = None
     title = _text_field(data, "title", loaded, errors)
     section = _text_field(data, "section", loaded, errors)
     level = _text_field(data, "level", loaded, errors)
@@ -480,6 +510,14 @@ def _number_field(
     return value
 
 
+def _peek_lesson_number(data: dict[str, Any]) -> int | None:
+    """Целый номер от 1 занимает место в нумерации, даже если урок дальше неверен."""
+    value = data.get("lesson")
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        return None
+    return value
+
+
 def _lesson_number(data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]) -> int | None:
     if "lesson" not in data:
         return None
@@ -629,19 +667,22 @@ def _scalar(raw: str) -> str:
     return text
 
 
-def _check_duplicates(lessons: list[Lesson], errors: list[dict[str, Any]]) -> None:
-    grouped: dict[int, list[Lesson]] = {}
-    for lesson in lessons:
-        grouped.setdefault(lesson.number, []).append(lesson)
+def _check_duplicate_numbers(
+    occupied: list[tuple[str, str, int]],
+    errors: list[dict[str, Any]],
+) -> None:
+    grouped: dict[int, list[tuple[str, str]]] = {}
+    for relative, text, number in occupied:
+        grouped.setdefault(number, []).append((relative, text))
     for number, group in grouped.items():
         if len(group) < 2:
             continue
-        for lesson in group:
+        for relative, text in group:
             errors.append(
                 _problem(
                     "frontmatter_invalid",
-                    lesson.relative,
-                    _key_line(lesson.text, "lesson"),
+                    relative,
+                    _key_line(text, "lesson"),
                     f"номер урока {number} повторяется",
                 )
             )
@@ -658,9 +699,10 @@ def _check_lesson_rules(
     lessons: list[Lesson],
     known_ids: set[str],
     errors: list[dict[str, Any]],
+    occupied: set[int],
 ) -> None:
     ordered = sorted(lessons, key=lambda lesson: lesson.number)
-    numbers = [lesson.number for lesson in ordered]
+    numbers = sorted(occupied)
     expected = list(range(1, len(numbers) + 1))
     if numbers != expected:
         missing = [number for number in expected if number not in set(numbers)]
@@ -847,33 +889,69 @@ def _differences(current: dict[str, str], previous: dict | None, dry_run: bool) 
 def _write_skeleton(write_dir: Path, skeleton: dict[str, dict]) -> None:
     payloads: list[tuple[Path, bytes]] = []
     for relative, topic in skeleton.items():
-        path = write_dir.joinpath(*relative.split("/"))
+        path = _destination(write_dir, relative)
         text = yaml.safe_dump(topic, allow_unicode=True, sort_keys=False)
         payloads.append((path, text.encode("utf-8")))
     _ensure_writable(write_dir, [path for path, _data in payloads])
-    created: list[Path] = []
+    created_files: list[Path] = []
+    created_dirs: list[Path] = []
     replaced: list[tuple[Path, bytes]] = []
     try:
         for path, data in payloads:
-            path.parent.mkdir(parents=True, exist_ok=True)
+            _make_parents(path.parent, write_dir, created_dirs)
             if path.exists():
                 replaced.append((path, path.read_bytes()))
             else:
-                created.append(path)
+                created_files.append(path)
             path.write_bytes(data)
     except OSError:
         for path, previous in reversed(replaced):
             path.write_bytes(previous)
-        for path in reversed(created):
-            if path.is_file():
+        for path in reversed(created_files):
+            if path.is_file() or path.is_symlink():
                 path.unlink()
+        for directory in reversed(created_dirs):
+            if directory.is_dir() and not any(directory.iterdir()):
+                directory.rmdir()
         raise
+
+
+def _destination(write_dir: Path, relative: str) -> Path:
+    parts = relative.split("/")
+    if not parts or any(part in {"", ".", ".."} or "\\" in part for part in parts):
+        raise OSError("путь выходит из каталога записи")
+    path = write_dir.joinpath(*parts)
+    root = write_dir.resolve()
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError:
+        raise OSError("путь выходит из каталога записи") from None
+    return path
+
+
+def _make_parents(directory: Path, write_dir: Path, created_dirs: list[Path]) -> None:
+    cursor = write_dir
+    for part in directory.relative_to(write_dir).parts:
+        cursor = cursor / part
+        if cursor.is_dir():
+            continue
+        if cursor.exists():
+            raise OSError("на месте каталога лежит файл")
+        cursor.mkdir()
+        created_dirs.append(cursor)
 
 
 def _ensure_writable(write_dir: Path, paths: list[Path]) -> None:
     if write_dir.exists() and not write_dir.is_dir():
         raise OSError("каталог записи недоступен")
+    root = write_dir.resolve()
     for path in paths:
+        resolved = path.resolve()
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            raise OSError("путь выходит из каталога записи") from None
         cursor = write_dir
         for part in path.relative_to(write_dir).parent.parts:
             cursor = cursor / part
