@@ -242,7 +242,7 @@ func (h *harness) lesson() string {
 
 func (h *harness) itemResult() attempts.ItemResult {
 	h.t.Helper()
-	res, err := attempts.ItemResult(context.Background(), h.conn, h.assignment(), h.item())
+	res, err := attempts.ReadItemResult(context.Background(), h.conn, h.assignment(), h.item())
 	if err != nil {
 		h.t.Fatalf("ItemResult: %v", err)
 	}
