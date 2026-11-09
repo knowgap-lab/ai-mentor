@@ -28,6 +28,10 @@ func Handler(dsn string, auth, answers, attempts http.Handler) http.Handler {
 			listStudents(w, r, pool)
 			return
 		}
+		if r.Method == http.MethodGet && r.URL.Path == "/assignments" {
+			listAssignments(w, r, pool)
+			return
+		}
 		path := r.URL.Path
 		switch {
 		case path == "/me" || strings.HasPrefix(path, "/auth/"):
@@ -58,44 +62,24 @@ func openPool(dsn string) *pgxpool.Pool {
 }
 
 type studentView struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
+	UserID      string `json:"user_id"`
+	Role        string `json:"role"`
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+}
+
+type assignmentSummary struct {
+	ID        string `json:"id"`
+	Kind      string `json:"kind"`
+	Subject   string `json:"subject"`
+	State     string `json:"state"`
+	Total     int    `json:"total"`
+	StudentID string `json:"student_id"`
 }
 
 func listStudents(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool) {
-	if pool == nil {
-		writeCode(w, http.StatusServiceUnavailable, "unavailable")
-		return
-	}
-	token, ok := cookieToken(r)
+	tutorID, ok := currentTutor(w, r, pool)
 	if !ok {
-		writeCode(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	hash, ok := hashToken(token)
-	if !ok {
-		writeCode(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	var tutorID, role string
-	err := pool.QueryRow(r.Context(), `
-		SELECT u.id, u.role
-		FROM core.session AS sess
-		JOIN core.app_user AS u ON u.id = sess.user_id
-		WHERE sess.token_hash = $1
-		  AND sess.revoked_at IS NULL
-		  AND sess.expires_at > now()
-	`, hash).Scan(&tutorID, &role)
-	if errors.Is(err, pgx.ErrNoRows) {
-		writeCode(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	if err != nil {
-		writeCode(w, http.StatusServiceUnavailable, "unavailable")
-		return
-	}
-	if role != "tutor" {
-		writeCode(w, http.StatusForbidden, "forbidden")
 		return
 	}
 	rows, err := pool.Query(r.Context(), `
@@ -116,6 +100,9 @@ func listStudents(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool) {
 			writeCode(w, http.StatusServiceUnavailable, "unavailable")
 			return
 		}
+		// Экран репетитора читает id и display_name. Отдельного имени в сиде нет.
+		item.ID = item.UserID
+		item.DisplayName = item.UserID
 		out = append(out, item)
 	}
 	if err := rows.Err(); err != nil {
@@ -123,6 +110,86 @@ func listStudents(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool) {
 		return
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+func listAssignments(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool) {
+	tutorID, ok := currentTutor(w, r, pool)
+	if !ok {
+		return
+	}
+	studentID := r.URL.Query().Get("student_id")
+	out := make([]assignmentSummary, 0)
+	if studentID == "" {
+		writeJSON(w, http.StatusOK, out)
+		return
+	}
+	rows, err := pool.Query(r.Context(), `
+		SELECT a.id, a.kind, a.state, a.student_id,
+		       (SELECT count(*)::int FROM core.assignment_item AS i WHERE i.assignment_id = a.id)
+		FROM core.assignment AS a
+		JOIN core.app_user AS u ON u.id = a.student_id
+		WHERE a.student_id = $1
+		  AND u.role = 'student'
+		  AND u.owner_tutor_id = $2
+		ORDER BY a.id
+	`, studentID, tutorID)
+	if err != nil {
+		writeCode(w, http.StatusServiceUnavailable, "unavailable")
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var item assignmentSummary
+		if err := rows.Scan(&item.ID, &item.Kind, &item.State, &item.StudentID, &item.Total); err != nil {
+			writeCode(w, http.StatusServiceUnavailable, "unavailable")
+			return
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		writeCode(w, http.StatusServiceUnavailable, "unavailable")
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func currentTutor(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool) (string, bool) {
+	if pool == nil {
+		writeCode(w, http.StatusServiceUnavailable, "unavailable")
+		return "", false
+	}
+	token, ok := cookieToken(r)
+	if !ok {
+		writeCode(w, http.StatusUnauthorized, "unauthorized")
+		return "", false
+	}
+	hash, ok := hashToken(token)
+	if !ok {
+		writeCode(w, http.StatusUnauthorized, "unauthorized")
+		return "", false
+	}
+	var tutorID, role string
+	err := pool.QueryRow(r.Context(), `
+		SELECT u.id, u.role
+		FROM core.session AS sess
+		JOIN core.app_user AS u ON u.id = sess.user_id
+		WHERE sess.token_hash = $1
+		  AND sess.revoked_at IS NULL
+		  AND sess.expires_at > now()
+	`, hash).Scan(&tutorID, &role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		writeCode(w, http.StatusUnauthorized, "unauthorized")
+		return "", false
+	}
+	if err != nil {
+		writeCode(w, http.StatusServiceUnavailable, "unavailable")
+		return "", false
+	}
+	if role != "tutor" {
+		writeCode(w, http.StatusForbidden, "forbidden")
+		return "", false
+	}
+	return tutorID, true
 }
 
 func cookieToken(r *http.Request) (string, bool) {

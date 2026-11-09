@@ -729,6 +729,11 @@ func (s *Service) doGet(ctx context.Context, user actor, assignmentID string) ([
 			ItemID       string `json:"item_id"`
 			Statement    string `json:"statement"`
 			AnswerFormat string `json:"answer_format"`
+			Format       string `json:"format"`
+			Options      []struct {
+				N    int    `json:"n"`
+				Text string `json:"text"`
+			} `json:"options"`
 		} `json:"items"`
 	}
 	if err := json.Unmarshal(snapshot, &stored); err != nil {
@@ -752,11 +757,16 @@ func (s *Service) doGet(ctx context.Context, user actor, assignmentID string) ([
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
+	type viewOption struct {
+		N    int    `json:"n"`
+		Text string `json:"text"`
+	}
 	type viewItem struct {
-		ItemID       string `json:"item_id"`
-		Statement    string `json:"statement"`
-		AnswerFormat string `json:"answer_format"`
-		ItemState    string `json:"item_state"`
+		ItemID       string       `json:"item_id"`
+		Statement    string       `json:"statement"`
+		AnswerFormat string       `json:"answer_format"`
+		ItemState    string       `json:"item_state"`
+		Options      []viewOption `json:"options,omitempty"`
 	}
 	view := struct {
 		ID    string     `json:"id"`
@@ -770,11 +780,23 @@ func (s *Service) doGet(ctx context.Context, user actor, assignmentID string) ([
 		Items: make([]viewItem, 0, len(stored.Items)),
 	}
 	for _, item := range stored.Items {
+		format := item.AnswerFormat
+		if format == "" {
+			format = item.Format
+		}
+		var options []viewOption
+		if len(item.Options) > 0 {
+			options = make([]viewOption, 0, len(item.Options))
+			for _, opt := range item.Options {
+				options = append(options, viewOption{N: opt.N, Text: opt.Text})
+			}
+		}
 		view.Items = append(view.Items, viewItem{
 			ItemID:       item.ItemID,
 			Statement:    item.Statement,
-			AnswerFormat: item.AnswerFormat,
+			AnswerFormat: format,
 			ItemState:    states[item.ItemID],
+			Options:      options,
 		})
 	}
 	return json.Marshal(view)

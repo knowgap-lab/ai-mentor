@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
 import { Statement } from "./Statement";
+import "./task.css";
 
 const INTEGER_HINT = "введите целое число";
 const MINUS = "−";
@@ -80,6 +81,20 @@ function integerHint(value: string): string | null {
     return INTEGER_HINT;
   }
   return null;
+}
+
+function itemOptions(item: ItemState): Option[] {
+  const given = item.options ?? [];
+  if (given.length > 0) {
+    return [...given].sort((a, b) => a.n - b.n);
+  }
+  if (
+    item.answer_format === "ct.choice1" ||
+    item.answer_format === "ct.choiceN"
+  ) {
+    return [1, 2, 3, 4, 5].map((n) => ({ n, text: String(n) }));
+  }
+  return [];
 }
 
 function attemptsLabel(left: number): string {
@@ -294,7 +309,7 @@ export function TaskPage() {
     void send(answer);
   }
 
-  const options = [...(item.options ?? [])].sort((a, b) => a.n - b.n);
+  const options = itemOptions(item);
   const verdict = result ? verdictText(result) : null;
 
   return (
@@ -305,7 +320,7 @@ export function TaskPage() {
         <Radio.Group
           label="Вариант"
           name="choice1"
-          value={choice}
+          value={choice ?? ""}
           onChange={setChoice}
         >
           {options.map((option) => (
@@ -345,8 +360,9 @@ export function TaskPage() {
           />
           <Button
             type="button"
+            className="touch-target"
+            variant="default"
             onClick={toggleMinus}
-            style={{ minHeight: 44, minWidth: 44 }}
           >
             {MINUS}
           </Button>
@@ -355,8 +371,9 @@ export function TaskPage() {
       {formatHint ? <p>{formatHint}</p> : null}
       <Button
         type="button"
+        className="touch-target"
+        variant="default"
         onClick={onAnswer}
-        style={{ minHeight: 44, minWidth: 44 }}
       >
         Ответить
       </Button>
