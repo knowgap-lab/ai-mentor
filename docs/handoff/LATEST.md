@@ -2,9 +2,9 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-09 16:10 (grok)
-**Ветка:** `feat/python-block` (от `feat/catalog-ci`, локально, без push); документация влита в `main` (PR №3)
-**Этап:** оркестратор Python-блока запущен. Пакет 1 `content/catalog_ci/` на месте (42 теста). Платформенного кода нет.
+**Обновлено:** 2026-11-09 18:27 (grok)
+**Ветка:** `feat/python-block` @ `df54c89` (локально, без push)
+**Этап:** Python-блок закрыт. A0–A2, B1 и B2 приняты. C1 заблокирован вопросом. Дальше выпуск 1.
 
 ## Где мы
 
@@ -17,11 +17,11 @@
 
 ## Что в работе сейчас
 
-Приняты A0, A1, B1 и B2. В очереди A2 (ключи и пул) и решение по C1. Состояние — [orchestrator-progress.md](orchestrator-progress.md).
+Python-блок закончен: отчёт [2026-11-09-1827-orchestrator-python-block-done](entries/2026-11-09-1827-orchestrator-python-block-done.md). C1 ждёт таблицу видов этапов. Состояние — [orchestrator-progress.md](orchestrator-progress.md).
 
 ## Следующий шаг
 
-Довести очередь Python-блока (A0 → A1 → A2, параллельно B1 и B2, затем C1) до принятых или заблокированных пакетов и влить принятое в `feat/python-block`. Проверка: `PATH="$PWD/.venv/bin:$PATH" tools/check.sh`. Выпуск 1 на Go и веб этой очередью не покрывается.
+Сразу выпуск 1 по `briefs/ORCHESTRATOR-RELEASE1.md` от `feat/python-block`. Проверка Python-блока: `PATH="$PWD/.venv/bin:$PATH" tools/check.sh`.
 
 ## Блокеры и вопросы
 
