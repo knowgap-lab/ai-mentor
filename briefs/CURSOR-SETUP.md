@@ -25,7 +25,7 @@
 
 Проверка: MCP-сервер в настройках Cursor горит зелёным.
 
-**Разрешения для автозапуска.** Добавьте в `allow_instructions` в `~/.cursor/permissions.json` строку: «Allow go (build, vet, test, mod tidy), gofmt, npm (ci, install, run, test), npx vitest and tsc, python3 and pytest, psql and docker compose or docker run for postgres test containers, and git worktree add/remove, inside the workspace and ../ai-mentor-wt». Блок-список (push в main, force, reset --hard, clean) оставьте как есть.
+**Разрешения для автозапуска.** Добавьте в `allow_instructions` в `~/.cursor/permissions.json` строку: «Allow go (build, vet, test, mod tidy), gofmt, npm (ci, install, run, test), npx vitest and tsc, python3 and pytest, psql and docker compose or docker run for postgres test containers, and git worktree add/remove, inside the workspace and .worktrees». Блок-список (push в main, force, reset --hard, clean) оставьте как есть.
 
 **Что ещё стоит поставить (по анализу того, что стоит у вас в Claude Code):**
 

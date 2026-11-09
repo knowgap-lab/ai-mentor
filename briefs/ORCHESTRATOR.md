@@ -80,12 +80,14 @@
 
 ```bash
 git checkout -b feat/python-block              # от текущей ветки; один раз
-git worktree add ../ai-mentor-wt/<пакет> -b feat/<пакет> feat/python-block
+echo .worktrees >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
+mkdir -p .worktrees
+git worktree add .worktrees/<пакет> -b feat/<пакет> feat/python-block
 ```
 
 - Один пакет — один worktree. Исполнитель получает путь worktree как рабочий каталог и не выходит за него.
 - Окружение Python — общее: `python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt` в корне основного репозитория (каталог `.venv/` игнорируется git); исполнителям даётся абсолютный путь `.../ai-mentor/.venv/bin/python`. Если установка зависимостей недоступна, остановитесь и запишите это в отчёт; не пытайтесь обойти.
-- Приёмка прошла → `git checkout feat/python-block && git merge --no-ff feat/<пакет>`, затем `git worktree remove ../ai-mentor-wt/<пакет>`. Ветку пакета не удаляйте.
+- Приёмка прошла → `git checkout feat/python-block && git merge --no-ff feat/<пакет>`, затем `git worktree remove .worktrees/<пакет>`. Ветку пакета не удаляйте.
 - Заблокированный пакет в интеграционную ветку не вливается; его ветку и worktree оставьте как есть.
 - Коммиты: заголовок строго `тип(область): тема` (`feat(content): add history checks`), один `-m`, без строк об авторстве ИИ; в `git add` файлы перечисляйте явно (`-A`, `--all`, `.` хук отклоняет).
 

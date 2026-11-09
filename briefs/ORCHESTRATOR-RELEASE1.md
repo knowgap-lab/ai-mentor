@@ -120,7 +120,9 @@
 
 ```bash
 git checkout -b feat/release1                       # один раз
-git worktree add ../ai-mentor-wt/<пакет> -b feat/r1-<пакет> feat/release1
+echo .worktrees >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
+mkdir -p .worktrees
+git worktree add .worktrees/<пакет> -b feat/r1-<пакет> feat/release1
 ```
 
 - Один пакет — один worktree; исполнитель не выходит за его пределы.
