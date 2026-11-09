@@ -50,7 +50,8 @@ var (
 	}
 )
 
-// Score оценивает сырой ввод. key: choice — []int, integer — int, digits и match — string.
+// Score оценивает сырой ввод. key: choice — []int (как множество номеров),
+// integer — int или строка целого, digits и match — string.
 // raw: choice — []int, иначе string. Неизвестный format вызывает панику.
 func Score(format string, key any, raw any, traps map[string]string) Result {
 	switch format {
@@ -89,7 +90,7 @@ func scoreChoice(single bool, key, raw any, traps map[string]string) Result {
 	norm := uniqueSorted(xs)
 	shown := joinInts(norm)
 	verdict := "wrong"
-	if slices.Equal(norm, sortedInts(ks)) {
+	if slices.Equal(norm, uniqueSorted(ks)) {
 		verdict = "correct"
 	}
 	format := formatChoiceN
@@ -100,7 +101,7 @@ func scoreChoice(single bool, key, raw any, traps map[string]string) Result {
 }
 
 func scoreInteger(key, raw any, traps map[string]string) Result {
-	k, ok := key.(int)
+	canon, ok := canonIntegerKey(key)
 	if !ok {
 		panic("answerrules: integer key")
 	}
@@ -113,10 +114,23 @@ func scoreInteger(key, raw any, traps map[string]string) Result {
 		return malformed()
 	}
 	verdict := "wrong"
-	if norm == itoa(k) {
+	if norm == canon {
 		verdict = "correct"
 	}
 	return scored(formatInteger, norm, verdict, traps)
+}
+
+// canonIntegerKey приводит ключ ct.integer к той же записи, что и ввод ученика.
+// Строка "007" становится "7" и не вызывает панику.
+func canonIntegerKey(key any) (string, bool) {
+	switch k := key.(type) {
+	case int:
+		return itoa(k), true
+	case string:
+		return canonicalInteger(k)
+	default:
+		return "", false
+	}
 }
 
 func scoreDigits(key, raw any, traps map[string]string) Result {
@@ -356,12 +370,6 @@ func uniqueSorted(xs []int) []int {
 		seen[x] = struct{}{}
 		out = append(out, x)
 	}
-	slices.Sort(out)
-	return out
-}
-
-func sortedInts(xs []int) []int {
-	out := append([]int(nil), xs...)
 	slices.Sort(out)
 	return out
 }
