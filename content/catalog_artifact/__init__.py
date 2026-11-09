@@ -152,6 +152,11 @@ def apply_version(
 ) -> ApplyResult:
     """Добавить ревизии изменившихся сущностей, не меняя входной журнал."""
 
+    # LD-R4: id из журнала нельзя стереть, просто убрав его из артефакта.
+    present = {entity.id for entity in artifact.entities}
+    if any(revision.id not in present for revision in log.revisions):
+        return ApplyResult(code="artifact_invalid", log=log)
+
     changed = _changed_ids(log, artifact)
     if not changed:
         # Те же хеши. Голова и голова плюс 1 — тихий успех без вызовов.
@@ -191,12 +196,14 @@ def apply_version(
             "commit": artifact.commit,
         },
     )
-    if artifact.corrected_keys:
+    # Ключ сверяется с последней ревизией журнала, а не с corrected_keys.
+    recheck_variants = _recheck_variants(log, artifact)
+    if recheck_variants:
         calls += (
             {
                 "kind": "recheck",
                 "correction_id": artifact.catalog_version,
-                "variants": list(artifact.corrected_keys),
+                "variants": recheck_variants,
             },
         )
     return ApplyResult(
@@ -250,12 +257,17 @@ def _entity(identifier: str, payload: dict[str, Any]) -> Entity:
     )
 
 
-def _changed_ids(log: VersionLog, artifact: Artifact) -> list[str]:
+def _latest_revisions(log: VersionLog) -> dict[str, Revision]:
     latest: dict[str, Revision] = {}
     for revision in log.revisions:
         current = latest.get(revision.id)
         if current is None or revision.catalog_version_from >= current.catalog_version_from:
             latest[revision.id] = revision
+    return latest
+
+
+def _changed_ids(log: VersionLog, artifact: Artifact) -> list[str]:
+    latest = _latest_revisions(log)
     changed = [
         entity.id
         for entity in artifact.entities
@@ -263,6 +275,19 @@ def _changed_ids(log: VersionLog, artifact: Artifact) -> list[str]:
     ]
     changed.sort()
     return changed
+
+
+def _recheck_variants(log: VersionLog, artifact: Artifact) -> list[str]:
+    """Id, чей key отличается от последней ревизии того же id."""
+
+    latest = _latest_revisions(log)
+    found = [
+        entity.id
+        for entity in artifact.entities
+        if entity.id in latest and _key(latest[entity.id].data) != _key(entity.data)
+    ]
+    found.sort()
+    return found
 
 
 def _corrected_keys(previous: Artifact | None, entities: tuple[Entity, ...]) -> tuple[str, ...]:
@@ -446,10 +471,11 @@ def _read_archive(path: Path) -> Artifact:
     entities: list[Entity] = []
     for entry in entries:
         raw = files[f"entities/{entry['id']}.json"]
-        if hashlib.sha256(raw).hexdigest() != entry["content_hash"]:
-            raise ArtifactInvalid()
         payload = _object(raw)
-        if payload is None:
+        # D275: файл сущности принимается только как точные канонические байты.
+        if payload is None or canonical_bytes(payload) != raw:
+            raise ArtifactInvalid()
+        if hashlib.sha256(raw).hexdigest() != entry["content_hash"]:
             raise ArtifactInvalid()
         entities.append(
             Entity(id=entry["id"], content_hash=entry["content_hash"], data=raw)
