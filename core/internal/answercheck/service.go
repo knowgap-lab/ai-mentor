@@ -18,6 +18,9 @@ import (
 
 const sessionCookie = "__Host-session"
 
+// Пустой AppOrigin: тесты задают только DSN и шлют Origin http://localhost.
+const unsetAppOrigin = "http://localhost"
+
 const (
 	solutionBlock = "ct-math:M10.B09"
 	variantID     = "ct-math:M10.T01.S1.V001"
@@ -27,7 +30,8 @@ const (
 
 // Config — параметры сервиса. В тестах задан только DSN.
 type Config struct {
-	DSN string
+	DSN       string
+	AppOrigin string
 }
 
 // World — идентификаторы, которые Seed подготовил для сценария.
@@ -42,6 +46,7 @@ type World struct {
 // Service обслуживает POST /assignments/{id}/items/{item}/answer.
 type Service struct {
 	pool    *pgxpool.Pool
+	cfg     Config
 	handler http.Handler
 }
 
@@ -77,7 +82,7 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 		pool.Close()
 		return nil, err
 	}
-	svc := &Service{pool: pool}
+	svc := &Service{pool: pool, cfg: cfg}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /assignments/{id}/items/{item}/answer", svc.answer)
 	svc.handler = mux
@@ -98,6 +103,10 @@ func (s *Service) Handler() http.Handler {
 }
 
 func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, bool) {
+	if r.Header.Get("Origin") != s.allowedOrigin() {
+		writeCode(w, http.StatusForbidden, "csrf")
+		return actor{}, false
+	}
 	cookie, err := r.Cookie(sessionCookie)
 	if err != nil || cookie.Value == "" {
 		writeCode(w, http.StatusUnauthorized, "unauthorized")
@@ -130,6 +139,13 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 		return actor{}, false
 	}
 	return user, true
+}
+
+func (s *Service) allowedOrigin() string {
+	if s.cfg.AppOrigin != "" {
+		return s.cfg.AppOrigin
+	}
+	return unsetAppOrigin
 }
 
 func hashToken(token string) ([]byte, bool) {

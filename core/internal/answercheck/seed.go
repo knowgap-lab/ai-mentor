@@ -22,6 +22,7 @@ type storedItem struct {
 	ItemID        string            `json:"item_id"`
 	Part          string            `json:"part,omitempty"`
 	Format        string            `json:"format,omitempty"`
+	AnswerFormat  string            `json:"answer_format,omitempty"`
 	Key           json.RawMessage   `json:"key,omitempty"`
 	SolutionBlock string            `json:"solution_block,omitempty"`
 	VariantID     string            `json:"variant_id,omitempty"`
@@ -224,7 +225,10 @@ func readItem(item map[string]any, hasItem bool) itemSpec {
 	if value, ok := asString(item["part"]); ok {
 		spec.part = value
 	}
-	if value, ok := asString(item["format"]); ok {
+	if value, ok := asString(item["format"]); ok && value != "" {
+		spec.format = value
+	}
+	if value, ok := asString(item["answer_format"]); ok && value != "" {
 		spec.format = value
 	}
 	if value, ok := item["key"]; ok {
