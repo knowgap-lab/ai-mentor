@@ -16,6 +16,7 @@ def _parser() -> argparse.ArgumentParser:
     check = commands.add_parser("check", help="проверить каталог")
     check.add_argument("path", type=Path)
     check.add_argument("--mode", choices=("pr", "main"), default="pr")
+    check.add_argument("--base", type=Path, help="каталог базы для сравнения id")
     check.add_argument("--json", action="store_true", dest="as_json")
     return parser
 
@@ -25,8 +26,10 @@ def main() -> int:
     args = parser.parse_args()
     if not args.path.is_dir():
         parser.error("path должен быть существующим каталогом")
+    if args.base is not None and not args.base.is_dir():
+        parser.error("каталог базы должен существовать")
 
-    problems = check_catalog(args.path, mode=args.mode)
+    problems = check_catalog(args.path, mode=args.mode, base=args.base)
     if args.as_json:
         print(
             json.dumps(
