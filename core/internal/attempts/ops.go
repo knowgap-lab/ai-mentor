@@ -794,7 +794,54 @@ func (s *Service) listAttempts(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusForbidden, "forbidden", nil)
 		return
 	}
-	writeJSON(w, http.StatusOK, []any{})
+	items, err := loadAttemptList(r.Context(), s.pool, r.PathValue("id"))
+	if err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+type attemptListItem struct {
+	AttemptID string `json:"attempt_id"`
+	ItemID    string `json:"item_id"`
+	AttemptNo int    `json:"attempt_no"`
+	RawInput  string `json:"raw_input"`
+	Verdict   string `json:"verdict"`
+	Points    int    `json:"points"`
+}
+
+func loadAttemptList(ctx context.Context, q queryer, assignmentID string) ([]attemptListItem, error) {
+	rows, err := q.Query(ctx, `
+		SELECT a.id, a.item_id, a.attempt_no, a.raw_input,
+		       COALESCE(v.verdict, ''), COALESCE(v.points, 0)
+		FROM core.attempts AS a
+		LEFT JOIN LATERAL (
+			SELECT verdict, points
+			FROM core.attempt_verdict
+			WHERE attempt_id = a.id
+			ORDER BY seq DESC
+			LIMIT 1
+		) AS v ON true
+		WHERE a.assignment_id = $1
+		ORDER BY a.item_id, a.attempt_no
+	`, assignmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]attemptListItem, 0)
+	for rows.Next() {
+		var item attemptListItem
+		if err := rows.Scan(&item.AttemptID, &item.ItemID, &item.AttemptNo, &item.RawInput, &item.Verdict, &item.Points); err != nil {
+			return nil, err
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 type draftItemView struct {
