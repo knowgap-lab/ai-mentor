@@ -7,7 +7,7 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
-from .checker import check_catalog
+from . import check_catalog
 
 
 def _parser() -> argparse.ArgumentParser:
