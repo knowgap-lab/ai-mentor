@@ -2,26 +2,26 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-09 18:27 (grok)
-**Ветка:** `feat/python-block` @ `df54c89` (локально, без push)
-**Этап:** Python-блок закрыт. A0–A2, B1 и B2 приняты. C1 заблокирован вопросом. Дальше выпуск 1.
+**Обновлено:** 2026-11-09 18:30 (grok)
+**Ветка:** `feat/release1` (от `feat/python-block`, локально, без push)
+**Этап:** выпуск 1, фаза 0. Каркас ещё не написан. Python-блок принят на предке ветки.
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (275), правила для агентов | схемы в `contracts/` |
+| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (300), правила для агентов | схемы в `contracts/` |
 | `catalog/` | schema, answer-rules, variants, loader, plan-import, composer (на ревью) | eval (отложен) |
 | `platform/` | answer-check, attempts, recheck, auth, privacy, notifications, web, ops, queue, rt-import (на ревью) | — |
 | `personalization/` | обзор, homework, lessons, conspect, plan (на ревью) | 4 модуля (diagnostics, optimizer, knowledge-model, agent) |
 
 ## Что в работе сейчас
 
-Python-блок закончен: отчёт [2026-11-09-1827-orchestrator-python-block-done](entries/2026-11-09-1827-orchestrator-python-block-done.md). C1 ждёт таблицу видов этапов. Состояние — [orchestrator-progress.md](orchestrator-progress.md).
+Идёт выпуск 1, фаза 0 (каркас). Прогресс — [orchestrator-progress-release1.md](orchestrator-progress-release1.md). Python-блок: [2026-11-09-1827-orchestrator-python-block-done](entries/2026-11-09-1827-orchestrator-python-block-done.md).
 
 ## Следующий шаг
 
-Сразу выпуск 1 по `briefs/ORCHESTRATOR-RELEASE1.md` от `feat/python-block`. Проверка Python-блока: `PATH="$PWD/.venv/bin:$PATH" tools/check.sh`.
+Довести фазу 0 (F0, затем F1, затем F2), потом фазу 1. Проверка каркаса появится как `tools/check-code.sh`. Документация: `PATH="$PWD/.venv/bin:$PATH" tools/check.sh`.
 
 ## Блокеры и вопросы
 
