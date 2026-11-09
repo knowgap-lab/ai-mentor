@@ -17,7 +17,7 @@
 
 ## Что в работе сейчас
 
-Идёт проверка одного ответа (G3). Журнал попыток уже влит. Прогресс — [orchestrator-progress-release1.md](orchestrator-progress-release1.md).
+Проверка одного ответа и загрузчик каталога влиты в `feat/release1`. Дальше локальный запуск, страница варианта, экран репетитора и сквозной прогон, затем фазы 2 и 3. Прогресс — [orchestrator-progress-release1.md](orchestrator-progress-release1.md).
 
 ## Следующий шаг
 
