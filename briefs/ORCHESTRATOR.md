@@ -80,13 +80,13 @@
 
 ```bash
 git checkout -b feat/python-block              # от текущей ветки; один раз
-echo .worktrees >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
+printf '.worktrees\n.venv\n' >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
 mkdir -p .worktrees
 git worktree add .worktrees/<пакет> -b feat/<пакет> feat/python-block
 ```
 
 - Один пакет — один worktree. Исполнитель получает путь worktree как рабочий каталог и не выходит за него.
-- Окружение Python — общее: `python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt` в корне основного репозитория (каталог `.venv/` игнорируется git); исполнителям даётся абсолютный путь `.../ai-mentor/.venv/bin/python`. Если установка зависимостей недоступна, остановитесь и запишите это в отчёт; не пытайтесь обойти.
+- Окружение Python — общее: `python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt` в корне основного репозитория (`.venv/` в корне скрыт через `.git/info/exclude` командой выше); исполнителям даётся абсолютный путь `.../ai-mentor/.venv/bin/python`. Если установка зависимостей недоступна, остановитесь и запишите это в отчёт; не пытайтесь обойти. Все проверки (`tools/check.sh`, `pytest`, `tools/check-code.sh`) запускайте с `PATH="<корень>/.venv/bin:$PATH"`, иначе `python3` будет без зависимостей и проверки упадут.
 - Приёмка прошла → `git checkout feat/python-block && git merge --no-ff feat/<пакет>`, затем `git worktree remove .worktrees/<пакет>`. Ветку пакета не удаляйте.
 - Заблокированный пакет в интеграционную ветку не вливается; его ветку и worktree оставьте как есть.
 - Коммиты: заголовок строго `тип(область): тема` (`feat(content): add history checks`), один `-m`, без строк об авторстве ИИ; в `git add` файлы перечисляйте явно (`-A`, `--all`, `.` хук отклоняет).

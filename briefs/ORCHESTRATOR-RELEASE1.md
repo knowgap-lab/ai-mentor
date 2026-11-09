@@ -120,13 +120,13 @@
 
 ```bash
 git checkout -b feat/release1                       # один раз
-echo .worktrees >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
+printf '.worktrees\n.venv\n' >> .git/info/exclude              # worktree внутри репозитория: Cursor не разрешает правки вне рабочей папки
 mkdir -p .worktrees
 git worktree add .worktrees/<пакет> -b feat/r1-<пакет> feat/release1
 ```
 
 - Один пакет — один worktree; исполнитель не выходит за его пределы.
-- Python: общее окружение `.venv` в корне (`python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt`), абсолютный путь к нему даётся исполнителям.
+- Python: общее окружение `.venv` в корне (`python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt`), абсолютный путь к нему даётся исполнителям. Все проверки (`tools/check.sh`, `pytest`, `tools/check-code.sh`) запускайте с `PATH="<корень>/.venv/bin:$PATH"`, иначе `python3` будет без зависимостей и проверки упадут.
 - PostgreSQL для тестов: один контейнер `postgres` (образ официальный, версия закреплена в F0); `docker` и `psql` на машине есть. С 15 параллельными пакетами у **каждого worktree своя база** (`CREATE DATABASE` из шаблона с уникальным именем по имени пакета) и свой порт сервера в тестах, иначе тесты соседей мешают друг другу. Если контейнер поднять нельзя, пакеты с БД проверяйте на том, что доступно, и в отчёте напишите «не проверено на реальной БД» для каждого такого пакета.
 - Приёмка прошла → `git checkout feat/release1 && git merge --no-ff feat/r1-<пакет>`, затем `git worktree remove`. Ветку пакета не удаляйте. Заблокированный пакет не вливается.
 - Коммиты: заголовок строго `тип(область): тема` (`feat(core): add attempts journal`), один `-m`, без строк об авторстве ИИ; в `git add` файлы перечисляйте явно (`-A`, `--all`, `.` хук отклоняет).
