@@ -23,9 +23,13 @@ func healthz(w http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
+	handler, err := rootHandler()
+	if err != nil {
+		log.Fatal(err)
+	}
 	srv := &http.Server{
-		Addr:              ":8080",
-		Handler:           newRouter(),
+		Addr:              listenAddr(),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	if err := srv.ListenAndServe(); err != nil {

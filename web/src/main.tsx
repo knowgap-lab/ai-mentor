@@ -12,7 +12,11 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <MantineProvider>
+    <MantineProvider
+      forceColorScheme="light"
+      withCssVariables={false}
+      withGlobalClasses={false}
+    >
       <BrowserRouter>
         <App />
       </BrowserRouter>
