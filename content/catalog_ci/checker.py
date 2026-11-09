@@ -1,9 +1,10 @@
-"""Сборка проверки каталога: загрузка, схема, межфайловые проверки."""
+"""Сборка проверки каталога: загрузка, схема, связи, ключи и пул."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from .answers import answer_problems, drop_shadowed_schema_problems
 from .cross import cross_file_problems
 from .history import history_problems
 from .load import load_documents
@@ -14,7 +15,7 @@ from .schema_layer import schema_problems
 def check_catalog(
     path: Path, mode: str = "pr", base: Path | None = None
 ) -> list[Problem]:
-    """Return every structural problem in catalog packages below *path*.
+    """Return every catalog problem in packages below *path*.
 
     ``path`` is the directory that contains package directories, not a package
     directory itself.  When ``base`` is a catalog directory, entity ids are
@@ -42,6 +43,8 @@ def check_catalog(
     problems = list(loading_problems)
     problems.extend(schema_problems(documents))
     problems.extend(cross_file_problems(documents, mode))
+    problems.extend(answer_problems(documents))
+    problems = drop_shadowed_schema_problems(problems)
     if base_root is not None:
         base_documents, _base_loading_problems = load_documents(base_root)
         problems.extend(history_problems(documents, base_documents))
