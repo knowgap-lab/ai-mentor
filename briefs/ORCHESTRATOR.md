@@ -59,7 +59,7 @@
 | B2 | Импорт плана | Разбор карточек тем и файлов уроков формата `ct-2027` в набор плана 0 (по контракту `PlanImportRequest` в `docs/contracts/internal-api.yaml`) и скелет каталога (темы, элементы E1); правила LP-R1…R20; валидатор входа. **Только синтетические данные** | `docs/catalog/plan-import.md`, `docs/catalog/plan-import.examples.yaml`, `docs/contracts/internal-api.yaml` | пакет `content/plan_import/`, `content/tests/test_plan_import.py`, синтетические данные в `content/tests/fixtures/` | — |
 | C1 | Составитель, детерминированная часть | Если останется лимит: разбор синтетического файла урока (разделы «Ход урока», «Задачи на уроке», «Домашняя работа») в шаблон урока формата `catalog.schema.json` (CP-R11, CP-R12, CP-R18, CP-R19); результат проходит `catalog_ci`. Не пишите и не меняйте SKILL.md | `docs/catalog/composer.md`, `docs/catalog/composer.examples.yaml` | `tools/composer/` (скрипты), `content/tests/test_composer_parse.py` | A0 |
 
-**Раздача исполнителей.** Модель везде Grok 4.7. Тесты: High. Код и ревью: effort из таблицы.
+**Раздача исполнителей.** Модель везде Grok 4.7. Effort субагентов отдельно не задаётся, он равен effort чата (High). Поэтому в таблице Medium означает «можно отдать на `composer-2.5-fast`, если поджимает лимит», а Extra High означает «усиленное ревью: два прохода по пунктам спецификации».
 
 | Пакет | Код (effort) | Ревью |
 |---|---|---|
