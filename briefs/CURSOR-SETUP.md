@@ -110,9 +110,9 @@
 Порядок: стандартная библиотека языка → зрелая популярная библиотека → свой код. Выбор, влияющий на несколько пакетов (веб-фреймворк, UI-кит, слой доступа к БД, способ PDF), записывается строкой в журнал решений как «default chosen by the orchestrator». Мелкие библиотеки внутри одного пакета записываются в отчёт исполнителя и итоговый отчёт.
 
 Кандидаты по умолчанию (можно заменить на другие, подходящие под критерии):
-- **Go:** `net/http` + `chi`, `pgx/v5`, `sqlc` (типобезопасные запросы из SQL), `oapi-codegen` и `kin-openapi` (контракт и проверка запросов), `goose` или `golang-migrate`, `alexedwards/scs` (сессии), защита от CSRF из `filippo.io/csrf` или `gorilla/csrf`, `golang.org/x/time/rate`, `log/slog`, `gopkg.in/yaml.v3`; тесты — `testify`, `go-cmp`, `testcontainers-go`.
-- **Web:** Vite, React, TypeScript, React Router, TanStack Query, `openapi-fetch` и `openapi-typescript`, `react-hook-form` + `zod`, один UI-кит на весь веб (Mantine или Tailwind с Radix; выбрать в F0 и записать), `react-markdown` + `remark-math` + `rehype-katex`, `DOMPurify`, `vite-plugin-pwa`, `date-fns`; тесты — `vitest`, `@testing-library/react`.
-- **Python:** `psycopg`, `pydantic`, `jsonschema`, `pyyaml`, `pytest`, `hypothesis` (property-based тесты).
+- **Go:** `net/http` + `chi`, `pgx/v5`, `sqlc` (типобезопасные запросы из SQL), `oapi-codegen` и `kin-openapi` (контракт и проверка запросов), `goose` или `golang-migrate`, `alexedwards/scs` (сессии), защита от CSRF из `filippo.io/csrf` или `gorilla/csrf`, `golang.org/x/time/rate`, `log/slog`, `gopkg.in/yaml.v3`; тесты — `testify`, `go-cmp`, `testcontainers-go`; анализ — `golangci-lint`, `govulncheck`.
+- **Web:** Vite, React, TypeScript, React Router, TanStack Query, `openapi-fetch` и `openapi-typescript`, `react-hook-form` + `zod`, один UI-кит на весь веб (Mantine или Tailwind с Radix; выбрать в F0 и записать), `react-markdown` + `remark-math` + `rehype-katex`, `DOMPurify`, `vite-plugin-pwa`, `date-fns`; тесты — `vitest`, `@testing-library/react`, `vitest-axe`, `Playwright` (с установленным Chrome, без скачивания браузеров), `@axe-core/playwright`; анализ — ESLint с `eslint-plugin-jsx-a11y`, Prettier.
+- **Python:** `psycopg`, `pydantic`, `jsonschema`, `pyyaml`, `pytest`, `hypothesis` (property-based тесты), `ruff` (линтер и формат).
 
 Инструменты генерации (sqlc, oapi-codegen и т. п.) закрепляются версией в `go.mod` (директива `tool`) или в `devDependencies`, ставятся только из публичных реестров по lock-файлам.
 
