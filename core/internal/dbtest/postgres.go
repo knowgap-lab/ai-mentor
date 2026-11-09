@@ -43,9 +43,11 @@ func Start(t *testing.T) string {
 	}
 
 	name := containerName()
+	vol := name + "-data"
 	runCtx, runCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	stdout, stderr, err := dockerOutput(runCtx, "run", "-d", "--rm", "--pull", "never",
 		"--name", name,
+		"-v", vol+":/var/lib/postgresql/data",
 		"-e", "POSTGRES_HOST_AUTH_METHOD=trust",
 		"-e", "POSTGRES_DB=ai_mentor_test",
 		"-p", "127.0.0.1::5432",
@@ -53,6 +55,9 @@ func Start(t *testing.T) string {
 	)
 	runCancel()
 	if err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		_, _, _ = dockerOutput(ctx, "volume", "rm", vol)
+		cancel()
 		t.Fatalf("docker run: %v: %s", err, trimText(stderr))
 	}
 	id := strings.TrimSpace(stdout)
@@ -61,6 +66,9 @@ func Start(t *testing.T) string {
 		defer cancel()
 		if _, _, rmErr := dockerOutput(ctx, "rm", "-f", id); rmErr != nil {
 			t.Errorf("docker rm: %v", rmErr)
+		}
+		if _, _, rmErr := dockerOutput(ctx, "volume", "rm", vol); rmErr != nil {
+			t.Errorf("docker volume rm: %v", rmErr)
 		}
 	})
 
