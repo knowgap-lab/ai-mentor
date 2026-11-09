@@ -80,14 +80,14 @@ func ensureImage() error {
 	imageOnce.Do(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
-		if _, _, err := dockerOutput(ctx, "image", "inspect", "--type=image", postgresImage); err == nil {
+		if _, _, err := dockerOutput(ctx, "image", "inspect", postgresImage); err == nil {
 			return
 		}
 		if _, stderr, err := dockerOutput(ctx, "pull", postgresImage); err != nil {
 			imageErr = fmt.Errorf("%w: %s", err, trimText(stderr))
 			return
 		}
-		if _, stderr, err := dockerOutput(ctx, "image", "inspect", "--type=image", postgresImage); err != nil {
+		if _, stderr, err := dockerOutput(ctx, "image", "inspect", postgresImage); err != nil {
 			imageErr = fmt.Errorf("image %s unavailable after pull: %w: %s", postgresImage, err, trimText(stderr))
 		}
 	})

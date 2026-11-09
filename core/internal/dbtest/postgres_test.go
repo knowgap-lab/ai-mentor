@@ -108,9 +108,9 @@ func TestMigrationSchemasAndReaderCatalogInsert(t *testing.T) {
 		{"core_app", "compute", false},
 		{"core_app", "queue", false},
 		{"reader", "catalog", true},
-		{"reader", "core", true},
-		{"reader", "compute", true},
-		{"reader", "queue", true},
+		{"reader", "core", false},
+		{"reader", "compute", false},
+		{"reader", "queue", false},
 	}
 	for _, check := range usage {
 		var got bool
@@ -206,11 +206,11 @@ func TestMigrationSchemasAndReaderCatalogInsert(t *testing.T) {
 		{"reader", "catalog.probe", "UPDATE", false},
 		{"reader", "catalog.probe", "DELETE", false},
 		{"reader", "catalog.probe", "TRUNCATE", false},
-		{"reader", "core.probe", "SELECT", true},
+		{"reader", "core.probe", "SELECT", false},
 		{"reader", "core.probe", "INSERT", false},
-		{"reader", "compute.probe", "SELECT", true},
+		{"reader", "compute.probe", "SELECT", false},
 		{"reader", "compute.probe", "INSERT", false},
-		{"reader", "queue.probe", "SELECT", true},
+		{"reader", "queue.probe", "SELECT", false},
 		{"reader", "queue.probe", "INSERT", false},
 		{"loader", "catalog.probe", "SELECT", true},
 		{"loader", "catalog.probe", "INSERT", true},
@@ -237,6 +237,7 @@ func TestMigrationSchemasAndReaderCatalogInsert(t *testing.T) {
 		}
 	}
 
+	expectAsRole(t, ctx, tx, "reader", `SELECT id FROM core.probe`, false, "schema")
 	expectAsRole(t, ctx, tx, "reader", `INSERT INTO catalog.probe (id) VALUES (1)`, false, "table")
 	expectAsRole(t, ctx, tx, "loader", `INSERT INTO catalog.probe (id) VALUES (1)`, true, "")
 	expectAsRole(t, ctx, tx, "loader", `UPDATE catalog.probe SET id = 2`, false, "table")
