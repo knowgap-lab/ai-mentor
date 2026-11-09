@@ -27,6 +27,7 @@ _ANSWER_CODES = frozenset(
 )
 
 _INTEGER_KEY = re.compile(r"^-?[0-9]+$")
+_FRACTIONAL_KEY = re.compile(r"^-?[0-9]+[.,][0-9]+$")
 _ASCII_DIGITS = set("0123456789")
 _MATCH_LETTERS = frozenset({"\u0410", "\u0411", "\u0412"})  # А Б В
 _CHOICE_FORMATS = frozenset({"ct.choice1", "ct.choiceN"})
@@ -129,9 +130,11 @@ def _integer_key_problems(
     variant: dict[str, Any],
     phrases: tuple[str, ...],
 ) -> list[Problem]:
-    if _is_integer_key(variant.get("key")):
+    key = variant.get("key")
+    if _is_integer_key(key):
         return []
-    if _statement_has_phrase(variant.get("statement"), phrases):
+    phrase_ok = _statement_has_phrase(variant.get("statement"), phrases)
+    if _is_fractional_key(key) and phrase_ok:
         return []
     return [
         _problem(
@@ -181,11 +184,13 @@ def _choice_problems(
 ) -> list[Problem]:
     problems: list[Problem] = []
     key_numbers = _choice_numbers(variant.get("key"))
+    option_numbers = _option_numbers(variant.get("options"))
     if format_id == "ct.choice1":
         count_ok = len(key_numbers) == 1
     else:
         count_ok = len(key_numbers) >= 2
-    if not count_ok:
+    numbers_ok = _choice_numbers_exist(key_numbers, option_numbers)
+    if not count_ok or not numbers_ok:
         problems.append(
             _problem(
                 document,
@@ -402,6 +407,14 @@ def _is_integer_key(value: Any) -> bool:
     return isinstance(value, str) and _INTEGER_KEY.fullmatch(value) is not None
 
 
+def _is_fractional_key(value: Any) -> bool:
+    """Дробный ключ: конечный float либо строка с одной десятичной точкой или запятой."""
+
+    if isinstance(value, float):
+        return value == value and abs(value) != float("inf")
+    return isinstance(value, str) and _FRACTIONAL_KEY.fullmatch(value) is not None
+
+
 def _digits_key_ok(value: Any) -> bool:
     if not isinstance(value, str) or not value:
         return False
@@ -436,6 +449,23 @@ def _choice_numbers(value: Any) -> set[int]:
     if not isinstance(value, list):
         return set()
     return {item for item in value if _is_strict_int(item)}
+
+
+def _option_numbers(options: Any) -> set[int]:
+    numbers: set[int] = set()
+    for _, option in _option_items(options):
+        number = option.get("n")
+        if _is_strict_int(number):
+            numbers.add(number)
+    return numbers
+
+
+def _choice_numbers_exist(key_numbers: set[int], option_numbers: set[int]) -> bool:
+    """Каждый номер ключа лежит в 1…5 и равен n одной из опций."""
+
+    return all(
+        number in _OPTION_NUMBERS and number in option_numbers for number in key_numbers
+    )
 
 
 def _minutes_ok(value: Any) -> bool:
