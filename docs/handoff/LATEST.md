@@ -2,7 +2,7 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-09 18:53 (grok)
+**Обновлено:** 2026-11-09 19:05 (grok)
 **Ветка:** `feat/release1` (от `feat/python-block`, локально, без push)
 **Этап:** выпуск 1, фаза 0. Каркас ещё не написан. Python-блок принят на предке ветки.
 
@@ -17,7 +17,7 @@
 
 ## Что в работе сейчас
 
-F0 принят (`tools/check-code.sh` зелёный). Дальше F1, миграции и роли базы. Прогресс — [orchestrator-progress-release1.md](orchestrator-progress-release1.md).
+F0 и F1 приняты на `feat/release1`. Дальше F2, прогонщик таблиц примеров. Прогресс — [orchestrator-progress-release1.md](orchestrator-progress-release1.md).
 
 ## Следующий шаг
 
