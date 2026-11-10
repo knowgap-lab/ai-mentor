@@ -4,6 +4,7 @@
 Ищет в web/src (кроме web/src/design/ и тестов) шестнадцатеричные цвета, rgb(), hsl()
 и именованные цвета CSS в значениях color, background и border. Код выхода 1 при находке.
 """
+
 import re
 import sys
 from pathlib import Path
@@ -30,7 +31,11 @@ for path in sorted(src.rglob("*")):
         code = line.split("//", 1)[0] if path.suffix != ".css" else line
         # Имена цветов темы в пропсах Mantine (color="red") разрешены; именованные цвета CSS
         # ищем только в CSS и во встроенных style.
-        patterns = (HEX, FUNC, NAMED) if path.suffix == ".css" or "style" in code else (HEX, FUNC)
+        patterns = (
+            (HEX, FUNC, NAMED)
+            if path.suffix == ".css" or "style" in code
+            else (HEX, FUNC)
+        )
         for pattern in patterns:
             m = pattern.search(code)
             if m:

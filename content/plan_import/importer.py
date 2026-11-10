@@ -16,7 +16,6 @@ from typing import Any
 
 import yaml
 
-
 PACKAGES = {"math": "ct-math", "physics": "ct-phys"}
 KINDS = {"diagnostic", "new", "consolidation", "review", "mock", "analysis"}
 CARD_REQUIRED = ("id", "title", "section", "level", "hours_lesson", "hours_home")
@@ -148,7 +147,9 @@ def import_plan(
         "created_topics": [topic["id"] for topic in skeleton.values()],
         "created_lessons": [item["lesson"] for item in request_lessons],
         "held_lessons": held,
-        "differences": _differences(snapshot["source_hashes"], previous_snapshot, dry_run),
+        "differences": _differences(
+            snapshot["source_hashes"], previous_snapshot, dry_run
+        ),
     }
     if write_dir is not None and not dry_run:
         try:
@@ -196,7 +197,9 @@ def _problem(code: str, file: str, line: int, message: str) -> dict[str, Any]:
 
 
 def _sorted(items: list[dict[str, Any]]) -> tuple[dict, ...]:
-    return tuple(sorted(items, key=lambda item: (item["file"], item["code"], item["line"])))
+    return tuple(
+        sorted(items, key=lambda item: (item["file"], item["code"], item["line"]))
+    )
 
 
 def _load_cards(
@@ -258,14 +261,18 @@ def _load_lessons(
     return lessons, occupied
 
 
-def _read_markdown(source: Path, path: Path, errors: list[dict[str, Any]]) -> LoadedFile | None:
+def _read_markdown(
+    source: Path, path: Path, errors: list[dict[str, Any]]
+) -> LoadedFile | None:
     raw = path.read_bytes()
     relative = path.relative_to(source).as_posix()
     digest = hashlib.sha256(raw).hexdigest()
     try:
         text = raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
     except UnicodeDecodeError:
-        errors.append(_problem("frontmatter_invalid", relative, 1, "файл не в кодировке UTF-8"))
+        errors.append(
+            _problem("frontmatter_invalid", relative, 1, "файл не в кодировке UTF-8")
+        )
         return None
     data = _frontmatter(text, relative, errors)
     if data is None:
@@ -273,14 +280,18 @@ def _read_markdown(source: Path, path: Path, errors: list[dict[str, Any]]) -> Lo
     return LoadedFile(relative=relative, text=text, digest=digest, data=data)
 
 
-def _frontmatter(text: str, relative: str, errors: list[dict[str, Any]]) -> dict[str, Any] | None:
+def _frontmatter(
+    text: str, relative: str, errors: list[dict[str, Any]]
+) -> dict[str, Any] | None:
     if not text.startswith("---\n"):
         errors.append(_problem("frontmatter_invalid", relative, 1, "нет frontmatter"))
         return None
     rest = text[4:]
     closing = re.search(r"\n---[ \t]*(?:\n|$)", rest)
     if closing is None:
-        errors.append(_problem("frontmatter_invalid", relative, 1, "frontmatter не закрыт"))
+        errors.append(
+            _problem("frontmatter_invalid", relative, 1, "frontmatter не закрыт")
+        )
         return None
     raw = rest[: closing.start()]
     try:
@@ -290,10 +301,18 @@ def _frontmatter(text: str, relative: str, errors: list[dict[str, Any]]) -> dict
         mark = getattr(exc, "problem_mark", None)
         if mark is not None and getattr(mark, "line", None) is not None:
             line = mark.line + 2
-        errors.append(_problem("frontmatter_invalid", relative, line, "frontmatter не разбирается"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", relative, line, "frontmatter не разбирается"
+            )
+        )
         return None
     if not isinstance(loaded, dict):
-        errors.append(_problem("frontmatter_invalid", relative, 1, "frontmatter должен быть объектом"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", relative, 1, "frontmatter должен быть объектом"
+            )
+        )
         return None
     return loaded
 
@@ -327,9 +346,17 @@ def _parse_card(loaded: LoadedFile, errors: list[dict[str, Any]]) -> Card | None
     level = _text_field(data, "level", loaded, errors)
     hours_lesson = _number_field(data, "hours_lesson", loaded, errors)
     hours_home = _number_field(data, "hours_home", loaded, errors)
-    prereqs = _code_list(data, "prereqs", loaded, errors, allow_empty=True, required=False)
-    positions = _code_list(data, "ct_positions", loaded, errors, allow_empty=True, required=False)
-    if hours_lesson is not None and hours_home is not None and hours_lesson + hours_home <= 0:
+    prereqs = _code_list(
+        data, "prereqs", loaded, errors, allow_empty=True, required=False
+    )
+    positions = _code_list(
+        data, "ct_positions", loaded, errors, allow_empty=True, required=False
+    )
+    if (
+        hours_lesson is not None
+        and hours_home is not None
+        and hours_lesson + hours_home <= 0
+    ):
         errors.append(
             _problem(
                 "frontmatter_invalid",
@@ -399,7 +426,9 @@ def _parse_lesson(
     week = _week_field(data, loaded, errors)
     phase = _text_field(data, "phase", loaded, errors)
     kind = _kind_field(data, loaded, errors)
-    topics = _code_list(data, "topics", loaded, errors, allow_empty=False, required=True)
+    topics = _code_list(
+        data, "topics", loaded, errors, allow_empty=False, required=True
+    )
     review = _code_list(data, "review", loaded, errors, allow_empty=True, required=True)
     title = _title(loaded.text)
     if title is None:
@@ -435,7 +464,12 @@ def _parse_lesson(
     ):
         return None
     assert lesson_subject and number is not None and week is not None
-    assert phase is not None and kind is not None and topics is not None and review is not None
+    assert (
+        phase is not None
+        and kind is not None
+        and topics is not None
+        and review is not None
+    )
     assert title is not None
     return Lesson(
         relative=loaded.relative,
@@ -452,7 +486,9 @@ def _parse_lesson(
     )
 
 
-def _check_prereqs(cards: list[Card], known_ids: set[str], errors: list[dict[str, Any]]) -> None:
+def _check_prereqs(
+    cards: list[Card], known_ids: set[str], errors: list[dict[str, Any]]
+) -> None:
     for card in cards:
         for code in dict.fromkeys(card.prereqs):
             if code not in known_ids:
@@ -518,21 +554,33 @@ def _peek_lesson_number(data: dict[str, Any]) -> int | None:
     return value
 
 
-def _lesson_number(data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]) -> int | None:
+def _lesson_number(
+    data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]
+) -> int | None:
     if "lesson" not in data:
         return None
     value = data["lesson"]
     line = _key_line(loaded.text, "lesson")
     if isinstance(value, bool) or not isinstance(value, int):
-        errors.append(_problem("frontmatter_invalid", loaded.relative, line, "неверный тип поля lesson"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", loaded.relative, line, "неверный тип поля lesson"
+            )
+        )
         return None
     if value < 1:
-        errors.append(_problem("frontmatter_invalid", loaded.relative, line, "номер урока меньше 1"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", loaded.relative, line, "номер урока меньше 1"
+            )
+        )
         return None
     return value
 
 
-def _week_field(data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]) -> dt.date | None:
+def _week_field(
+    data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]
+) -> dt.date | None:
     if "week" not in data:
         return None
     week = _as_date(data["week"])
@@ -560,16 +608,26 @@ def _as_date(value: object) -> dt.date | None:
     return None
 
 
-def _kind_field(data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]) -> str | None:
+def _kind_field(
+    data: dict[str, Any], loaded: LoadedFile, errors: list[dict[str, Any]]
+) -> str | None:
     if "kind" not in data:
         return None
     value = data["kind"]
     line = _key_line(loaded.text, "kind")
     if not isinstance(value, str):
-        errors.append(_problem("frontmatter_invalid", loaded.relative, line, "неверный тип поля kind"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", loaded.relative, line, "неверный тип поля kind"
+            )
+        )
         return None
     if value not in KINDS:
-        errors.append(_problem("kind_unknown", loaded.relative, line, f"неизвестный вид урока {value}"))
+        errors.append(
+            _problem(
+                "kind_unknown", loaded.relative, line, f"неизвестный вид урока {value}"
+            )
+        )
         return value
     return value
 
@@ -590,10 +648,16 @@ def _code_list(
     value = data[key]
     line = _key_line(loaded.text, key)
     if not isinstance(value, list):
-        errors.append(_problem("frontmatter_invalid", loaded.relative, line, f"неверный тип поля {key}"))
+        errors.append(
+            _problem(
+                "frontmatter_invalid", loaded.relative, line, f"неверный тип поля {key}"
+            )
+        )
         return None
     if not value and not allow_empty:
-        errors.append(_problem("frontmatter_invalid", loaded.relative, line, f"список {key} пуст"))
+        errors.append(
+            _problem("frontmatter_invalid", loaded.relative, line, f"список {key} пуст")
+        )
         return None
     codes: list[str] = []
     for item in value:
@@ -764,7 +828,9 @@ def _check_lesson_rules(
                 introduced.add(code)
 
 
-def _cross_check(source: Path, card_codes: set[str], lessons: list[Lesson]) -> list[dict[str, Any]]:
+def _cross_check(
+    source: Path, card_codes: set[str], lessons: list[Lesson]
+) -> list[dict[str, Any]]:
     warnings: list[dict[str, Any]] = []
     graph = source / "graph" / "graph.json"
     if graph.is_file():
@@ -781,7 +847,9 @@ def _graph_warnings(path: Path, card_codes: set[str]) -> list[dict[str, Any]]:
     except (UnicodeDecodeError, json.JSONDecodeError):
         return [_mismatch("graph/graph.json", "файл не разбирается форматом сверки")]
     topics = loaded.get("topics") if isinstance(loaded, dict) else None
-    if not isinstance(topics, list) or not all(isinstance(item, str) for item in topics):
+    if not isinstance(topics, list) or not all(
+        isinstance(item, str) for item in topics
+    ):
         return [_mismatch("graph/graph.json", "файл не разбирается форматом сверки")]
     graph_codes = set(topics)
     missing = sorted(graph_codes - card_codes)
@@ -790,7 +858,12 @@ def _graph_warnings(path: Path, card_codes: set[str]) -> list[dict[str, Any]]:
         return []
     parts = [f"нет карточки {code}" for code in missing]
     parts.extend(f"лишняя карточка {code}" for code in extra)
-    return [_mismatch("graph/graph.json", "расхождение со сгенерированным графом: " + "; ".join(parts))]
+    return [
+        _mismatch(
+            "graph/graph.json",
+            "расхождение со сгенерированным графом: " + "; ".join(parts),
+        )
+    ]
 
 
 def _plan_warnings(path: Path, lessons: list[Lesson]) -> list[dict[str, Any]]:
@@ -873,17 +946,28 @@ def _lessons_payload(
             }
         )
         if planned < monday:
-            held.append({"lesson": lesson.number, "state": "held", "snapshot": None, "marks": None})
+            held.append(
+                {
+                    "lesson": lesson.number,
+                    "state": "held",
+                    "snapshot": None,
+                    "marks": None,
+                }
+            )
     return payload, held
 
 
-def _differences(current: dict[str, str], previous: dict | None, dry_run: bool) -> list[str]:
+def _differences(
+    current: dict[str, str], previous: dict | None, dry_run: bool
+) -> list[str]:
     if not dry_run or not isinstance(previous, dict):
         return []
     hashes = previous.get("source_hashes")
     if not isinstance(hashes, dict):
         hashes = {}
-    return sorted(path for path, digest in current.items() if hashes.get(path) != digest)
+    return sorted(
+        path for path, digest in current.items() if hashes.get(path) != digest
+    )
 
 
 def _write_skeleton(write_dir: Path, skeleton: dict[str, dict]) -> None:

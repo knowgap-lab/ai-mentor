@@ -141,7 +141,7 @@ func loadConsentText() (version, text string, err error) {
 	if err != nil {
 		return "", "", err
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: путь из cwd и фиксированного имени legal/consent-1.md, не из запроса
 	if err != nil {
 		return "", "", err
 	}

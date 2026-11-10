@@ -3,7 +3,18 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-export PATH="$PWD/.venv/bin:$PATH"
+
+# Общий .venv лежит в каталоге интеграции; worktree своего не создаёт.
+venv_root="$PWD"
+while [[ ! -x "$venv_root/.venv/bin/ruff" ]]; do
+  parent="$(dirname "$venv_root")"
+  if [[ "$parent" == "$venv_root" ]]; then
+    echo "ruff не найден в .venv: проверка обязательна" >&2
+    exit 1
+  fi
+  venv_root="$parent"
+done
+export PATH="$venv_root/.venv/bin:$PATH"
 
 mapfile -d '' go_files < <(find core -name '*.go' -print0)
 if ((${#go_files[@]} > 0)); then
@@ -15,17 +26,29 @@ if ((${#go_files[@]} > 0)); then
 fi
 
 (cd core && go test ./...)
+
+# -race только у пакетов, чьи тесты не запускают внешний процесс
+# (exec.Command, docker, Postgres). Остальные остаются в go test ./... выше.
+race_packages=(
+  ./cmd/migrate
+  ./cmd/server
+  ./internal/answerrules
+)
+(cd core && go test -race "${race_packages[@]}")
+
 (cd core && go vet ./...)
 
-# Линтеры обязательны: отсутствие инструмента — провал, а не пропуск (briefs/ORCHESTRATOR-RELEASE1-FINISH.md, Q0).
-if (cd core && go tool -n golangci-lint >/dev/null 2>&1); then
-  (cd core && go tool golangci-lint run ./...)
-elif command -v golangci-lint >/dev/null 2>&1; then
-  (cd core && golangci-lint run ./...)
-else
+if ! (cd core && go tool -n golangci-lint >/dev/null 2>&1); then
   echo "golangci-lint не установлен: проверка обязательна" >&2
   exit 1
 fi
+(cd core && go tool golangci-lint run ./...)
+
+if ! (cd core && go tool -n govulncheck >/dev/null 2>&1); then
+  echo "govulncheck не установлен: проверка обязательна" >&2
+  exit 1
+fi
+(cd core && go tool govulncheck ./...)
 
 python3 tools/check_design.py
 (cd web && npm test)
@@ -33,11 +56,8 @@ python3 tools/check_design.py
 if node -e 'const s=require("./web/package.json").scripts||{}; process.exit(s.lint?0:1)'; then
   (cd web && npm run lint)
 fi
+# Ненулевой код только при high или critical. moderate и low проверку не валят.
+(cd web && npm audit --omit=dev --audit-level=high)
 
-if [[ -x .venv/bin/ruff ]]; then
-  .venv/bin/ruff check
-  .venv/bin/ruff format --check
-else
-  echo "ruff не найден в .venv: проверка обязательна" >&2
-  exit 1
-fi
+ruff check
+ruff format --check

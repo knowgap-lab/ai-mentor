@@ -10,9 +10,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, ValidationError
 
-from .load import Document, _PACKAGE_DEFINITIONS
+from .load import _PACKAGE_DEFINITIONS, Document
 from .problem import Problem
-
 
 _ID_FIELD_NAMES = {
     "id",
@@ -65,16 +64,23 @@ def _repository_root() -> Path:
 def _read_schemas() -> tuple[dict[str, Any], dict[str, Any]]:
     contracts = _repository_root() / "docs" / "contracts"
     try:
-        catalog = json.loads((contracts / "catalog.schema.json").read_text(encoding="utf-8"))
+        catalog = json.loads(
+            (contracts / "catalog.schema.json").read_text(encoding="utf-8")
+        )
         subject = json.loads(
             (contracts / "subject-package.schema.json").read_text(encoding="utf-8")
         )
-    except (OSError, json.JSONDecodeError) as error:  # pragma: no cover - repository invariant
+    except (
+        OSError,
+        json.JSONDecodeError,
+    ) as error:  # pragma: no cover - repository invariant
         raise RuntimeError(f"Не удалось загрузить JSON Schema: {error}") from error
     return catalog, subject
 
 
-def _definition_validator(schema: dict[str, Any], definition: str) -> Draft202012Validator:
+def _definition_validator(
+    schema: dict[str, Any], definition: str
+) -> Draft202012Validator:
     """Build a validator whose root points at one catalog ``$defs`` entry."""
 
     root = copy.deepcopy(schema)
@@ -82,7 +88,9 @@ def _definition_validator(schema: dict[str, Any], definition: str) -> Draft20201
     return Draft202012Validator(root)
 
 
-def _problems_from_schema_error(document: Document, error: ValidationError) -> list[Problem]:
+def _problems_from_schema_error(
+    document: Document, error: ValidationError
+) -> list[Problem]:
     pointer = _pointer(error.absolute_path)
 
     if error.validator == "additionalProperties":
@@ -171,16 +179,17 @@ def _is_citation_error(document: Document, error: ValidationError) -> bool:
     path = tuple(error.absolute_path)
     if error.validator == "minItems" and path and path[-1] == "citations":
         return _citation_owner_path(path[:-1])
-    if error.validator == "required" and "'citations' is a required property" in error.message:
+    if (
+        error.validator == "required"
+        and "'citations' is a required property" in error.message
+    ):
         return _citation_owner_path(path)
     return False
 
 
 def _citation_owner_path(path: tuple[Any, ...]) -> bool:
     return path == () or (
-        len(path) == 2
-        and path[0] in {"elements", "types"}
-        and isinstance(path[1], int)
+        len(path) == 2 and path[0] in {"elements", "types"} and isinstance(path[1], int)
     )
 
 
@@ -190,7 +199,7 @@ def _is_missing_primary_element(document: Document, error: ValidationError) -> b
         and error.validator == "required"
         and "'primary_element' is a required property" in error.message
         and len(error.absolute_path) == 2
-        and tuple(error.absolute_path)[0] == "types"
+        and next(iter(error.absolute_path)) == "types"
         and isinstance(tuple(error.absolute_path)[1], int)
     )
 
@@ -202,7 +211,11 @@ def _is_id_error(error: ValidationError) -> bool:
     field = path[-1]
     if isinstance(field, int):
         field = path[-2] if len(path) > 1 else ""
-    return isinstance(field, str) and field in _ID_FIELD_NAMES and error.validator != "required"
+    return (
+        isinstance(field, str)
+        and field in _ID_FIELD_NAMES
+        and error.validator != "required"
+    )
 
 
 def _is_non_element_prerequisite(document: Document, pointer: str) -> bool:
@@ -212,7 +225,11 @@ def _is_non_element_prerequisite(document: Document, pointer: str) -> bool:
     if len(parts) != 4 or parts[0] != "types" or parts[2] != "prerequisites":
         return False
     value = _at_pointer(document.data, pointer)
-    return isinstance(value, str) and _looks_like_catalog_id(value) and not _looks_like_element_id(value)
+    return (
+        isinstance(value, str)
+        and _looks_like_catalog_id(value)
+        and not _looks_like_element_id(value)
+    )
 
 
 def _pointer(parts: Iterable[Any]) -> str:
@@ -220,7 +237,11 @@ def _pointer(parts: Iterable[Any]) -> str:
 
 
 def _join_pointer(pointer: str, part: Any) -> str:
-    return f"{pointer}/{_escape_pointer_part(part)}" if pointer else f"/{_escape_pointer_part(part)}"
+    return (
+        f"{pointer}/{_escape_pointer_part(part)}"
+        if pointer
+        else f"/{_escape_pointer_part(part)}"
+    )
 
 
 def _escape_pointer_part(part: Any) -> str:
@@ -230,7 +251,9 @@ def _escape_pointer_part(part: Any) -> str:
 def _pointer_parts(pointer: str) -> tuple[str, ...]:
     if not pointer:
         return ()
-    return tuple(part.replace("~1", "/").replace("~0", "~") for part in pointer[1:].split("/"))
+    return tuple(
+        part.replace("~1", "/").replace("~0", "~") for part in pointer[1:].split("/")
+    )
 
 
 def _at_pointer(data: Any, pointer: str) -> Any:

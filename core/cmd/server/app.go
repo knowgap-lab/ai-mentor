@@ -160,7 +160,7 @@ func webRoot() (string, error) {
 		}
 		dir = found
 	}
-	info, err := os.Stat(filepath.Join(dir, "index.html"))
+	info, err := os.Stat(filepath.Join(dir, "index.html")) //nolint:gosec // G703: WEB_DIST или путь от cwd, не ввод запроса
 	if err != nil {
 		return "", fmt.Errorf("web dist %s: %w", dir, err)
 	}
@@ -215,7 +215,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	info, err := os.Stat(full)
+	info, err := os.Stat(full) //nolint:gosec // G703: filepath.Rel выше уже не пускает путь вне h.root
 	if err == nil && !info.IsDir() {
 		h.files.ServeHTTP(w, r)
 		return

@@ -219,15 +219,15 @@ func applyResult(ctx context.Context, tx pgx.Tx, row dueRow, now time.Time, send
 	}
 	var fail *Failure
 	if errors.As(sendErr, &fail) && fail != nil {
-		switch {
-		case fail.Status == 429:
+		switch fail.Status {
+		case 429:
 			_, err := tx.Exec(ctx, `
 				UPDATE core.outbox
 				SET next_attempt_at = $2
 				WHERE id = $1
 			`, row.id, now.Add(fail.RetryAfter))
 			return err
-		case fail.Status == 400 || fail.Status == 403:
+		case 400, 403:
 			_, err := tx.Exec(ctx, `
 				UPDATE core.outbox
 				SET state = 'failed', last_error = $2
@@ -245,7 +245,7 @@ func applyResult(ctx context.Context, tx pgx.Tx, row dueRow, now time.Time, send
 		`, row.id, nextAttempts, networkError)
 		return err
 	}
-	pause := basePause * time.Duration(uint(1)<<uint(nextAttempts-1))
+	pause := basePause * time.Duration(uint(1)<<uint(nextAttempts-1)) //nolint:gosec // G115: на ветке attempts+1 < 5, значение умещается в int64; uint не паникует при отрицательном сдвиге
 	_, err := tx.Exec(ctx, `
 		UPDATE core.outbox
 		SET attempts = $2, next_attempt_at = $3, last_error = $4

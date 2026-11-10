@@ -228,7 +228,10 @@ def read_version(log: VersionLog, number: int) -> dict[str, bytes]:
         if revision.catalog_version_from > number:
             continue
         current = chosen.get(revision.id)
-        if current is None or revision.catalog_version_from >= current.catalog_version_from:
+        if (
+            current is None
+            or revision.catalog_version_from >= current.catalog_version_from
+        ):
             chosen[revision.id] = revision
     return {identifier: revision.data for identifier, revision in chosen.items()}
 
@@ -261,7 +264,10 @@ def _latest_revisions(log: VersionLog) -> dict[str, Revision]:
     latest: dict[str, Revision] = {}
     for revision in log.revisions:
         current = latest.get(revision.id)
-        if current is None or revision.catalog_version_from >= current.catalog_version_from:
+        if (
+            current is None
+            or revision.catalog_version_from >= current.catalog_version_from
+        ):
             latest[revision.id] = revision
     return latest
 
@@ -271,7 +277,8 @@ def _changed_ids(log: VersionLog, artifact: Artifact) -> list[str]:
     changed = [
         entity.id
         for entity in artifact.entities
-        if entity.id not in latest or latest[entity.id].content_hash != entity.content_hash
+        if entity.id not in latest
+        or latest[entity.id].content_hash != entity.content_hash
     ]
     changed.sort()
     return changed
@@ -290,7 +297,9 @@ def _recheck_variants(log: VersionLog, artifact: Artifact) -> list[str]:
     return found
 
 
-def _corrected_keys(previous: Artifact | None, entities: tuple[Entity, ...]) -> tuple[str, ...]:
+def _corrected_keys(
+    previous: Artifact | None, entities: tuple[Entity, ...]
+) -> tuple[str, ...]:
     if previous is None:
         return ()
     previous_by_id = {entity.id: entity for entity in previous.entities}
@@ -335,7 +344,9 @@ def _payloads(root: Path) -> dict[str, dict[str, Any]]:
                 _put(raw, variant)
         elif document.definition == "block_frontmatter":
             payload = copy.deepcopy(data)
-            payload["body"] = _block_body((root / document.file).read_text(encoding="utf-8"))
+            payload["body"] = _block_body(
+                (root / document.file).read_text(encoding="utf-8")
+            )
             _put(raw, payload)
         elif document.definition == "test":
             _put(raw, data)
@@ -375,10 +386,7 @@ def _normalize_value(value: Any, entity_ids: set[str]) -> Any:
             return sorted(item["id"] for item in value)
         return [_normalize_value(item, entity_ids) for item in value]
     if isinstance(value, dict):
-        return {
-            key: _normalize_value(item, entity_ids)
-            for key, item in value.items()
-        }
+        return {key: _normalize_value(item, entity_ids) for key, item in value.items()}
     return value
 
 
@@ -448,7 +456,13 @@ def _read_archive(path: Path) -> Artifact:
         files = _tar_files(path)
         manifest_raw = files["manifest.json"]
         manifest = json.loads(manifest_raw)
-    except (OSError, tarfile.TarError, KeyError, json.JSONDecodeError, UnicodeError) as error:
+    except (
+        OSError,
+        tarfile.TarError,
+        KeyError,
+        json.JSONDecodeError,
+        UnicodeError,
+    ) as error:
         raise ArtifactInvalid() from error
     if not isinstance(manifest, dict) or canonical_bytes(manifest) != manifest_raw:
         raise ArtifactInvalid()
@@ -459,13 +473,18 @@ def _read_archive(path: Path) -> Artifact:
     corrected = manifest["corrected_keys"]
     if type(catalog_version) is not int or not isinstance(commit, str):
         raise ArtifactInvalid()
-    if not isinstance(corrected, list) or not all(isinstance(item, str) for item in corrected):
+    if not isinstance(corrected, list) or not all(
+        isinstance(item, str) for item in corrected
+    ):
         raise ArtifactInvalid()
     entries = _entries(manifest["active"]) + _entries(manifest["retired"])
     identifiers = [entry["id"] for entry in entries]
     if len(identifiers) != len(set(identifiers)):
         raise ArtifactInvalid()
-    expected = {"manifest.json", *(f"entities/{identifier}.json" for identifier in identifiers)}
+    expected = {
+        "manifest.json",
+        *(f"entities/{identifier}.json" for identifier in identifiers),
+    }
     if set(files) != expected:
         raise ArtifactInvalid()
     entities: list[Entity] = []

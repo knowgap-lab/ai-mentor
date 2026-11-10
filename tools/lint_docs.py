@@ -1,21 +1,46 @@
 #!/usr/bin/env python3
 """Целостность ссылок документации: markdown-ссылки на файлы, номера решений Dnn, номера правил XX-Rnn.
 Запуск: python3 tools/lint_docs.py   (только стандартная библиотека)"""
-import pathlib, re, sys
+
+import pathlib
+import re
+import sys
 
 root = pathlib.Path(__file__).resolve().parents[1]
 docs = root / "docs"
-SKIP = ("docs/spec/", "docs/archive/", "docs/handoff/entries/")  # записи журнала только добавляются
-FUTURE = {"diagnostics.md", "optimizer.md", "knowledge-model.md", "agent.md", "eval.md"}  # модули выпусков 2–4, ещё не написаны
-files = [p for p in docs.rglob("*.md") if not any(s in str(p.relative_to(root)) + "/" for s in SKIP)]
+SKIP = (
+    "docs/spec/",
+    "docs/archive/",
+    "docs/handoff/entries/",
+)  # записи журнала только добавляются
+FUTURE = {
+    "diagnostics.md",
+    "optimizer.md",
+    "knowledge-model.md",
+    "agent.md",
+    "eval.md",
+}  # модули выпусков 2–4, ещё не написаны
+files = [
+    p
+    for p in docs.rglob("*.md")
+    if not any(s in str(p.relative_to(root)) + "/" for s in SKIP)
+]
 log = (docs / "decisions/log.md").read_text(encoding="utf8")
-decisions = set(re.findall(r"^\| D(\d+) \|", log, re.M))
+decisions = set(re.findall(r"^\| D(\d+) \|", log, re.MULTILINE))
 rule_defs = set()
 for p in files:
-    rule_defs |= set(re.findall(r"\*\*([A-Z]{2}-R\d+[a-z]?)\.\*\*", p.read_text(encoding="utf8")))
+    rule_defs |= set(
+        re.findall(r"\*\*([A-Z]{2}-R\d+[a-z]?)\.\*\*", p.read_text(encoding="utf8"))
+    )
 bad = 0
+
+
 def fail(msg):
-    global bad; bad += 1; print("FAIL", msg)
+    global bad
+    bad += 1
+    print("FAIL", msg)
+
+
 for p in files:
     rel = p.relative_to(root)
     t = p.read_text(encoding="utf8")
