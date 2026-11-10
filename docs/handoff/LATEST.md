@@ -2,9 +2,9 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-10 09:12 (grok)
+**Обновлено:** 2026-11-10 15:10 (grok)
 **Ветка:** `feat/release1-finish` (от `feat/release1`, локально, без push)
-**Этап:** доделка выпуска 1. Очередь первого захода закрыта; приложение собрано не целиком.
+**Этап:** доделка выпуска 1. Q0 принят. Дальше сборка сервера S1.
 
 ## Где мы
 
@@ -16,11 +16,11 @@
 
 ## Что в работе сейчас
 
-Доделка выпуска 1 по `briefs/ORCHESTRATOR-RELEASE1-FINISH.md`. Старт — [2026-11-10-0912-grok-orchestrator-release1-finish-start.md](entries/2026-11-10-0912-grok-orchestrator-release1-finish-start.md). Прогресс — [orchestrator-progress-release1-finish.md](orchestrator-progress-release1-finish.md). Первый пакет — Q0 (линтеры).
+Доделка выпуска 1 по `briefs/ORCHESTRATOR-RELEASE1-FINISH.md`. Q0 принят: [2026-11-10-1510-grok-orchestrator-q0-done.md](entries/2026-11-10-1510-grok-orchestrator-q0-done.md). Прогресс — [orchestrator-progress-release1-finish.md](orchestrator-progress-release1-finish.md). В работе S1 и ревью долгов R1.
 
 ## Следующий шаг
 
-Принять Q0, затем подключить модули к серверу (S1). Ветку не отправлять.
+Принять тесты S1, затем код сборки сервера. Ветку не отправлять.
 
 ## Блокеры и вопросы
 
