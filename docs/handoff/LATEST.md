@@ -10,7 +10,7 @@
 
 | Область | Готово | Не готово |
 |---|---|---|
-| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (300), правила для агентов | схемы в `contracts/` |
+| Основа | видение, архитектура, глоссарий, шаблон модуля, журнал решений (302), правила для агентов | схемы в `contracts/` |
 | `catalog/` | schema, answer-rules, variants, loader, plan-import, composer (на ревью) | eval (отложен) |
 | `platform/` | answer-check, attempts, recheck, auth, privacy, notifications, web, ops, queue, rt-import (на ревью) | — |
 | `personalization/` | обзор, homework, lessons, conspect, plan (на ревью) | 4 модуля (diagnostics, optimizer, knowledge-model, agent) |

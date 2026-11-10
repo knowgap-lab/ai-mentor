@@ -17,7 +17,7 @@
 - `tools/release1_inventory.py`: **15 из 58** операций `core-api.yaml` и `internal-api.yaml` подключены к серверу; **5 из 14** экранов `web.md` есть в вебе (реестр `web/screens.json`).
 - Находки ревью без правки: `docs/handoff/entries/2026-11-10-0410-grok-orchestrator-phase2-review.md`, `docs/handoff/entries/2026-11-10-0656-grok-orchestrator-reviews.md`.
 - Пакеты без ревью: G2, P1, G9, G10, G11, G12, W3.
-- Открытые вопросы человеку: способ PDF (`docs/handoff/entries/2026-11-10-0445-grok-orchestrator-question-g12.md`), таблица этапов урока для C1 (`docs/handoff/entries/2026-11-09-1640-orchestrator-question-c1.md`).
+- Вопросы первого захода закрыты решениями: способ PDF — **D301** (Gotenberg), таблица этапов урока для C1 — **D302**.
 
 Перед началом сами запустите `tools/release1_inventory.py` и `tools/check-code.sh` и запишите фактические числа в файл прогресса: состояние могло измениться.
 
@@ -37,7 +37,7 @@
 
 ## 3. Пакеты
 
-Интеграционная ветка: **`feat/release1-finish`** от `feat/release1`. Номера решений — подряд с **D301**. Профиль исполнителей — по таблице `briefs/CURSOR-SETUP.md`, раздел 5: пакеты с безопасностью (вход, согласие, права, внутренний API) считаются критичными.
+Интеграционная ветка: **`feat/release1-finish`** от `feat/release1`. Номера решений — подряд с **D303**. Профиль исполнителей — по таблице `briefs/CURSOR-SETUP.md`, раздел 5: пакеты с безопасностью (вход, согласие, права, внутренний API) считаются критичными.
 
 ### Фаза Q. Проверки (первой, по одному)
 
@@ -56,7 +56,7 @@
 | S5 | ДЗ, итог, споры | `getSummary`, `listDisputes`, `getDiscussList`, подключение `getHomeworkDraft`, `issueHomework`. Находки ревью: список попыток не показывает вердикт до сдачи там, где AC-R7 этого не разрешает; черновик ДЗ проверяет владельца | `docs/personalization/homework.md`, `docs/platform/attempts.md`, `answer-check.md` | S1 |
 | S6 | Перепроверка и внутренний API | `startRecheck`, `getRecheckState`, `getRecheckReport`, `announceCatalogVersion`, `importPlan`, `getStatus`. Загрузчик P1 вызывает `announceCatalogVersion` по-настоящему (в тесте — на поднятом сервере) | `docs/platform/recheck.md`, `docs/catalog/loader.md`, `docs/catalog/plan-import.md`, `docs/platform/ops.md` (OP-R17) | S1 |
 | S7 | Журнал событий | События пишутся конвертом `events.schema.json` (со `schema_version`); проверка документов событий по схеме в тесте | `docs/contracts/events.schema.json`, `docs/platform/attempts.md` | S1 |
-| S8 | PDF | **Только если** в `docs/decisions/log.md` есть решение человека о способе PDF. Тогда: `getConspectPdf`, `getSheetPdf`, `getTestFormPdf` по CN-R10…R12 и WB-R28, WB-R29. Если решения нет, маршруты подключены и честно отвечают `503 pdf_unavailable`, пакет заблокирован с тем же вопросом | `docs/personalization/conspect.md`, `web.md` | S1 |
+| S8 | PDF | По **D301**: сервис Gotenberg в отдельном контейнере (образ закреплён версией в `deploy/`, только внутренняя сеть), core отдаёт ему тот же HTML, что и веб, всё встроено, без внешних запросов; первый PDF снимка хранится и отдаётся теми же байтами. Операции `getConspectPdf`, `getSheetPdf`, `getTestFormPdf` по CN-R10…R12 и WB-R28, WB-R29; Gotenberg недоступен — `503 pdf_unavailable`. В тестах Gotenberg поднимается контейнером, как Postgres. Добавить сервис в файлы Compose из O1 | `docs/personalization/conspect.md`, `web.md` | S1 |
 
 S2–S7 независимы между собой после S1, пока не пишут в одни файлы. Файл сборки сервера (`core/cmd/server`, `core/internal/compose`) правит только S1; если пакету S2–S8 нужно новое подключение, он оставляет функцию-обработчик в своём модуле, а подключение делает оркестратор отдельным коммитом после приёмки.
 
@@ -120,7 +120,7 @@ R1 можно запускать сразу после Q0, параллельн�
 
 ## 7. Что по-прежнему решает человек
 
-- Способ PDF (S8) и таблица этапов урока для C1 Python-блока. Если решение появилось в журнале решений до или во время сессии, выполните соответствующий пакет; иначе оставьте заблокированным.
+- Способ PDF и таблица этапов уже решены (D301, D302). Добавьте в очередь пакет **C1** Python-блока по `briefs/ORCHESTRATOR.md` (раздел 4) с таблицей D302, отдельным worktree от `feat/release1-finish`; он независим от фаз S и W.
 - Правки замороженных тестов (раздел 6).
 - Telegram-бот, секреты, запуск на сервере, юридический статус согласия.
 
