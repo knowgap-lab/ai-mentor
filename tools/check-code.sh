@@ -17,10 +17,14 @@ fi
 (cd core && go test ./...)
 (cd core && go vet ./...)
 
-if command -v golangci-lint >/dev/null 2>&1; then
+# Линтеры обязательны: отсутствие инструмента — провал, а не пропуск (briefs/ORCHESTRATOR-RELEASE1-FINISH.md, Q0).
+if (cd core && go tool -n golangci-lint >/dev/null 2>&1); then
+  (cd core && go tool golangci-lint run ./...)
+elif command -v golangci-lint >/dev/null 2>&1; then
   (cd core && golangci-lint run ./...)
 else
-  echo "golangci-lint не установлен, проверка пропущена"
+  echo "golangci-lint не установлен: проверка обязательна" >&2
+  exit 1
 fi
 
 (cd web && npm test)
@@ -31,6 +35,8 @@ fi
 
 if [[ -x .venv/bin/ruff ]]; then
   .venv/bin/ruff check
+  .venv/bin/ruff format --check
 else
-  echo "ruff не найден в .venv, проверка пропущена"
+  echo "ruff не найден в .venv: проверка обязательна" >&2
+  exit 1
 fi

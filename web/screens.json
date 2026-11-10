@@ -1,0 +1,7 @@
+{
+  "Ученик/Главная": "/",
+  "Ученик/Урок": "/lesson/:lessonId",
+  "Ученик/Выдача (ДЗ)": "/assignment/:assignmentId",
+  "Ученик/Задача": "/task/:assignmentId/:itemId",
+  "Репетитор/Ученики": "/tutor"
+}
