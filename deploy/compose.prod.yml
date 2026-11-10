@@ -1,0 +1,122 @@
+# Разовый шаг миграции выполняется до сервисов core и web (OP-R7).
+name: ai-mentor-prod
+
+services:
+  migrate:
+    image: "${CORE_IMAGE_REPOSITORY}:${IMAGE_TAG}"
+    command: ["migrate"]
+    restart: "no"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_DEV_MODE: false
+      APP_ENV: prod
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app
+    secrets:
+      - database_url
+
+  db:
+    image: postgres:16.15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - app
+    secrets:
+      - postgres_password
+
+  content:
+    image: "${CONTENT_IMAGE_REPOSITORY}:${IMAGE_TAG}"
+    restart: "no"
+    profiles: ["catalog"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      CONTENT_API_TOKEN: ${CONTENT_API_TOKEN}
+      CATALOG_PUBLIC_KEY: ${CATALOG_PUBLIC_KEY}
+      AUTH_DEV_MODE: false
+      APP_ENV: prod
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - app
+    secrets:
+      - database_url
+      - content_api_token
+      - catalog_public_key
+
+  core:
+    image: "${CORE_IMAGE_REPOSITORY}:${IMAGE_TAG}"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      AUTH_DEV_MODE: false
+      APP_ENV: prod
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      OPS_CHAT_ID: ${OPS_CHAT_ID}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - app
+    secrets:
+      - database_url
+      - telegram_bot_token
+      - telegram_webhook_secret
+
+  web:
+    image: "${WEB_IMAGE_REPOSITORY}:${IMAGE_TAG}"
+    environment:
+      AUTH_DEV_MODE: false
+      APP_ENV: prod
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      core:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app
+
+networks:
+  app:
+    name: ai-mentor-prod
+
+volumes:
+  db-data:
+    name: ai-mentor-prod-db
+
+secrets:
+  database_url:
+    file: ${SECRETS_DIR}/database_url
+  postgres_password:
+    file: ${SECRETS_DIR}/postgres_password
+  telegram_bot_token:
+    file: ${SECRETS_DIR}/telegram_bot_token
+  telegram_webhook_secret:
+    file: ${SECRETS_DIR}/telegram_webhook_secret
+  content_api_token:
+    file: ${SECRETS_DIR}/content_api_token
+  catalog_public_key:
+    file: ${SECRETS_DIR}/catalog_public_key
