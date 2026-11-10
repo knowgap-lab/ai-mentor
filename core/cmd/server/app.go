@@ -98,7 +98,14 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		_ = authSvc.Close()
 		return nil, err
 	}
-	api := compose.Handler(dsn, authSvc.Handler(), answerSvc.Handler(), attemptSvc.Handler())
+	fallback := compose.Handler(dsn, authSvc.Handler(), answerSvc.Handler(), attemptSvc.Handler())
+	api, err := mountLocal(ctx, dsn, origin, fallback)
+	if err != nil {
+		_ = attemptSvc.Close()
+		_ = answerSvc.Close()
+		_ = authSvc.Close()
+		return nil, err
+	}
 	web := spaHandler{root: root, files: http.FileServer(http.Dir(root))}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/healthz" {
@@ -126,7 +133,7 @@ func withCSP(next http.Handler) http.Handler {
 func isAPI(urlPath string) bool {
 	p := path.Clean("/" + urlPath)
 	switch {
-	case p == "/healthz" || p == "/me":
+	case p == "/healthz" || p == "/me" || p == "/status":
 		return true
 	case p == "/auth" || strings.HasPrefix(p, "/auth/"):
 		return true
@@ -137,6 +144,20 @@ func isAPI(urlPath string) bool {
 	case p == "/attempts" || strings.HasPrefix(p, "/attempts/"):
 		return true
 	case p == "/lessons" || strings.HasPrefix(p, "/lessons/"):
+		return true
+	case p == "/consent" || strings.HasPrefix(p, "/consent/"):
+		return true
+	case p == "/invite" || strings.HasPrefix(p, "/invite/"):
+		return true
+	case p == "/me/sessions" || strings.HasPrefix(p, "/me/sessions/"):
+		return true
+	case p == "/rechecks" || strings.HasPrefix(p, "/rechecks/"):
+		return true
+	case p == "/tests" || strings.HasPrefix(p, "/tests/"):
+		return true
+	case p == "/telegram" || strings.HasPrefix(p, "/telegram/"):
+		return true
+	case p == "/internal" || strings.HasPrefix(p, "/internal/"):
 		return true
 	default:
 		return false
