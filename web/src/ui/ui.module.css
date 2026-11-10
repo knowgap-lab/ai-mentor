@@ -1,0 +1,127 @@
+/* Общие компоненты (docs/platform/design.md, DS-R11). Цвета только через переменные темы (DS-R1). */
+
+.screen {
+  max-width: var(--am-content-width);
+  margin: 0 auto;
+  padding: var(--mantine-spacing-md);
+  box-sizing: border-box;
+}
+
+.screenWithBar {
+  padding-bottom: calc(var(--am-actionbar-height) + var(--mantine-spacing-lg));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  min-height: var(--am-target);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--am-target);
+  min-height: var(--am-target);
+  margin-left: calc(var(--mantine-spacing-sm) * -1);
+  border-radius: var(--mantine-radius-md);
+  color: var(--am-ink);
+  text-decoration: none;
+  font-size: 1.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mantine-h1-font-size);
+  line-height: var(--mantine-h1-line-height);
+  font-weight: 600;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--am-sheet);
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
+}
+
+.row + .row {
+  border-top: 1px solid var(--am-line);
+}
+
+.rowLink {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-md);
+  min-height: 3.5rem;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rowLink:active {
+  background: var(--mantine-color-gray-1);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rowSub {
+  color: var(--am-text-muted);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.sheet {
+  position: relative;
+  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md);
+  background-color: var(--am-sheet);
+  /* Тетрадь в клетку: единственная декоративная деталь (design.md, раздел 3). */
+  background-image:
+    linear-gradient(var(--am-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--am-grid) 1px, transparent 1px);
+  background-size: 1.25rem 1.25rem;
+  background-position: -1px -1px;
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+  overflow-wrap: anywhere;
+}
+
+.sheetLabel {
+  margin: 0 0 var(--mantine-spacing-sm);
+  color: var(--am-text-muted);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.actionBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: var(--am-sheet);
+  border-top: 1px solid var(--am-line);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md)
+    calc(var(--mantine-spacing-sm) + env(safe-area-inset-bottom));
+}
+
+.actionBarInner {
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  max-width: var(--am-content-width);
+  margin: 0 auto;
+}
+
+.actionBarInner > * {
+  flex: 1;
+}

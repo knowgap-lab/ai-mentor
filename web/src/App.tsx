@@ -5,6 +5,7 @@ import { HomePage } from "./student/HomePage";
 import { LessonPage } from "./student/LessonPage";
 import { TaskPage } from "./task/TaskPage";
 import { TutorPage } from "./tutor/TutorPage";
+import { DesignPage } from "./design/DesignPage";
 
 function parkProviderStyles(): void {
   const parked = new Set(
@@ -39,6 +40,9 @@ export function App() {
       <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
       <Route path="/task/:assignmentId/:itemId" element={<TaskPage />} />
       <Route path="/tutor" element={<TutorPage />} />
+      {import.meta.env.DEV ? (
+        <Route path="/design" element={<DesignPage />} />
+      ) : null}
       <Route path="*" element={<HomePage />} />
     </Routes>
   );

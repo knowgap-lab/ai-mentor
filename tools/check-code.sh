@@ -27,6 +27,7 @@ else
   exit 1
 fi
 
+python3 tools/check_design.py
 (cd web && npm test)
 (cd web && npm run typecheck)
 if node -e 'const s=require("./web/package.json").scripts||{}; process.exit(s.lint?0:1)'; then

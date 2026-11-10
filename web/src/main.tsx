@@ -4,6 +4,10 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./App";
 import "@mantine/core/styles.css";
+import "@fontsource-variable/golos-text";
+import "./design/theme.css";
+import "./design/design.css";
+import { theme } from "./design/theme";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -13,6 +17,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <MantineProvider
+      theme={theme}
       forceColorScheme="light"
       withCssVariables={false}
       withGlobalClasses={false}
