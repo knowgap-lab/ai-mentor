@@ -1,8 +1,10 @@
 package homework
 
-// Config содержит только DSN базы, в которой лежат уроки и черновик.
+// Config — подключение к базе уроков и черновика.
+// Пустой AppOrigin в проверке Origin заменяется на http://localhost.
 type Config struct {
-	DSN string
+	DSN       string
+	AppOrigin string
 }
 
 // World — выдуманные участники, которых Seed положил в базу.

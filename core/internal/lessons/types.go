@@ -4,8 +4,9 @@ import "time"
 
 // Config — подключение и часы раскладки. Now не заменяется на time.Now.
 type Config struct {
-	DSN string
-	Now time.Time
+	DSN       string
+	Now       time.Time
+	AppOrigin string
 }
 
 // Schedule — правило пары (ученик, предмет): дни 1–7, время UTC, длительность.

@@ -23,6 +23,7 @@ const (
 // Service собирает черновик ДЗ, выдаёт его и отзывает выдачу.
 type Service struct {
 	pool    *pgxpool.Pool
+	cfg     Config
 	handler http.Handler
 }
 
@@ -77,7 +78,7 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 		pool.Close()
 		return nil, err
 	}
-	svc := &Service{pool: pool}
+	svc := &Service{pool: pool, cfg: cfg}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /lessons/{lesson}/homework-draft", svc.getDraft)
 	mux.HandleFunc("PATCH /lessons/{lesson}/homework-draft", svc.patchDraft)
@@ -634,7 +635,11 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 		return actor{}, false
 	}
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		if r.Header.Get("Origin") != appOrigin {
+		origin := s.cfg.AppOrigin
+		if origin == "" {
+			origin = appOrigin
+		}
+		if r.Header.Get("Origin") != origin {
 			writeCode(w, http.StatusForbidden, "csrf")
 			return actor{}, false
 		}
