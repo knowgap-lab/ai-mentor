@@ -70,7 +70,11 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 		return actor{}, false
 	}
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		if r.Header.Get("Origin") != appOrigin {
+		origin := s.cfg.AppOrigin
+		if origin == "" {
+			origin = appOrigin
+		}
+		if r.Header.Get("Origin") != origin {
 			writeCode(w, http.StatusForbidden, "csrf")
 			return actor{}, false
 		}

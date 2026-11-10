@@ -102,7 +102,13 @@ func (s *Service) apply(ctx context.Context, studentID, action string, now time.
 		if tag.RowsAffected() == 0 {
 			return errMissing()
 		}
-		return nil
+		_, err = s.pool.Exec(ctx, `
+			UPDATE core.session
+			SET revoked_at = $2
+			WHERE user_id = $1
+			  AND revoked_at IS NULL
+		`, studentID, now)
+		return err
 	case "cancel_revoke":
 		tag, err := s.pool.Exec(ctx, `
 			UPDATE core.consent

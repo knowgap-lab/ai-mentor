@@ -371,7 +371,7 @@ func (s *Service) revision(ctx context.Context, id string, version int) (storedR
 }
 
 func present(rev storedRev) (blockOut, bool) {
-	if strings.Contains(rev.Body, "<script") {
+	if strings.Contains(strings.ToLower(rev.Body), "<script") {
 		return blockOut{}, false
 	}
 	switch rev.Kind {
