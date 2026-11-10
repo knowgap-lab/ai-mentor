@@ -1,7 +1,13 @@
 import { Button, Checkbox, Radio, TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
+import {
+  dropOutbox,
+  readOutbox,
+  upsertOutbox,
+  type OutboxItem,
+} from "./outbox";
 import { Statement } from "./Statement";
 import "./task.css";
 
@@ -125,6 +131,37 @@ function verdictText(result: AnswerResponse): string | null {
   return null;
 }
 
+type Delivered =
+  { kind: "ok"; body: AnswerResponse } | { kind: "http" } | { kind: "offline" };
+
+async function deliver(entry: OutboxItem): Promise<Delivered> {
+  try {
+    const response = await fetch(
+      `/assignments/${encodeURIComponent(entry.assignmentId)}/items/${encodeURIComponent(entry.itemId)}/answer`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...csrfHeaders(),
+        },
+        body: JSON.stringify({
+          answer: entry.answer,
+          idempotency_key: entry.idempotency_key,
+        }),
+      },
+    );
+    rememberCsrfFromResponse(response);
+    if (!response.ok) {
+      return { kind: "http" };
+    }
+    const body = (await response.json()) as AnswerResponse;
+    return { kind: "ok", body };
+  } catch {
+    return { kind: "offline" };
+  }
+}
+
 function showScore(result: AnswerResponse): boolean {
   if (result.points === undefined || result.max_points === undefined) {
     return false;
@@ -151,6 +188,9 @@ export function TaskPage() {
   const [formatHint, setFormatHint] = useState<string | null>(null);
   const [result, setResult] = useState<AnswerResponse | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [unsent, setUnsent] = useState(false);
+  const blocked = useRef(false);
+  const flushing = useRef(false);
 
   useEffect(() => {
     if (!assignmentId) {
@@ -186,6 +226,68 @@ export function TaskPage() {
       cancelled = true;
     };
   }, [assignmentId, reloadKey]);
+
+  useEffect(() => {
+    if (!assignmentId || !itemId) {
+      return;
+    }
+    let cancelled = false;
+    const queued = readOutbox().some(
+      (entry) => entry.assignmentId === assignmentId && entry.itemId === itemId,
+    );
+    setUnsent(queued);
+    blocked.current = queued;
+
+    async function flush() {
+      if (!assignmentId || !itemId || flushing.current) {
+        return;
+      }
+      const entry = readOutbox().find(
+        (item) => item.assignmentId === assignmentId && item.itemId === itemId,
+      );
+      if (!entry || navigator.onLine === false) {
+        return;
+      }
+      flushing.current = true;
+      dropOutbox(assignmentId, itemId);
+      try {
+        const outcome = await deliver(entry);
+        if (outcome.kind === "offline") {
+          upsertOutbox(entry);
+          if (!cancelled) {
+            setUnsent(true);
+          }
+          return;
+        }
+        blocked.current = false;
+        if (cancelled) {
+          return;
+        }
+        if (outcome.kind === "http") {
+          setUnsent(false);
+          setSendError("Нет связи");
+          return;
+        }
+        setUnsent(false);
+        setResult(outcome.body);
+        if (outcome.body.hint) {
+          setFormatHint(outcome.body.hint);
+        }
+      } finally {
+        flushing.current = false;
+      }
+    }
+
+    function onOnline() {
+      void flush();
+    }
+    window.addEventListener("online", onOnline);
+    void flush();
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", onOnline);
+    };
+  }, [assignmentId, itemId]);
 
   if (!assignmentId || !itemId) {
     return (
@@ -266,39 +368,44 @@ export function TaskPage() {
   }
 
   async function send(answer: string | number[]) {
+    if (!assignmentId || !itemId || blocked.current) {
+      return;
+    }
     setSendError(null);
-    try {
-      const response = await fetch(
-        `/assignments/${encodeURIComponent(assignmentId ?? "")}/items/${encodeURIComponent(itemId ?? "")}/answer`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...csrfHeaders(),
-          },
-          body: JSON.stringify({
-            answer,
-            idempotency_key: idempotencyKey(),
-          }),
-        },
-      );
-      rememberCsrfFromResponse(response);
-      if (!response.ok) {
-        setSendError("Нет связи");
-        return;
-      }
-      const body = (await response.json()) as AnswerResponse;
-      setResult(body);
-      if (body.hint) {
-        setFormatHint(body.hint);
-      }
-    } catch {
+    const entry: OutboxItem = {
+      assignmentId,
+      itemId,
+      answer,
+      idempotency_key: idempotencyKey(),
+    };
+    if (navigator.onLine === false) {
+      blocked.current = true;
+      upsertOutbox(entry);
+      setUnsent(true);
+      return;
+    }
+    blocked.current = true;
+    const outcome = await deliver(entry);
+    if (outcome.kind === "offline") {
+      upsertOutbox(entry);
+      setUnsent(true);
+      return;
+    }
+    blocked.current = false;
+    if (outcome.kind === "http") {
       setSendError("Нет связи");
+      return;
+    }
+    setResult(outcome.body);
+    if (outcome.body.hint) {
+      setFormatHint(outcome.body.hint);
     }
   }
 
   function onAnswer() {
+    if (unsent || blocked.current) {
+      return;
+    }
     const answer = answerPayload();
     if (answer === null) {
       if (item?.answer_format === "ct.integer") {
@@ -373,10 +480,13 @@ export function TaskPage() {
         type="button"
         className="touch-target"
         variant="default"
+        disabled={unsent}
         onClick={onAnswer}
       >
         Ответить
       </Button>
+      {unsent ? <p>не отправлено</p> : null}
+      {unsent && item.answer_format === "ct.integer" ? <p>ждём связь</p> : null}
       {verdict ? <p>{verdict}</p> : null}
       {result?.hint ? <p>{result.hint}</p> : null}
       {result && showScore(result) ? (
