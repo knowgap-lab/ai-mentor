@@ -86,7 +86,11 @@ def load_documents(root: Path) -> tuple[list[Document], list[Problem]]:
 
         for relative_glob, definition, loader in (
             ("topics/*.yaml", _PACKAGE_DEFINITIONS["topic"], _load_yaml_document),
-            ("variants/*/*.yaml", _PACKAGE_DEFINITIONS["variants"], _load_yaml_document),
+            (
+                "variants/*/*.yaml",
+                _PACKAGE_DEFINITIONS["variants"],
+                _load_yaml_document,
+            ),
             ("blocks/*/*.md", _PACKAGE_DEFINITIONS["block"], _load_block_document),
             ("tests/*.yaml", _PACKAGE_DEFINITIONS["test"], _load_yaml_document),
             ("lessons/L*.yaml", _PACKAGE_DEFINITIONS["lesson"], _load_yaml_document),

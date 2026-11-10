@@ -48,4 +48,6 @@ def check_catalog(
     if base_root is not None:
         base_documents, _base_loading_problems = load_documents(base_root)
         problems.extend(history_problems(documents, base_documents))
-    return sorted(problems, key=lambda problem: (problem.file, problem.code, problem.pointer))
+    return sorted(
+        problems, key=lambda problem: (problem.file, problem.code, problem.pointer)
+    )

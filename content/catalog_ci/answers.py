@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import math
+import re
 from collections import defaultdict
 from collections.abc import Iterable
-import re
 from typing import Any
 
 from .load import Document
 from .problem import Problem
-
 
 _ANSWER_CODES = frozenset(
     {
@@ -48,7 +48,9 @@ def answer_problems(documents: Iterable[Document]) -> list[Problem]:
     file_by_type: dict[str, str] = {}
 
     for document in docs:
-        if document.definition != "variants_file" or not isinstance(document.data, dict):
+        if document.definition != "variants_file" or not isinstance(
+            document.data, dict
+        ):
             continue
         type_id = document.data.get("type")
         type_name = type_id if isinstance(type_id, str) else None
@@ -92,7 +94,8 @@ def drop_shadowed_schema_problems(problems: list[Problem]) -> list[Problem]:
     return [
         problem
         for problem in problems
-        if problem.code != "schema_invalid" or (problem.file, problem.pointer) not in owned
+        if problem.code != "schema_invalid"
+        or (problem.file, problem.pointer) not in owned
     ]
 
 
@@ -290,7 +293,9 @@ def _lesson_mentions(
     used_types: dict[str, tuple[str, str]] = {}
     used_subvariants: dict[str, tuple[str, str]] = {}
     for document in documents:
-        if document.definition != "lesson_template" or not isinstance(document.data, dict):
+        if document.definition != "lesson_template" or not isinstance(
+            document.data, dict
+        ):
             continue
         _remember_practice(document, used_types, used_subvariants)
         _remember_recipe(document, used_types)
@@ -324,7 +329,9 @@ def _remember_practice(
             )
 
 
-def _remember_recipe(document: Document, used_types: dict[str, tuple[str, str]]) -> None:
+def _remember_recipe(
+    document: Document, used_types: dict[str, tuple[str, str]]
+) -> None:
     homework = document.data.get("homework")
     if not isinstance(homework, dict):
         return
@@ -376,17 +383,15 @@ def _type_formats(documents: Iterable[Document]) -> dict[str, str]:
 def _scale_phrases(documents: Iterable[Document]) -> dict[Any, tuple[str, ...]]:
     phrases: dict[Any, tuple[str, ...]] = {}
     for document in documents:
-        if document.definition != "subject_package" or not isinstance(document.data, dict):
+        if document.definition != "subject_package" or not isinstance(
+            document.data, dict
+        ):
             continue
         raw = document.data.get("scale_phrases")
         if not isinstance(raw, list):
             phrases[document.package_dir] = ()
             continue
-        kept = [
-            item
-            for item in raw
-            if isinstance(item, str) and item.strip() != ""
-        ]
+        kept = [item for item in raw if isinstance(item, str) and item.strip() != ""]
         phrases[document.package_dir] = tuple(kept)
     return phrases
 
@@ -411,7 +416,7 @@ def _is_fractional_key(value: Any) -> bool:
     """Дробный ключ: конечный float либо строка с одной десятичной точкой или запятой."""
 
     if isinstance(value, float):
-        return value == value and abs(value) != float("inf")
+        return math.isfinite(value)
     return isinstance(value, str) and _FRACTIONAL_KEY.fullmatch(value) is not None
 
 
@@ -480,9 +485,7 @@ def _option_items(options: Any) -> list[tuple[int, dict[str, Any]]]:
     if not isinstance(options, list):
         return []
     return [
-        (index, item)
-        for index, item in enumerate(options)
-        if isinstance(item, dict)
+        (index, item) for index, item in enumerate(options) if isinstance(item, dict)
     ]
 
 

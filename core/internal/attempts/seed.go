@@ -353,14 +353,15 @@ func planItems(given, assignment map[string]any, hasAssignment bool, item map[st
 		items = append(items, planned)
 	case hasAssignment && hasKey(assignment, "unanswered"):
 		unanswered, _ := asInt(assignment["unanswered"])
-		if unanswered == 4 {
+		switch unanswered {
+		case 4:
 			for i := 0; i < 4; i++ {
 				items = append(items, addItem("final", []string{"correct"}))
 			}
 			for i := 0; i < 2; i++ {
 				items = append(items, addItem("final", []string{"wrong"}))
 			}
-		} else if unanswered == 0 {
+		case 0:
 			items = append(items, addItem("final", []string{"correct"}))
 		}
 		for i := 0; i < unanswered; i++ {

@@ -115,7 +115,8 @@ def _plan(
     changed = tuple(
         entity
         for entity in artifact.entities
-        if entity.id not in latest or latest[entity.id].content_hash != entity.content_hash
+        if entity.id not in latest
+        or latest[entity.id].content_hash != entity.content_hash
     )
     head = _head(loads)
     already = _loaded(loads, artifact.catalog_version, environment)
@@ -164,7 +165,10 @@ def _latest(revisions: list[_Revision]) -> dict[str, _Revision]:
     latest: dict[str, _Revision] = {}
     for revision in revisions:
         current = latest.get(revision.entity_id)
-        if current is None or revision.catalog_version_from >= current.catalog_version_from:
+        if (
+            current is None
+            or revision.catalog_version_from >= current.catalog_version_from
+        ):
             latest[revision.entity_id] = revision
     return latest
 
@@ -189,7 +193,8 @@ def _recheck_ids(
     found = [
         entity.id
         for entity in artifact.entities
-        if entity.id in latest and _key(latest[entity.id].data) != _key(json.loads(entity.data))
+        if entity.id in latest
+        and _key(latest[entity.id].data) != _key(json.loads(entity.data))
     ]
     found.sort()
     return found
@@ -290,7 +295,7 @@ def _fetch_json(dsn: str, sql: str) -> list[dict[str, Any]]:
         return []
     parsed = json.loads(raw)
     if not isinstance(parsed, list):
-        raise RuntimeError("psql вернул не список")
+        raise RuntimeError("psql вернул не список")  # noqa: TRY004  # тот же тип, что у остальных отказов psql
     return parsed
 
 

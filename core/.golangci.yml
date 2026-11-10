@@ -1,0 +1,16 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - staticcheck
+    - errcheck
+    - gosec
+    - govet
+    - ineffassign
+    - unused
+
+# Тесты заморожены (D131): комментарий nolint в *_test.go был бы правкой теста.
+# Одна настройка run.tests выключает разбор *_test.go целиком.
+run:
+  tests: false

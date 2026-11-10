@@ -12,7 +12,6 @@ from .load import Document
 from .problem import Problem
 from .schema_layer import _looks_like_catalog_id, _looks_like_element_id
 
-
 CatalogData = dict[str, Any]
 
 
@@ -107,10 +106,16 @@ def _collect_entities(documents: Iterable[Document]) -> list[Entity]:
         if document.definition == "topic":
             _append_entity(entities, "topic", document, "/id", data)
             for index, element in _objects(data.get("elements")):
-                _append_entity(entities, "element", document, f"/elements/{index}/id", element)
+                _append_entity(
+                    entities, "element", document, f"/elements/{index}/id", element
+                )
             for type_index, task_type in _objects(data.get("types")):
-                _append_entity(entities, "type", document, f"/types/{type_index}/id", task_type)
-                for subvariant_index, subvariant in _objects(task_type.get("subvariants")):
+                _append_entity(
+                    entities, "type", document, f"/types/{type_index}/id", task_type
+                )
+                for subvariant_index, subvariant in _objects(
+                    task_type.get("subvariants")
+                ):
                     _append_entity(
                         entities,
                         "subvariant",
@@ -120,7 +125,9 @@ def _collect_entities(documents: Iterable[Document]) -> list[Entity]:
                     )
         elif document.definition == "variants_file":
             for index, variant in _objects(data.get("variants")):
-                _append_entity(entities, "variant", document, f"/variants/{index}/id", variant)
+                _append_entity(
+                    entities, "variant", document, f"/variants/{index}/id", variant
+                )
         elif document.definition == "block_frontmatter":
             _append_entity(entities, "block", document, "/id", data)
         elif document.definition == "test":
@@ -128,12 +135,18 @@ def _collect_entities(documents: Iterable[Document]) -> list[Entity]:
         elif document.definition == "lesson_template":
             _append_entity(entities, "lesson", document, "/id", data)
             for index, stage in _objects(data.get("stages")):
-                _append_entity(entities, "stage", document, f"/stages/{index}/id", stage)
+                _append_entity(
+                    entities, "stage", document, f"/stages/{index}/id", stage
+                )
     return entities
 
 
 def _append_entity(
-    entities: list[Entity], kind: str, document: Document, pointer: str, data: CatalogData
+    entities: list[Entity],
+    kind: str,
+    document: Document,
+    pointer: str,
+    data: CatalogData,
 ) -> None:
     identifier = data.get("id")
     if isinstance(identifier, str):
@@ -465,8 +478,8 @@ def _check_prerequisite_cycles(
                     )
                 )
 
-    for node in graph:
-        graph[node] = sorted(set(graph[node]))
+    for node, successors in graph.items():
+        graph[node] = sorted(set(successors))
 
     reported: set[frozenset[str]] = set()
     for cycle in _find_cycles(graph):
@@ -475,10 +488,10 @@ def _check_prerequisite_cycles(
             continue
         reported.add(members)
         source, target = cycle[-2], cycle[-1]
-        document, pointer = sorted(
+        document, pointer = min(
             edge_sources[(source, target)],
             key=lambda item: (item[0].file, item[1]),
-        )[0]
+        )
         add(
             Problem(
                 "prereq_cycle",
@@ -547,7 +560,9 @@ def _answer_format_problems(documents: Iterable[Document]) -> list[Problem]:
 
     formats_by_package: dict[Path, set[str]] = {}
     for document in documents:
-        if document.definition != "subject_package" or not isinstance(document.data, dict):
+        if document.definition != "subject_package" or not isinstance(
+            document.data, dict
+        ):
             continue
         formats_by_package[document.package_dir] = {
             item["id"]

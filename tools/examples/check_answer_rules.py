@@ -4,20 +4,48 @@
 
 Запуск: python3 tools/examples/check_answer_rules.py   (нужен pyyaml)
 """
-import re, sys, pathlib
+
+import pathlib
+import re
+import sys
+
 import yaml
 
-MAX_POINTS = {"ct.choice1": 1, "ct.choiceN": 1, "ct.match": 2, "ct.digits": 2, "ct.integer": 2}
+MAX_POINTS = {
+    "ct.choice1": 1,
+    "ct.choiceN": 1,
+    "ct.match": 2,
+    "ct.digits": 2,
+    "ct.integer": 2,
+}
 MINUS = "−–‐"
-LATIN_TO_CYR = {"A": "А", "B": "В", "C": "С", "E": "Е", "H": "Н", "K": "К", "M": "М", "O": "О", "P": "Р", "T": "Т", "X": "Х"}
+LATIN_TO_CYR = {
+    "A": "А",
+    "B": "В",
+    "C": "С",
+    "E": "Е",
+    "H": "Н",
+    "K": "К",
+    "M": "М",
+    "O": "О",
+    "P": "Р",
+    "T": "Т",
+    "X": "Х",
+}
+
 
 def strip_ws(s):
     return re.sub(r"\s+", "", s)
 
+
 def normalize(fmt, raw, key):
     """Возвращает нормализованный ввод или None (malformed)."""
     if fmt in ("ct.choice1", "ct.choiceN"):
-        if not isinstance(raw, list) or not raw or any(not isinstance(x, int) or not 1 <= x <= 5 for x in raw):
+        if (
+            not isinstance(raw, list)
+            or not raw
+            or any(not isinstance(x, int) or not 1 <= x <= 5 for x in raw)
+        ):
             return None
         if fmt == "ct.choice1" and len(raw) != 1:
             return None
@@ -26,8 +54,7 @@ def normalize(fmt, raw, key):
     for ch in MINUS:
         s = s.replace(ch, "-")
     if fmt == "ct.integer":
-        if s.startswith("+"):
-            s = s[1:]
+        s = s.removeprefix("+")
         if not re.fullmatch(r"-?[0-9]+", s):
             return None
         return str(int(s))
@@ -46,6 +73,7 @@ def normalize(fmt, raw, key):
             return None
         return "".join(l + d for l, d in sorted(pairs))
     raise ValueError(fmt)
+
 
 def score(fmt, key, raw, traps=None):
     norm = normalize(fmt, raw, key)
@@ -71,21 +99,33 @@ def score(fmt, key, raw, traps=None):
         verdict = "correct" if wrong == 0 else "partial" if wrong == 1 else "wrong"
     maxp = MAX_POINTS[fmt]
     points = maxp if verdict == "correct" else 1 if verdict == "partial" else 0
-    res = {"status": "scored", "normalized": shown, "verdict": verdict, "points": points}
+    res = {
+        "status": "scored",
+        "normalized": shown,
+        "verdict": verdict,
+        "points": points,
+    }
     if verdict == "wrong" and shown in traps:
         res["trap_id"] = traps[shown]
     return res
 
+
 def main():
-    path = pathlib.Path(__file__).resolve().parents[2] / "docs/catalog/answer-rules.examples.yaml"
+    path = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "docs/catalog/answer-rules.examples.yaml"
+    )
     failed = 0
     for c in yaml.safe_load(path.read_text(encoding="utf8")):
         got = score(c["format"], c["key"], c["input"], c.get("traps"))
         if got != c["expect"]:
             failed += 1
-            print(f"FAIL {c['id']} ({c['rule']}): ожидалось {c['expect']}, получено {got}")
+            print(
+                f"FAIL {c['id']} ({c['rule']}): ожидалось {c['expect']}, получено {got}"
+            )
     print(f"{'FAILED' if failed else 'OK'}: {failed} ошибок")
     sys.exit(1 if failed else 0)
+
 
 if __name__ == "__main__":
     main()
