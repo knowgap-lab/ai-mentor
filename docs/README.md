@@ -10,7 +10,7 @@
 | 2. Архитектура | [01-architecture.md](01-architecture.md) | сервисы, схемы данных, потоки, границы доверия |
 | 3. Контракты | [contracts/](contracts/README.md) | OpenAPI и JSON Schema — источник типов для всех языков |
 | 4. Спецификации модулей | [catalog/](catalog/overview.md) · [platform/](platform/overview.md) · [personalization/](personalization/overview.md) | один файл на модуль, по [шаблону](templates/module-spec.md) |
-| 5. Решения | [decisions/log.md](decisions/log.md) | журнал D1–D303 с цепочками отмен |
+| 5. Решения | [decisions/log.md](decisions/log.md) | журнал D1–D307 с цепочками отмен |
 | 6. Брифы агентов | `briefs/` (будет) | собираются скриптом из спецификаций и тестов (D155) |
 | 7. Состояние работы | [handoff/](handoff/README.md) | журнал передачи между сессиями агентов, сводка LATEST.md (D217) |
 
