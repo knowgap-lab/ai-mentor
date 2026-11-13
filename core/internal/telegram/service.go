@@ -11,6 +11,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -26,9 +28,12 @@ type Config struct {
 	Log io.Writer
 }
 
-// Service — приглашения Telegram в Postgres.
+// Service — приглашения и webhook Telegram.
+// secret — TELEGRAM_WEBHOOK_SECRET на момент Open. В журнал он не пишется.
 type Service struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	secret  string
+	handler http.Handler
 }
 
 type rower interface {
@@ -45,7 +50,19 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 		pool.Close()
 		return nil, err
 	}
-	return &Service{pool: pool}, nil
+	svc := &Service{pool: pool, secret: os.Getenv("TELEGRAM_WEBHOOK_SECRET")}
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /telegram/webhook", svc.webhook)
+	svc.handler = mux
+	return svc, nil
+}
+
+// Handler обслуживает POST /telegram/webhook.
+func (s *Service) Handler() http.Handler {
+	if s == nil {
+		return nil
+	}
+	return s.handler
 }
 
 // Close закрывает пул соединений.
