@@ -1,7 +1,8 @@
+import { Anchor, Button, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { List, ListRow, Screen, StatusBadge } from "../ui";
 import { rememberCsrfFromResponse } from "../task/csrf";
-import "../task/task.css";
 
 type Summary = {
   id: string;
@@ -55,16 +56,6 @@ function formatDeadline(value: string | undefined): string {
   }).format(date);
 }
 
-function stateLabel(state: string): string | null {
-  if (state === "submitted") {
-    return "сдано";
-  }
-  if (state === "withdrawn") {
-    return "отозвано";
-  }
-  return null;
-}
-
 export function HomePage() {
   const [rows, setRows] = useState<Summary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,44 +101,64 @@ export function HomePage() {
   }, [reloadKey]);
 
   return (
-    <main>
-      <h1>ИИ-ментор</h1>
-      <Link to="/next">дальше</Link>
-      <h2>Выдачи</h2>
-      {loading ? <p>Загрузка</p> : null}
-      {failed ? (
-        <>
-          <p>Нет связи</p>
-          <button
-            type="button"
-            className="touch-target"
-            onClick={() => setReloadKey((value) => value + 1)}
-          >
-            Повторить
-          </button>
-        </>
-      ) : null}
-      {!loading && !failed && rows.length === 0 ? <p>Пусто</p> : null}
-      <ul>
-        {rows.map((row) => {
-          const label = stateLabel(row.state);
-          return (
-            <li key={row.id}>
-              <Link to={`/assignment/${encodeURIComponent(row.id)}`}>
-                {row.subject}
-              </Link>
-              <span>{formatDeadline(row.deadline)}</span>
-              <span>{`отвечено ${row.answered} из ${row.total}`}</span>
-              {label ? <span>{label}</span> : null}
-            </li>
-          );
-        })}
-      </ul>
-      {/* В core-api нет списка уроков ученика и поля урока у выдачи. */}
-      <section>
-        <h2>Ближайший урок</h2>
-        <p>нет</p>
-      </section>
-    </main>
+    <Screen title="ИИ-ментор">
+      <Stack gap="md">
+        <Anchor component={Link} to="/next">
+          дальше
+        </Anchor>
+        <Title order={2} size="h3">
+          Выдачи
+        </Title>
+        {loading ? <Text>Загрузка</Text> : null}
+        {failed ? (
+          <Stack gap="sm">
+            <Text>Нет связи</Text>
+            <Button
+              variant="default"
+              onClick={() => setReloadKey((value) => value + 1)}
+            >
+              Повторить
+            </Button>
+          </Stack>
+        ) : null}
+        {!loading && !failed && rows.length === 0 ? <Text>Пусто</Text> : null}
+        {rows.length > 0 ? (
+          <List label="Выдачи">
+            {rows.map((row) => {
+              const deadline = formatDeadline(row.deadline);
+              return (
+                <ListRow
+                  key={row.id}
+                  to={`/assignment/${encodeURIComponent(row.id)}`}
+                  title={row.subject}
+                  subtitle={[
+                    deadline,
+                    `отвечено ${row.answered} из ${row.total}`,
+                  ]
+                    .filter((part) => part !== "")
+                    .join(" · ")}
+                  aside={
+                    row.state === "submitted" ? (
+                      <StatusBadge state="submitted" />
+                    ) : row.state === "withdrawn" ? (
+                      <Text size="sm" c="gray.7">
+                        отозвано
+                      </Text>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+          </List>
+        ) : null}
+        {/* В core-api нет списка уроков ученика и поля урока у выдачи. */}
+        <section>
+          <Title order={2} size="h3">
+            Ближайший урок
+          </Title>
+          <Text>нет</Text>
+        </section>
+      </Stack>
+    </Screen>
   );
 }

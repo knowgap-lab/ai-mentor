@@ -1,8 +1,9 @@
+import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { Screen, TaskSheet } from "../ui";
 import { Statement } from "../task/Statement";
 import { rememberCsrfFromResponse } from "../task/csrf";
-import "../task/task.css";
 
 type Block = {
   id: string;
@@ -121,9 +122,9 @@ export function LessonPage() {
 
   if (!lessonId) {
     return (
-      <main>
-        <p>Урок не найден</p>
-      </main>
+      <Screen title="Конспект" backTo="/">
+        <Text>Урок не найден</Text>
+      </Screen>
     );
   }
 
@@ -132,37 +133,33 @@ export function LessonPage() {
   );
 
   return (
-    <main>
-      <h1>Конспект</h1>
-      {loading ? <p>Загрузка</p> : null}
-      {failed ? (
-        <>
-          <p>Нет связи</p>
-          <button
-            type="button"
-            className="touch-target"
-            onClick={() => setReloadKey((value) => value + 1)}
-          >
-            Повторить
-          </button>
-        </>
-      ) : null}
-      {blocks && visible.length === 0 ? <p>Пусто</p> : null}
-      {visible.map((block) => (
-        <section key={block.id}>
-          <Statement source={block.markdown} />
-        </section>
-      ))}
-      {blocks ? (
-        <button
-          type="button"
-          className="touch-target"
-          onClick={() => void onPdf()}
-        >
-          Скачать PDF
-        </button>
-      ) : null}
-      {pdfError ? <p>{pdfError}</p> : null}
-    </main>
+    <Screen title="Конспект" backTo="/">
+      <Stack gap="md">
+        {loading ? <Text>Загрузка</Text> : null}
+        {failed ? (
+          <Stack gap="sm">
+            <Text>Нет связи</Text>
+            <Button
+              variant="default"
+              onClick={() => setReloadKey((value) => value + 1)}
+            >
+              Повторить
+            </Button>
+          </Stack>
+        ) : null}
+        {blocks && visible.length === 0 ? <Text>Пусто</Text> : null}
+        {visible.map((block) => (
+          <TaskSheet key={block.id} label="Конспект">
+            <Statement source={block.markdown} />
+          </TaskSheet>
+        ))}
+        {blocks ? (
+          <Button variant="default" onClick={() => void onPdf()}>
+            Скачать PDF
+          </Button>
+        ) : null}
+        {pdfError ? <Text>{pdfError}</Text> : null}
+      </Stack>
+    </Screen>
   );
 }
