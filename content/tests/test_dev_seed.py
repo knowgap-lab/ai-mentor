@@ -2,7 +2,7 @@
 
 Проверяется процесс ``tools/dev_seed.py``, не ``tools/dev-up.sh``.
 Интерпретатор процесса:
-``/home/stranger/projects/university/coursework/ai-mentor/.venv/bin/python``.
+``.venv/bin/python`` в корне репозитория.
 Рабочий каталог — корень репозитория. DSN передаётся только через
 ``DATABASE_URL``. Модуль сида при сборе тестов не импортируется.
 
@@ -47,7 +47,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[2]
 DEMO_CATALOG = Path(__file__).parent / "fixtures" / "demo-catalog"
 SEED = REPO / "tools" / "dev_seed.py"
-INTERPRETER = Path("/home/stranger/projects/university/coursework/ai-mentor/.venv/bin/python")
+INTERPRETER = REPO / ".venv" / "bin" / "python"
 MIGRATIONS = REPO / "migrations"
 POSTGRES_IMAGE = "postgres:16.15"
 

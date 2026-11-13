@@ -7,7 +7,7 @@ container="ai-mentor-dev"
 image="postgres:16.15"
 volume="ai-mentor-dev-data"
 dsn="${DATABASE_URL:-postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable}"
-python="/home/stranger/projects/university/coursework/ai-mentor/.venv/bin/python"
+python="$root/.venv/bin/python"
 
 if [[ ! -x "$python" ]]; then
   echo "нет интерпретатора $python" >&2
