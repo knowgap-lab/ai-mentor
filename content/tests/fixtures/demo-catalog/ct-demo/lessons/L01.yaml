@@ -1,0 +1,38 @@
+id: ct-demo:L01
+topics:
+- ct-demo:D1
+review: []
+duration_min: 60
+stages:
+- id: ct-demo:L01.G1
+  minutes:
+  - 0
+  - 30
+  title: Новая тема
+  kind: theory
+  blocks:
+  - ct-demo:D1.B01
+  - ct-demo:D1.B02
+  practice: []
+- id: ct-demo:L01.G2
+  minutes:
+  - 30
+  - 60
+  title: Практика
+  kind: practice
+  blocks: []
+  practice:
+  - type: ct-demo:D1.T01
+    subvariant: ct-demo:D1.T01.S1
+    role: solve_together
+    theory_block: ct-demo:D1.B01
+homework:
+  budget_hours: 1
+  items:
+  - source: new_topic
+    series:
+    - type: ct-demo:D1.T01
+      count: 2
+    difficulty:
+    - 1
+    - 1

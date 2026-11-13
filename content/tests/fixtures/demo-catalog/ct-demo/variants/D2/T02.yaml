@@ -1,0 +1,127 @@
+type: ct-demo:D2.T02
+variants:
+- id: ct-demo:D2.T02.S1.V001
+  subvariant: ct-demo:D2.T02.S1
+  statement: Чему равно $2 × 3$?
+  key:
+  - 4
+  options:
+  - n: 1
+    text: '5'
+    trap_id: off_by_one
+  - n: 2
+    text: '8'
+    trap_id: off_by_one
+  - n: 3
+    text: '9'
+    trap_id: off_by_one
+  - n: 4
+    text: '6'
+  - n: 5
+    text: '7'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D2.B01
+- id: ct-demo:D2.T02.S1.V002
+  subvariant: ct-demo:D2.T02.S1
+  statement: Чему равно $3 × 4$?
+  key:
+  - 5
+  options:
+  - n: 1
+    text: '11'
+    trap_id: off_by_one
+  - n: 2
+    text: '13'
+    trap_id: off_by_one
+  - n: 3
+    text: '14'
+    trap_id: off_by_one
+  - n: 4
+    text: '15'
+    trap_id: off_by_one
+  - n: 5
+    text: '12'
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D2.B01
+- id: ct-demo:D2.T02.S1.V003
+  subvariant: ct-demo:D2.T02.S1
+  statement: Чему равно $4 × 5$?
+  key:
+  - 1
+  options:
+  - n: 1
+    text: '20'
+  - n: 2
+    text: '19'
+    trap_id: off_by_one
+  - n: 3
+    text: '22'
+    trap_id: off_by_one
+  - n: 4
+    text: '23'
+    trap_id: off_by_one
+  - n: 5
+    text: '21'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D2.B01
+- id: ct-demo:D2.T02.S1.V004
+  subvariant: ct-demo:D2.T02.S1
+  statement: Чему равно $5 × 6$?
+  key:
+  - 3
+  options:
+  - n: 1
+    text: '32'
+    trap_id: off_by_one
+  - n: 2
+    text: '33'
+    trap_id: off_by_one
+  - n: 3
+    text: '30'
+  - n: 4
+    text: '29'
+    trap_id: off_by_one
+  - n: 5
+    text: '31'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D2.B01
+- id: ct-demo:D2.T02.S1.V005
+  subvariant: ct-demo:D2.T02.S1
+  statement: Чему равно $6 × 7$?
+  key:
+  - 1
+  options:
+  - n: 1
+    text: '42'
+  - n: 2
+    text: '43'
+    trap_id: off_by_one
+  - n: 3
+    text: '44'
+    trap_id: off_by_one
+  - n: 4
+    text: '41'
+    trap_id: off_by_one
+  - n: 5
+    text: '45'
+    trap_id: off_by_one
+  traps:
+  - id: off_by_one
+    description: ошибка на единицу
+  minutes: 1
+  theory_block: ct-demo:D2.B01

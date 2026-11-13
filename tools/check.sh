@@ -9,3 +9,4 @@ python3 tools/examples/check_schema_examples.py
 python3 tools/examples/check_text_examples.py
 python3 tools/examples/check_consent.py
 python3 tools/lint_docs.py
+(cd content && python3 -m pytest -q)

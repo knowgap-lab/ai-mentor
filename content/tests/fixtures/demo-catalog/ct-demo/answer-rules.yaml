@@ -1,0 +1,21 @@
+id: ct-demo
+title: Правила ответа демо-пакета
+subject: math
+spec_version: demo-1
+positions:
+- A1
+- A2
+- B1
+- B2
+scale_phrases: []
+answer_formats:
+- id: ct.choice1
+  title: один верный
+  applies_to: часть А
+  input: номер опции 1–5
+  max_points: 1
+- id: ct.integer
+  title: целое число
+  applies_to: часть В
+  input: целое число
+  max_points: 2

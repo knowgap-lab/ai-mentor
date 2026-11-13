@@ -1,0 +1,47 @@
+/* Смысловые переменные и основа страницы (docs/platform/design.md). Цвета только отсюда и из theme.css (DS-R1). */
+:root {
+  --am-page: var(--mantine-color-gray-0);
+  --am-sheet: var(--mantine-color-white);
+  --am-text: var(--mantine-color-gray-9);
+  --am-text-muted: var(--mantine-color-gray-7);
+  --am-line: var(--mantine-color-gray-2);
+  --am-ink: var(--mantine-color-ink-7);
+  --am-grid: var(--mantine-color-ink-1);
+  --am-content-width: 40rem;
+  --am-target: 2.75rem;
+  --am-actionbar-height: 4.5rem;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--am-page);
+  color: var(--am-text);
+  font-family: var(--mantine-font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Числа баллов и сроков — табличными цифрами (DS-R7). */
+.am-num {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--am-ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,4 @@
+# Проверка и формат только этих деревьев. Остальной Python (docs/contracts и прочее) не трогаем.
+include = ["content/**/*.py", "tools/**/*.py", "deploy/**/*.py"]
+# Тесты заморожены (D131): ruff их не правит и не проверяет.
+extend-exclude = ["content/tests/**", "deploy/ops_test.py"]

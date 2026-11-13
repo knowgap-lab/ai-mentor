@@ -1,0 +1,32 @@
+type: ct-demo:D1.T01
+variants:
+- id: ct-demo:D1.T01.S1.V001
+  subvariant: ct-demo:D1.T01.S1
+  statement: Найдите значение выражения $2 + 3$.
+  key: 5
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T01.S1.V002
+  subvariant: ct-demo:D1.T01.S1
+  statement: Найдите значение выражения $3 + 4$.
+  key: 7
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T01.S1.V003
+  subvariant: ct-demo:D1.T01.S1
+  statement: Найдите значение выражения $4 + 5$.
+  key: 9
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T01.S1.V004
+  subvariant: ct-demo:D1.T01.S1
+  statement: Найдите значение выражения $5 + 6$.
+  key: 11
+  minutes: 1
+  theory_block: ct-demo:D1.B01
+- id: ct-demo:D1.T01.S1.V005
+  subvariant: ct-demo:D1.T01.S1
+  statement: Найдите значение выражения $6 + 7$.
+  key: 13
+  minutes: 1
+  theory_block: ct-demo:D1.B01

@@ -1,0 +1,5 @@
+id: ct-demo
+title: Демонстрационный пакет (синтетический, D142)
+subject: math
+spec_version: demo-1
+answer_rules: answer-rules.yaml

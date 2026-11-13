@@ -1,0 +1,9 @@
+id: ct-demo:TEST.2025-CT-V1
+title: Демо-тест
+year: 2025
+stage: CT
+appearances:
+- position: A1
+  type: ct-demo:D1.T02
+- position: B1
+  type: ct-demo:D1.T01
