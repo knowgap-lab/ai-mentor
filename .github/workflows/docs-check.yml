@@ -10,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  docs-check:
+    name: docs-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
