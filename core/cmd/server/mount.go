@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -10,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -166,58 +164,8 @@ func internalHandler(next http.Handler) http.Handler {
 			writeCode(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		cap := &statusCapture{header: make(http.Header)}
-		next.ServeHTTP(cap, r)
-		code := cap.code
-		if code == 0 {
-			code = http.StatusOK
-		}
-		// Контракт отсутствующего пакета — 404. Тест подключения считает
-		// любой 404 неизвестным маршрутом, поэтому на сервере этот ответ
-		// уходит без кода 404. Пакет internalapi по-прежнему отвечает 404.
-		if code == http.StatusNotFound && recheckStatePath(r) {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		for key, values := range cap.header {
-			for _, value := range values {
-				w.Header().Add(key, value)
-			}
-		}
-		w.WriteHeader(code)
-		_, _ = w.Write(cap.body.Bytes())
+		next.ServeHTTP(w, r)
 	})
-}
-
-func recheckStatePath(r *http.Request) bool {
-	if r.Method != http.MethodGet {
-		return false
-	}
-	rest, ok := strings.CutPrefix(r.URL.Path, "/internal/rechecks/")
-	return ok && rest != "" && !strings.Contains(rest, "/")
-}
-
-type statusCapture struct {
-	header http.Header
-	code   int
-	body   bytes.Buffer
-}
-
-func (c *statusCapture) Header() http.Header {
-	return c.header
-}
-
-func (c *statusCapture) WriteHeader(code int) {
-	if c.code == 0 {
-		c.code = code
-	}
-}
-
-func (c *statusCapture) Write(p []byte) (int, error) {
-	if c.code == 0 {
-		c.code = http.StatusOK
-	}
-	return c.body.Write(p)
 }
 
 func contentTokenOK(r *http.Request) bool {
