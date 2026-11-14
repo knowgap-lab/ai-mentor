@@ -133,10 +133,13 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 	mux.Handle("POST /students/{id}/consent/cancel-revoke", h.privacy)
 
 	mux.Handle("PUT /students/{id}/schedules/{subject}", h.lessons)
+	mux.Handle("POST /students/{id}/lessons", h.lessons)
 	mux.Handle("GET /lessons/{lesson}", h.lessons)
 	mux.Handle("POST /lessons/{lesson}/move", h.lessons)
 	mux.Handle("POST /lessons/{lesson}/cancel", h.lessons)
+	mux.Handle("POST /lessons/{lesson}/skip", h.lessons)
 	mux.Handle("POST /lessons/{lesson}/marks", h.lessons)
+	mux.Handle("GET /lessons/{lesson}/preparation", h.lessons)
 
 	// Тот же шаблон есть у lessons. По контракту это план.
 	mux.Handle("GET /students/{id}/plans/{subject}", h.plan)

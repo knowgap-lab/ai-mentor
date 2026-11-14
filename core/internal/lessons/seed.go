@@ -2,6 +2,9 @@ package lessons
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"sort"
 
 	"github.com/jackc/pgx/v5"
@@ -169,10 +172,53 @@ func Seed(ctx context.Context, conn *pgx.Conn, fx Fixture) (World, error) {
 		world.OtherStudentID = otherStudent
 		world.OtherLessonID = otherLesson
 	}
+	if err := seedDemoVariant(ctx, tx, fx); err != nil {
+		return World{}, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return World{}, err
 	}
 	return world, nil
+}
+
+// demo:V1 в каталоге нет. Подготовка читает ключ только из catalog.revision,
+// поэтому сид кладёт выдуманный документ: условие и ключ 42.
+func seedDemoVariant(ctx context.Context, tx pgx.Tx, fx Fixture) error {
+	if fx.CatalogVersion < 1 || !fixtureHasVariant(fx, "demo:V1") {
+		return nil
+	}
+	raw, err := json.Marshal(struct {
+		ID        string `json:"id"`
+		Statement string `json:"statement"`
+		Key       int    `json:"key"`
+	}{
+		ID:        "demo:V1",
+		Statement: "выдуманное условие",
+		Key:       42,
+	})
+	if err != nil {
+		return err
+	}
+	sum := sha256.Sum256(raw)
+	_, err = tx.Exec(ctx, `
+		INSERT INTO catalog.revision (entity_id, catalog_version_from, content_hash, data)
+		VALUES ($1, $2, $3, $4::jsonb)
+		ON CONFLICT (entity_id, catalog_version_from) DO NOTHING
+	`, "demo:V1", fx.CatalogVersion, hex.EncodeToString(sum[:]), string(raw))
+	return err
+}
+
+func fixtureHasVariant(fx Fixture, id string) bool {
+	for _, lesson := range fx.Lessons {
+		for _, stage := range lesson.Stages {
+			for _, slot := range stage.Practice {
+				if slot.VariantID == id {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func reviseTemplates(ctx context.Context, db q, studentID, subject string, blocks []string) error {

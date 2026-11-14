@@ -48,7 +48,10 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 	mux.HandleFunc("GET /lessons/{lesson}", svc.getLesson)
 	mux.HandleFunc("POST /lessons/{lesson}/move", svc.moveLesson)
 	mux.HandleFunc("POST /lessons/{lesson}/cancel", svc.cancelLesson)
+	mux.HandleFunc("POST /lessons/{lesson}/skip", svc.skipLesson)
 	mux.HandleFunc("POST /lessons/{lesson}/marks", svc.markLesson)
+	mux.HandleFunc("POST /students/{id}/lessons", svc.addLesson)
+	mux.HandleFunc("GET /lessons/{lesson}/preparation", svc.getPreparation)
 	svc.handler = mux
 	return svc, nil
 }
