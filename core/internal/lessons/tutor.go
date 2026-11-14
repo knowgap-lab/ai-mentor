@@ -2,6 +2,7 @@ package lessons
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -213,7 +214,17 @@ func (s *Service) getPreparation(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, preparationOf(lesson))
+	head, err := loadPlan(r.Context(), s.pool, lesson.StudentID, lesson.Subject)
+	if err != nil {
+		writeHandlerErr(w, failErr(err))
+		return
+	}
+	view, err := preparationFromCatalog(r.Context(), s.pool, lesson, head.version)
+	if err != nil {
+		writeHandlerErr(w, failErr(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, view)
 }
 
 // ownedLesson отдаёт 403 и на чужой, и на несуществующий урок (AU-R4).
@@ -294,9 +305,9 @@ func stepSlot(rule Schedule, from time.Time, dir int) (time.Time, bool) {
 }
 
 type preparationItem struct {
-	VariantID string `json:"variant_id"`
-	Statement string `json:"statement"`
-	Key       string `json:"key"`
+	VariantID string          `json:"variant_id"`
+	Statement string          `json:"statement"`
+	Key       json.RawMessage `json:"key"`
 }
 
 type preparationView struct {
@@ -304,24 +315,74 @@ type preparationView struct {
 	Items    []preparationItem `json:"items"`
 }
 
-func preparationOf(lesson lessonRow) preparationView {
+type catalogVariant struct {
+	Statement string          `json:"statement"`
+	Key       json.RawMessage `json:"key"`
+}
+
+func preparationFromCatalog(ctx context.Context, db q, lesson lessonRow, version int) (preparationView, error) {
 	view := preparationView{LessonID: lesson.ID, Items: []preparationItem{}}
+	ids := lessonVariantIDs(lesson)
+	if len(ids) == 0 || version < 1 {
+		return view, nil
+	}
+	stored, err := loadCatalogVariants(ctx, db, ids, version)
+	if err != nil {
+		return preparationView{}, err
+	}
+	for _, id := range ids {
+		item, ok := stored[id]
+		if !ok || item.Statement == "" || len(item.Key) == 0 || string(item.Key) == "null" {
+			continue
+		}
+		view.Items = append(view.Items, preparationItem{
+			VariantID: id,
+			Statement: item.Statement,
+			Key:       item.Key,
+		})
+	}
+	return view, nil
+}
+
+func lessonVariantIDs(lesson lessonRow) []string {
+	var ids []string
+	seen := map[string]bool{}
 	for _, stage := range baseStages(lesson) {
-		statement := stage.Title
 		for _, slot := range stage.Practice {
-			if slot.VariantID == "" {
+			if slot.VariantID == "" || seen[slot.VariantID] {
 				continue
 			}
-			text := statement
-			if text == "" {
-				text = slot.VariantID
-			}
-			view.Items = append(view.Items, preparationItem{
-				VariantID: slot.VariantID,
-				Statement: text,
-				Key:       slot.VariantID,
-			})
+			seen[slot.VariantID] = true
+			ids = append(ids, slot.VariantID)
 		}
 	}
-	return view
+	return ids
+}
+
+func loadCatalogVariants(ctx context.Context, db q, ids []string, version int) (map[string]catalogVariant, error) {
+	rows, err := db.Query(ctx, `
+		SELECT DISTINCT ON (entity_id) entity_id, data
+		FROM catalog.revision
+		WHERE entity_id = ANY($1)
+		  AND catalog_version_from <= $2
+		ORDER BY entity_id, catalog_version_from DESC
+	`, ids, version)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]catalogVariant{}
+	for rows.Next() {
+		var id string
+		var raw []byte
+		if err := rows.Scan(&id, &raw); err != nil {
+			return nil, err
+		}
+		var item catalogVariant
+		if err := json.Unmarshal(raw, &item); err != nil {
+			return nil, err
+		}
+		out[id] = item
+	}
+	return out, rows.Err()
 }
