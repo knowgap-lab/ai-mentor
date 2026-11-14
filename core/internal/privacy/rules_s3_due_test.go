@@ -1,5 +1,3 @@
-//go:build s3method
-
 package privacy_test
 
 import (
