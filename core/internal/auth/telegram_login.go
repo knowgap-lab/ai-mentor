@@ -44,6 +44,12 @@ func (s *Service) loginTelegram(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, errLoginInvalid())
 		return
 	}
+	// Пустой TELEGRAM_BOT_TOKEN не ключ подписи: иначе HMAC от SHA-256("")
+	// принимает подделанный hash (AU-R12). Токен читается при Open.
+	if s.botToken == "" {
+		writeErr(w, errLoginInvalid())
+		return
+	}
 	if err := telegram.Check(fields, s.botToken, time.Now()); err != nil {
 		writeTelegramErr(w, err)
 		return

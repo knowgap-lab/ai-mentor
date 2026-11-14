@@ -105,17 +105,18 @@ func (s *Service) issueInvite(ctx context.Context, studentID string) (inviteLink
 	}
 
 	now := time.Now().UTC()
-	var live int
+	// Перевыпуск — любое новое приглашение, если прежнее уже было
+	// (действует, просрочено или использовано). Оно отзывает прежнюю
+	// строку, привязку Telegram и сеансы (AU-R11). Первый выпуск — нет.
+	var previous int
 	if err := tx.QueryRow(ctx, `
 		SELECT count(*)
 		FROM core.telegram_invite
 		WHERE student_id = $1
-		  AND used_at IS NULL
-		  AND expires_at > $2
-	`, studentID, now).Scan(&live); err != nil {
+	`, studentID).Scan(&previous); err != nil {
 		return inviteLink{}, err
 	}
-	if live > 0 {
+	if previous > 0 {
 		if err := s.reissue(ctx, tx, studentID, now); err != nil {
 			return inviteLink{}, err
 		}
