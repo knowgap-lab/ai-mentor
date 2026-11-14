@@ -2,7 +2,21 @@ import { Button, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { List, ListRow, Screen, StatusBadge } from "../ui";
-import { rememberCsrfFromResponse } from "../task/csrf";
+import { hasCsrfToken, rememberCsrfFromResponse } from "../task/csrf";
+
+// Сервер ставит am-session=1 на страницу, только если есть сеанс.
+// Сама cookie сеанса HttpOnly, скрипт её не видит.
+function hasSession(): boolean {
+  if (hasCsrfToken()) {
+    return true;
+  }
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return document.cookie
+    .split(";")
+    .some((part) => part.trim() === "am-session=1");
+}
 
 type Summary = {
   id: string;
@@ -58,11 +72,17 @@ function formatDeadline(value: string | undefined): string {
 
 export function HomePage() {
   const [rows, setRows] = useState<Summary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasSession);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    if (!hasSession()) {
+      setRows([]);
+      setFailed(false);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     async function load() {
       setLoading(true);
