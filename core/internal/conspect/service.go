@@ -12,11 +12,12 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knowgap-lab/ai-mentor/core/internal/pdf"
 )
 
 const sessionCookie = "__Host-session"
 
-// Service отдаёт конспект урока. PDF не формирует.
+// Service отдаёт конспект урока и его PDF.
 type Service struct {
 	pool    *pgxpool.Pool
 	handler http.Handler
@@ -102,7 +103,7 @@ func (s *Service) Close() error {
 	return nil
 }
 
-// Handler обслуживает конспект и отказ PDF.
+// Handler обслуживает конспект и его PDF.
 func (s *Service) Handler() http.Handler {
 	return s.handler
 }
@@ -121,10 +122,49 @@ func (s *Service) getConspect(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) getPDF(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.authenticate(w, r); !ok {
+	user, ok := s.authenticate(w, r)
+	if !ok {
 		return
 	}
-	writeCode(w, http.StatusServiceUnavailable, "pdf_unavailable")
+	lessonID := r.PathValue("lesson")
+	out, err := s.build(r.Context(), user, lessonID)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	subject, place, title, err := s.lessonHeader(r.Context(), lessonID)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	body, err := pdf.Cached(r.Context(), s.pool, pdf.SnapshotKey{
+		LessonID:       lessonID,
+		CatalogVersion: out.CatalogVersion,
+		Audience:       user.role,
+	}, conspectHTML(subject, title, place, out))
+	if errors.Is(err, pdf.ErrUnavailable) {
+		writeCode(w, http.StatusServiceUnavailable, "pdf_unavailable")
+		return
+	}
+	if err != nil {
+		writeCode(w, http.StatusServiceUnavailable, "unavailable")
+		return
+	}
+	w.Header().Set("Content-Type", "application/pdf")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(body)
+}
+
+func (s *Service) lessonHeader(ctx context.Context, id string) (string, int, string, error) {
+	var subject, title string
+	var place int
+	err := s.pool.QueryRow(ctx, `
+		SELECT subject, place_no, title FROM core.lesson WHERE id = $1
+	`, id).Scan(&subject, &place, &title)
+	if err != nil {
+		return "", 0, "", fail(http.StatusServiceUnavailable, "unavailable")
+	}
+	return subject, place, title, nil
 }
 
 func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, bool) {
@@ -532,16 +572,30 @@ func snapshotBlockIDs(raw []byte) ([]string, error) {
 }
 
 func lessonFile(raw []byte) (string, error) {
-	if len(raw) == 0 || raw[0] != '{' {
+	if len(raw) == 0 {
 		return "", nil
 	}
-	var doc struct {
-		LessonFile string `json:"lesson_file"`
+	switch raw[0] {
+	case '{':
+		var doc struct {
+			LessonFile string `json:"lesson_file"`
+		}
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			return "", err
+		}
+		return doc.LessonFile, nil
+	case '[':
+		// Уроки пишут template массивом этапов. В этапе нет текста файла.
+		var stages []struct {
+			Blocks []string `json:"blocks"`
+		}
+		if err := json.Unmarshal(raw, &stages); err != nil {
+			return "", err
+		}
+		return "", nil
+	default:
+		return "", nil
 	}
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		return "", err
-	}
-	return doc.LessonFile, nil
 }
 
 func hashToken(token string) ([]byte, bool) {

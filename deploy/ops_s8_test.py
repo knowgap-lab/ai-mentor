@@ -12,7 +12,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 DEPLOY = Path(__file__).resolve().parent
 COMPOSE_NAMES = ("compose.prod.yml", "compose.staging.yml")
 _GOTENBERG_NAME = re.compile(r"\b([A-Z][A-Z0-9_]*GOTENBERG[A-Z0-9_]*)\b")

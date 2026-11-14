@@ -54,7 +54,7 @@ func EnvName() (string, error) {
 	var found []string
 	seen := map[string]bool{}
 	for _, name := range []string{"secrets.md", "README.md", "compose.prod.yml", "compose.staging.yml"} {
-		raw, err := os.ReadFile(filepath.Join(dir, name))
+		raw, err := os.ReadFile(filepath.Join(dir, name)) //nolint:gosec // G304: путь — файл репозитория, его выбирает помощник тестов, не запрос
 		if err != nil {
 			return "", err
 		}
@@ -190,7 +190,7 @@ func pdfBody(n int) []byte {
 }
 
 func imageFrom(path string) (string, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: путь — файл репозитория, его выбирает помощник тестов, не запрос
 	if err != nil {
 		return "", err
 	}

@@ -73,11 +73,14 @@ services:
       OPS_CHAT_ID: ${OPS_CHAT_ID}
       STAGING_CHAT_ALLOWLIST: ${STAGING_CHAT_ALLOWLIST}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN}
+      PDF_GOTENBERG_URL: http://gotenberg:3000
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      gotenberg:
+        condition: service_started
     restart: unless-stopped
     networks:
       - app
@@ -85,6 +88,12 @@ services:
       - database_url
       - telegram_bot_token
       - telegram_webhook_secret
+
+  gotenberg:
+    image: gotenberg/gotenberg:9.5.0
+    restart: unless-stopped
+    networks:
+      - app
 
   web:
     image: "${WEB_IMAGE_REPOSITORY}:${IMAGE_TAG}"
