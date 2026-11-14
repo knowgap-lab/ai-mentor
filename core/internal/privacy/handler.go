@@ -45,7 +45,7 @@ func (s *Service) postConsent(w http.ResponseWriter, r *http.Request) {
 		writeServiceErr(w, err)
 		return
 	}
-	if err := s.apply(r.Context(), row.studentID, action, now); err != nil {
+	if err := s.apply(r.Context(), row.studentID, row.kind, action, now); err != nil {
 		writeServiceErr(w, err)
 		return
 	}
@@ -74,10 +74,16 @@ func readAction(r *http.Request) (string, error) {
 	}
 }
 
-func (s *Service) apply(ctx context.Context, studentID, action string, now time.Time) error {
+func (s *Service) apply(ctx context.Context, studentID, kind, action string, now time.Time) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
 	switch action {
 	case "give":
-		_, err := s.pool.Exec(ctx, `
+		if _, err := tx.Exec(ctx, `
 			INSERT INTO core.consent (student_id, version, state, granted_at, revoked_at, anonymise_at)
 			VALUES ($1, $2, 'active', $3, NULL, NULL)
 			ON CONFLICT (student_id) DO UPDATE
@@ -86,31 +92,47 @@ func (s *Service) apply(ctx context.Context, studentID, action string, now time.
 			    granted_at = EXCLUDED.granted_at,
 			    revoked_at = NULL,
 			    anonymise_at = NULL
-		`, studentID, s.version, now)
-		return err
+		`, studentID, s.version, now); err != nil {
+			return err
+		}
+		if err := insertConsentEvent(ctx, tx, "consent_given", studentID, map[string]string{
+			"consent_id":   studentID,
+			"kind":         kind,
+			"text_version": s.textVersion,
+		}); err != nil {
+			return err
+		}
 	case "revoke":
-		tag, err := s.pool.Exec(ctx, `
+		anonymiseAt := now.Add(anonymiseIn)
+		tag, err := tx.Exec(ctx, `
 			UPDATE core.consent
 			SET state = 'revoked',
 			    revoked_at = $2,
 			    anonymise_at = $3
 			WHERE student_id = $1
-		`, studentID, now, now.Add(anonymiseIn))
+		`, studentID, now, anonymiseAt)
 		if err != nil {
 			return err
 		}
 		if tag.RowsAffected() == 0 {
 			return errMissing()
 		}
-		_, err = s.pool.Exec(ctx, `
+		if _, err := tx.Exec(ctx, `
 			UPDATE core.session
 			SET revoked_at = $2
 			WHERE user_id = $1
 			  AND revoked_at IS NULL
-		`, studentID, now)
-		return err
+		`, studentID, now); err != nil {
+			return err
+		}
+		if err := insertConsentEvent(ctx, tx, "consent_revoked", studentID, map[string]string{
+			"consent_id":   studentID,
+			"anonymise_at": anonymiseAt.UTC().Format(time.RFC3339),
+		}); err != nil {
+			return err
+		}
 	case "cancel_revoke":
-		tag, err := s.pool.Exec(ctx, `
+		tag, err := tx.Exec(ctx, `
 			UPDATE core.consent
 			SET state = 'active',
 			    revoked_at = NULL,
@@ -125,10 +147,27 @@ func (s *Service) apply(ctx context.Context, studentID, action string, now time.
 		if tag.RowsAffected() == 0 {
 			return errMissing()
 		}
-		return nil
+		if err := insertConsentEvent(ctx, tx, "consent_revocation_cancelled", studentID, map[string]string{
+			"consent_id": studentID,
+		}); err != nil {
+			return err
+		}
 	default:
 		return errUnavailable()
 	}
+	return tx.Commit(ctx)
+}
+
+func insertConsentEvent(ctx context.Context, tx pgx.Tx, kind, studentID string, payload any) error {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `
+		INSERT INTO core.journal_event (kind, payload, student_id, actor_role)
+		VALUES ($1, $2::jsonb, $3, 'system')
+	`, kind, string(raw), studentID)
+	return err
 }
 
 func (s *Service) loadPage(ctx context.Context, studentID, kind string) (consentPage, error) {
