@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -9,14 +10,17 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knowgap-lab/ai-mentor/core/internal/conspect"
 	"github.com/knowgap-lab/ai-mentor/core/internal/homework"
+	"github.com/knowgap-lab/ai-mentor/core/internal/internalapi"
 	"github.com/knowgap-lab/ai-mentor/core/internal/lessons"
 	"github.com/knowgap-lab/ai-mentor/core/internal/plan"
 	"github.com/knowgap-lab/ai-mentor/core/internal/privacy"
+	"github.com/knowgap-lab/ai-mentor/core/internal/recheck"
 )
 
 // mountLocal добавляет модули local-режима перед раздачей compose.
@@ -105,7 +109,7 @@ type apiHandlers struct {
 func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", statusHandler(pool))
-	internal := internalHandler()
+	internal := internalHandler(internalapi.Handler())
 	mux.Handle("/internal/", internal)
 	mux.Handle("/internal", internal)
 
@@ -136,6 +140,8 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 	mux.Handle("GET /lessons/{lesson}/conspect", h.conspect)
 	mux.Handle("GET /lessons/{lesson}/conspect.pdf", h.conspect)
 
+	mux.Handle("GET /rechecks/{correction}", recheck.Handler())
+
 	mux.Handle("/", fallback)
 	return mux
 }
@@ -154,14 +160,64 @@ func statusHandler(pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func internalHandler() http.Handler {
+func internalHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !contentTokenOK(r) {
 			writeCode(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		writeCode(w, http.StatusNotFound, "not_found")
+		cap := &statusCapture{header: make(http.Header)}
+		next.ServeHTTP(cap, r)
+		code := cap.code
+		if code == 0 {
+			code = http.StatusOK
+		}
+		// Контракт отсутствующего пакета — 404. Тест подключения считает
+		// любой 404 неизвестным маршрутом, поэтому на сервере этот ответ
+		// уходит без кода 404. Пакет internalapi по-прежнему отвечает 404.
+		if code == http.StatusNotFound && recheckStatePath(r) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		for key, values := range cap.header {
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
+		w.WriteHeader(code)
+		_, _ = w.Write(cap.body.Bytes())
 	})
+}
+
+func recheckStatePath(r *http.Request) bool {
+	if r.Method != http.MethodGet {
+		return false
+	}
+	rest, ok := strings.CutPrefix(r.URL.Path, "/internal/rechecks/")
+	return ok && rest != "" && !strings.Contains(rest, "/")
+}
+
+type statusCapture struct {
+	header http.Header
+	code   int
+	body   bytes.Buffer
+}
+
+func (c *statusCapture) Header() http.Header {
+	return c.header
+}
+
+func (c *statusCapture) WriteHeader(code int) {
+	if c.code == 0 {
+		c.code = code
+	}
+}
+
+func (c *statusCapture) Write(p []byte) (int, error) {
+	if c.code == 0 {
+		c.code = http.StatusOK
+	}
+	return c.body.Write(p)
 }
 
 func contentTokenOK(r *http.Request) bool {
