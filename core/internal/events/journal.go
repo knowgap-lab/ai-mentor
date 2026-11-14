@@ -73,22 +73,25 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) AS obs_asg ON true
 LEFT JOIN LATERAL (
-    SELECT asg.student_id
-    FROM core.journal_event AS v
-    JOIN core.attempts AS att_r ON att_r.id = v.payload->>'attempt_id'
-    JOIN core.assignment AS asg ON asg.id = att_r.assignment_id
-    WHERE e.kind = 'recheck_completed'
-      AND v.kind = 'attempt_verdict'
-      AND v.payload->>'origin' = 'recheck'
-      AND v.payload->>'correction_id' = e.payload->>'correction_id'
-    GROUP BY asg.student_id
-    HAVING array_agg(DISTINCT att_r.item_id ORDER BY att_r.item_id)
-         = ARRAY(
-             SELECT item
-             FROM jsonb_array_elements_text(e.payload->'changed_items') AS item
-             ORDER BY item
-         )
-    LIMIT 1
+    SELECT min(matched.student_id) AS student_id
+    FROM (
+        SELECT asg.student_id
+        FROM core.journal_event AS v
+        JOIN core.attempts AS att_r ON att_r.id = v.payload->>'attempt_id'
+        JOIN core.assignment AS asg ON asg.id = att_r.assignment_id
+        WHERE e.kind = 'recheck_completed'
+          AND v.kind = 'attempt_verdict'
+          AND v.payload->>'origin' = 'recheck'
+          AND v.payload->>'correction_id' = e.payload->>'correction_id'
+        GROUP BY asg.student_id
+        HAVING array_agg(DISTINCT att_r.item_id ORDER BY att_r.item_id)
+             = ARRAY(
+                 SELECT item
+                 FROM jsonb_array_elements_text(e.payload->'changed_items') AS item
+                 ORDER BY item
+             )
+    ) AS matched
+    HAVING count(*) = 1
 ) AS recheck_stu ON true
 WHERE e.kind <> 'answer_request'
 ORDER BY e.journal_seq
