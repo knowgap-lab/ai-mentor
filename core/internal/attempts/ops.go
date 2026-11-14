@@ -157,6 +157,7 @@ func (s *Service) doSubmit(ctx context.Context, user actor, assignmentID, key st
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
+	key = assignmentID + ":" + key
 	var stored []byte
 	err = tx.QueryRow(ctx, `
 		SELECT response FROM core.idempotency WHERE user_id = $1 AND idem_key = $2
@@ -204,13 +205,9 @@ func (s *Service) doSubmit(ctx context.Context, user actor, assignmentID, key st
 		return 0, nil, fail(http.StatusConflict, "unanswered_confirmation_required", map[string]any{"left": unanswered})
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE core.assignment_item AS ai
+		UPDATE core.assignment_item
 		SET skipped = true, state = 'final'
-		WHERE ai.assignment_id = $1
-		  AND NOT EXISTS (
-			SELECT 1 FROM core.attempts AS a
-			WHERE a.assignment_id = ai.assignment_id AND a.item_id = ai.item_id
-		  )
+		WHERE assignment_id = $1 AND state = 'open'
 	`, assignmentID); err != nil {
 		return 0, nil, err
 	}
@@ -264,8 +261,8 @@ func (s *Service) doSubmit(ctx context.Context, user actor, assignmentID, key st
 		return 0, nil, err
 	}
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO core.outbox (id, kind, payload)
-		VALUES ($1, 'homework_submitted', $2::jsonb)
+		INSERT INTO core.outbox (id, kind, payload, template, state, next_attempt_at)
+		VALUES ($1, 'homework_submitted', $2::jsonb, 'homework_submitted', 'pending', now())
 	`, "homework-submitted-"+assignmentID, string(outbox)); err != nil {
 		return 0, nil, err
 	}
@@ -480,7 +477,7 @@ func (s *Service) doDidNotUnderstand(ctx context.Context, user actor, assignment
 		WHERE assignment_id = $1 AND item_id = $2
 	`, assignmentID, itemID).Scan(&itemState)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return fail(http.StatusNotFound, "not_found", nil)
+		return fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return err
@@ -562,7 +559,7 @@ func (s *Service) doDispute(ctx context.Context, user actor, assignmentID, itemI
 		WHERE assignment_id = $1 AND item_id = $2
 	`, assignmentID, itemID).Scan(&itemState)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return fail(http.StatusNotFound, "not_found", nil)
+		return fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return err
@@ -660,7 +657,7 @@ func (s *Service) doManual(ctx context.Context, user actor, attemptID, verdict s
 		SELECT assignment_id, item_id FROM core.attempts WHERE id = $1
 	`, attemptID).Scan(&assignmentID, &itemID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return fail(http.StatusNotFound, "not_found", nil)
+		return fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return err
@@ -692,6 +689,32 @@ func (s *Service) doManual(ctx context.Context, user actor, attemptID, verdict s
 		return err
 	}
 	if err := insertObservation(ctx, tx, assignmentID, itemID, result, maxPoints); err != nil {
+		return err
+	}
+	verdictEvent, err := json.Marshal(map[string]any{
+		"attempt_id": attemptID,
+		"origin":     "manual",
+		"verdict":    verdict,
+		"points":     points,
+		"max_points": maxPoints,
+		"reason":     reason,
+	})
+	if err != nil {
+		return err
+	}
+	if err := insertEvent(ctx, tx, "attempt_verdict", verdictEvent); err != nil {
+		return err
+	}
+	manualEvent, err := json.Marshal(map[string]any{
+		"attempt_id": attemptID,
+		"verdict":    verdict,
+		"points":     points,
+		"reason":     reason,
+	})
+	if err != nil {
+		return err
+	}
+	if err := insertEvent(ctx, tx, "manual_verdict", manualEvent); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
@@ -816,6 +839,10 @@ func (s *Service) listAttempts(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusForbidden, "forbidden", nil)
 		return
 	}
+	if user.role == "student" && isTestKind(head.kind) && head.state != "submitted" {
+		writeCode(w, http.StatusForbidden, "forbidden", nil)
+		return
+	}
 	items, err := loadAttemptList(r.Context(), s.pool, r.PathValue("id"))
 	if err != nil {
 		writeHandlerErr(w, err)
@@ -903,7 +930,7 @@ func (s *Service) patchHomeworkDraft(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusBadRequest, "invalid", nil)
 		return
 	}
-	view, err := s.doPatchDraft(r.Context(), r.PathValue("lesson"), body.Remove, body.Add, body.Deadline)
+	view, err := s.doPatchDraft(r.Context(), user, r.PathValue("lesson"), body.Remove, body.Add, body.Deadline)
 	if err != nil {
 		writeHandlerErr(w, err)
 		return
@@ -911,24 +938,27 @@ func (s *Service) patchHomeworkDraft(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, view)
 }
 
-func (s *Service) doPatchDraft(ctx context.Context, lessonID string, remove, add []string, deadline *string) (draftView, error) {
+func (s *Service) doPatchDraft(ctx context.Context, user actor, lessonID string, remove, add []string, deadline *string) (draftView, error) {
 	tx, err := s.begin(ctx)
 	if err != nil {
 		return draftView{}, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	if err := requireDraftOwner(ctx, tx, user, lessonID); err != nil {
+		return draftView{}, err
+	}
 	var raw []byte
 	var storedDeadline string
 	err = tx.QueryRow(ctx, `
 		SELECT items, deadline FROM core.homework_draft WHERE lesson_id = $1
 	`, lessonID).Scan(&raw, &storedDeadline)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return draftView{}, fail(http.StatusNotFound, "not_found", nil)
+		return draftView{}, fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return draftView{}, err
 	}
-	ids, err := variantList(raw)
+	items, err := decodeDraftItems(raw)
 	if err != nil {
 		return draftView{}, err
 	}
@@ -936,13 +966,15 @@ func (s *Service) doPatchDraft(ctx context.Context, lessonID string, remove, add
 	for _, id := range remove {
 		drop[id] = true
 	}
-	kept := make([]string, 0, len(ids))
-	for _, id := range ids {
-		if !drop[id] {
-			kept = append(kept, id)
+	kept := make([]draftItemView, 0, len(items))
+	for _, item := range items {
+		if !drop[item.VariantID] {
+			kept = append(kept, item)
 		}
 	}
-	kept = append(kept, add...)
+	for _, id := range add {
+		kept = append(kept, draftItemView{VariantID: id})
+	}
 	if deadline != nil {
 		storedDeadline = *deadline
 	}
@@ -958,22 +990,35 @@ func (s *Service) doPatchDraft(ctx context.Context, lessonID string, remove, add
 	if err := tx.Commit(ctx); err != nil {
 		return draftView{}, err
 	}
-	view := draftView{
+	return draftView{
 		LessonID:      lessonID,
 		Deadline:      storedDeadline,
-		Items:         make([]draftItemView, 0, len(kept)),
+		Items:         kept,
 		Hints:         []string{},
 		Warnings:      json.RawMessage("[]"),
 		DiscussTopics: []string{},
 		Issued:        false,
-	}
-	for _, id := range kept {
-		view.Items = append(view.Items, draftItemView{VariantID: id})
-	}
-	return view, nil
+	}, nil
 }
 
-func variantList(raw []byte) ([]string, error) {
+func requireDraftOwner(ctx context.Context, q queryer, user actor, lessonID string) error {
+	var owner string
+	err := q.QueryRow(ctx, `
+		SELECT COALESCE(u.owner_tutor_id, '')
+		FROM core.lesson AS l
+		JOIN core.app_user AS u ON u.id = l.student_id
+		WHERE l.id = $1
+	`, lessonID).Scan(&owner)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && (user.role != "tutor" || user.id != owner)) {
+		return fail(http.StatusForbidden, "forbidden", nil)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func decodeDraftItems(raw []byte) ([]draftItemView, error) {
 	var value any
 	if err := json.Unmarshal(raw, &value); err != nil {
 		return nil, err
@@ -982,20 +1027,208 @@ func variantList(raw []byte) ([]string, error) {
 	if !ok {
 		return nil, fmt.Errorf("items %T", value)
 	}
-	out := make([]string, 0, len(items))
+	out := make([]draftItemView, 0, len(items))
 	for _, item := range items {
 		switch row := item.(type) {
 		case string:
-			out = append(out, row)
+			out = append(out, draftItemView{VariantID: row})
 		case map[string]any:
-			id, _ := row["variant_id"].(string)
-			if id == "" {
+			view := draftItemView{VariantID: jsonString(row["variant_id"])}
+			view.TypeID = jsonString(row["type_id"])
+			view.AnswerFormat = jsonString(row["answer_format"])
+			view.Source = jsonString(row["source"])
+			view.Statement = jsonString(row["statement"])
+			if view.VariantID == "" {
 				return nil, fmt.Errorf("item without variant_id")
 			}
-			out = append(out, id)
+			out = append(out, view)
 		default:
 			return nil, fmt.Errorf("item %T", item)
 		}
 	}
 	return out, nil
+}
+
+func jsonString(v any) string {
+	s, _ := v.(string)
+	return s
+}
+
+func (s *Service) getSummary(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.authenticate(w, r)
+	if !ok {
+		return
+	}
+	body, err := s.doSummary(r.Context(), user, r.PathValue("id"))
+	if err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	writeResult(w, http.StatusOK, body)
+}
+
+func (s *Service) doSummary(ctx context.Context, user actor, assignmentID string) ([]byte, error) {
+	head, err := loadAssignment(ctx, s.pool, assignmentID)
+	if err != nil {
+		return nil, err
+	}
+	if !canRead(user, head) {
+		return nil, fail(http.StatusForbidden, "forbidden", nil)
+	}
+	if head.state != "submitted" {
+		return nil, fail(http.StatusConflict, "not_submitted", nil)
+	}
+	items, err := loadItems(ctx, s.pool, assignmentID)
+	if err != nil {
+		return nil, err
+	}
+	response := submitResponse{
+		AssignmentID: assignmentID,
+		Items:        make([]submitItem, 0, len(items)),
+	}
+	for _, item := range items {
+		response.MaxPoints += item.max
+		if len(item.attempts) == 0 {
+			response.Skipped++
+			continue
+		}
+		response.Answered++
+		result, ok := summarize(item.attempts)
+		if !ok {
+			continue
+		}
+		response.TotalPoints += result.TotalPoints
+		response.Items = append(response.Items, submitItem{
+			ItemID:    item.id,
+			Verdict:   result.Verdict,
+			Points:    result.TotalPoints,
+			MaxPoints: item.max,
+		})
+	}
+	return json.Marshal(response)
+}
+
+func (s *Service) listDisputes(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.authenticate(w, r)
+	if !ok {
+		return
+	}
+	if err := s.tutorOwnsStudent(r.Context(), user, r.PathValue("id")); err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	rows, err := s.pool.Query(r.Context(), `
+		SELECT d.item_id, d.assignment_id, d.reason, d.state, COALESCE(d.body, '')
+		FROM core.dispute AS d
+		JOIN core.assignment AS a ON a.id = d.assignment_id
+		WHERE a.student_id = $1
+		ORDER BY d.assignment_id, d.item_id
+	`, r.PathValue("id"))
+	if err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	defer rows.Close()
+	out := make([]disputeListItem, 0)
+	for rows.Next() {
+		var item disputeListItem
+		if err := rows.Scan(&item.ID, &item.AssignmentID, &item.Reason, &item.State, &item.Text); err != nil {
+			writeHandlerErr(w, err)
+			return
+		}
+		item.ItemID = item.ID
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Service) getDiscussList(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.authenticate(w, r)
+	if !ok {
+		return
+	}
+	if err := s.tutorOwnsStudent(r.Context(), user, r.PathValue("id")); err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	rows, err := s.pool.Query(r.Context(), `
+		SELECT e.payload->>'item_id', e.payload->>'assignment_id', COALESCE(snap.variant_id, '')
+		FROM core.journal_event AS e
+		LEFT JOIN LATERAL (
+			SELECT item->>'variant_id' AS variant_id
+			FROM core.assignment AS a
+			CROSS JOIN LATERAL jsonb_array_elements(COALESCE(a.snapshot->'items', '[]'::jsonb)) AS item
+			WHERE a.id = e.payload->>'assignment_id'
+			  AND item->>'item_id' = e.payload->>'item_id'
+			LIMIT 1
+		) AS snap ON true
+		WHERE e.kind = 'did_not_understand'
+		  AND e.payload->>'assignment_id' IN (
+			SELECT id FROM core.assignment WHERE student_id = $1
+		  )
+		ORDER BY e.at
+	`, r.PathValue("id"))
+	if err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	defer rows.Close()
+	seen := map[string]bool{}
+	out := make([]discussListItem, 0)
+	for rows.Next() {
+		var item discussListItem
+		if err := rows.Scan(&item.ItemID, &item.AssignmentID, &item.VariantID); err != nil {
+			writeHandlerErr(w, err)
+			return
+		}
+		key := item.AssignmentID + ":" + item.ItemID
+		if seen[key] || item.ItemID == "" {
+			continue
+		}
+		seen[key] = true
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		writeHandlerErr(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Service) tutorOwnsStudent(ctx context.Context, user actor, studentID string) error {
+	if user.role != "tutor" {
+		return fail(http.StatusForbidden, "forbidden", nil)
+	}
+	var owner string
+	err := s.pool.QueryRow(ctx, `
+		SELECT COALESCE(owner_tutor_id, '')
+		FROM core.app_user
+		WHERE id = $1 AND role = 'student'
+	`, studentID).Scan(&owner)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && owner != user.id) {
+		return fail(http.StatusForbidden, "forbidden", nil)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type disputeListItem struct {
+	ID           string `json:"id"`
+	AssignmentID string `json:"assignment_id"`
+	ItemID       string `json:"item_id"`
+	Reason       string `json:"reason"`
+	State        string `json:"state"`
+	Text         string `json:"text,omitempty"`
+}
+
+type discussListItem struct {
+	ItemID       string `json:"item_id"`
+	VariantID    string `json:"variant_id"`
+	AssignmentID string `json:"assignment_id"`
 }

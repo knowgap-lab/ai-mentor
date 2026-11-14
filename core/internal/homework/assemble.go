@@ -45,6 +45,7 @@ type sibling struct {
 	PlaceNo  int
 	State    string
 	StartsAt string
+	Topics   []string
 }
 
 func (d storedDraft) view(lessonID string, issued bool) draftView {
@@ -71,7 +72,7 @@ func buildDraft(row lessonRow, siblings []sibling) storedDraft {
 	if row.NoBlocks && row.Blob.Coverage == "all" && row.Blob.Mark == nil {
 		return storedDraft{Deadline: deadline}
 	}
-	return assemble(row.Blob, deadline)
+	return assemble(row.Blob, deadline, heldTopics(row.PlaceNo, siblings))
 }
 
 func nextDeadline(place int, siblings []sibling) string {
@@ -89,7 +90,7 @@ func nextDeadline(place int, siblings []sibling) string {
 	return best
 }
 
-func assemble(blob lessonBlob, deadline string) storedDraft {
+func assemble(blob lessonBlob, deadline string, spacing []string) storedDraft {
 	byID := map[string]Variant{}
 	for _, item := range blob.Variants {
 		byID[item.ID] = item
@@ -162,6 +163,17 @@ func assemble(blob lessonBlob, deadline string) storedDraft {
 		}
 		review = append(review, items...)
 	}
+	for _, topic := range spacing {
+		found := freeVariants(blob.Variants, seen, used, func(item Variant) bool {
+			return item.Topic == topic
+		})
+		if len(found) == 0 {
+			continue
+		}
+		picked := found[0]
+		used[picked.ID] = true
+		review = append(review, itemFrom(picked, "review"))
+	}
 
 	sortByID(reinforcement)
 	sortByID(unsolved)
@@ -191,6 +203,32 @@ func assemble(blob lessonBlob, deadline string) storedDraft {
 		draft.Hints = []string{hintLine(solved, len(items))}
 	}
 	return draft
+}
+
+func heldTopics(place int, siblings []sibling) []string {
+	held := make([]sibling, 0, len(siblings))
+	for _, item := range siblings {
+		if item.PlaceNo < place && item.State == "held" {
+			held = append(held, item)
+		}
+	}
+	slices.SortFunc(held, func(a, b sibling) int { return cmp.Compare(a.PlaceNo, b.PlaceNo) })
+	seen := map[string]bool{}
+	var topics []string
+	for _, back := range []int{1, 3, 7, 15} {
+		idx := len(held) - back
+		if idx < 0 {
+			continue
+		}
+		for _, topic := range held[idx].Topics {
+			if topic == "" || seen[topic] {
+				continue
+			}
+			seen[topic] = true
+			topics = append(topics, topic)
+		}
+	}
+	return topics
 }
 
 func theoryOf(mark *Mark) string {
