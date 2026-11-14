@@ -1,7 +1,8 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
-import { csrfHeaders } from "../task/csrf";
+import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import { clearOutbox } from "../task/outbox";
 import { Screen } from "../ui";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -24,6 +25,7 @@ export function ProfilePage() {
     async function load() {
       try {
         const response = await fetch("/me", { credentials: "include" });
+        rememberCsrfFromResponse(response);
         if (!response.ok) {
           const text = await messageForResponse(response);
           if (!cancelled) {
@@ -61,9 +63,13 @@ export function ProfilePage() {
         credentials: "include",
         headers: csrfHeaders(),
       });
+      rememberCsrfFromResponse(response);
       if (!response.ok) {
         setActionError(await messageForResponse(response));
         return;
+      }
+      if (path === "/auth/logout") {
+        clearOutbox();
       }
       if (path === "/me/sessions/revoke-all") {
         setRevoked(true);

@@ -2,7 +2,7 @@ import { Button, NativeSelect, Stack, Text, Textarea } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
-import { csrfHeaders } from "../task/csrf";
+import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen, StatusBadge, type Status } from "../ui";
 
 const REASONS = [
@@ -82,6 +82,7 @@ export function SummaryPage() {
           `/assignments/${encodeURIComponent(assignmentId ?? "")}/summary`,
           { credentials: "include" },
         );
+        rememberCsrfFromResponse(response);
         if (!response.ok) {
           const text = await messageForResponse(response);
           if (!cancelled) {
@@ -134,6 +135,7 @@ export function SummaryPage() {
           body,
         },
       );
+      rememberCsrfFromResponse(response);
       if (!response.ok) {
         setActionError(await messageForResponse(response));
       }
