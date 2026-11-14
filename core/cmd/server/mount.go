@@ -112,6 +112,15 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 	mux.Handle("GET /consent/{token}", h.privacy)
 	mux.Handle("POST /consent/{token}", h.privacy)
 
+	// GET /students остаётся у compose. Здесь только операции privacy.
+	mux.Handle("POST /students", h.privacy)
+	mux.Handle("GET /students/{id}", h.privacy)
+	mux.Handle("POST /students/{id}/archive", h.privacy)
+	mux.Handle("POST /students/{id}/unarchive", h.privacy)
+	mux.Handle("POST /students/{id}/anonymise", h.privacy)
+	mux.Handle("POST /students/{id}/consent-links", h.privacy)
+	mux.Handle("POST /students/{id}/consent/cancel-revoke", h.privacy)
+
 	mux.Handle("PUT /students/{id}/schedules/{subject}", h.lessons)
 	mux.Handle("GET /lessons/{lesson}", h.lessons)
 	mux.Handle("POST /lessons/{lesson}/move", h.lessons)
