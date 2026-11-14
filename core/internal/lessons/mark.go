@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 )
 
 func (s *Service) markLesson(w http.ResponseWriter, r *http.Request) {
@@ -77,6 +76,7 @@ func (s *Service) markLesson(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, detail)
 }
 
+// Слот уже начался: отметки ставятся на текущем и на прошедшем занятии (LS-R16, LS-R19).
 func (s *Service) lessonCurrent(ctx context.Context, db q, lesson lessonRow) bool {
 	if lesson.StartsAt == nil {
 		return false
@@ -85,10 +85,7 @@ func (s *Service) lessonCurrent(ctx context.Context, db q, lesson lessonRow) boo
 	if err != nil || rule == nil || rule.DurationMin <= 0 {
 		return false
 	}
-	begin := lesson.StartsAt.UTC()
-	end := begin.Add(time.Duration(rule.DurationMin) * time.Minute)
-	now := s.cfg.Now.UTC()
-	return !now.Before(begin) && now.Before(end)
+	return !s.cfg.Now.UTC().Before(lesson.StartsAt.UTC())
 }
 
 func readMarks(r *http.Request) (mode, coverage string, theory *string, practice *apiPracticeRef, err error) {
