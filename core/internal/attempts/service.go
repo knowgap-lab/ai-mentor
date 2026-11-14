@@ -100,7 +100,7 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 			writeCode(w, http.StatusForbidden, "csrf", nil)
 			return actor{}, false
 		}
-		if r.Header.Get("Origin") != appOrigin {
+		if r.Header.Get("Origin") != s.allowedOrigin() {
 			writeCode(w, http.StatusForbidden, "csrf", nil)
 			return actor{}, false
 		}
@@ -128,6 +128,13 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 		return actor{}, false
 	}
 	return user, true
+}
+
+func (s *Service) allowedOrigin() string {
+	if s.cfg.AppOrigin != "" {
+		return s.cfg.AppOrigin
+	}
+	return appOrigin
 }
 
 func hashToken(token string) ([]byte, bool) {

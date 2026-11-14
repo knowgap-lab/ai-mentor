@@ -205,20 +205,8 @@ func (s *Service) doSubmit(ctx context.Context, user actor, assignmentID, key st
 		return 0, nil, fail(http.StatusConflict, "unanswered_confirmation_required", map[string]any{"left": unanswered})
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE core.assignment_item AS ai
-		SET skipped = true, state = 'final'
-		WHERE ai.assignment_id = $1
-		  AND state = 'open'
-		  AND NOT EXISTS (
-			SELECT 1 FROM core.attempts AS a
-			WHERE a.assignment_id = ai.assignment_id AND a.item_id = ai.item_id
-		  )
-	`, assignmentID); err != nil {
-		return 0, nil, err
-	}
-	if _, err := tx.Exec(ctx, `
 		UPDATE core.assignment_item
-		SET state = 'final'
+		SET skipped = true, state = 'final'
 		WHERE assignment_id = $1 AND state = 'open'
 	`, assignmentID); err != nil {
 		return 0, nil, err
@@ -489,7 +477,7 @@ func (s *Service) doDidNotUnderstand(ctx context.Context, user actor, assignment
 		WHERE assignment_id = $1 AND item_id = $2
 	`, assignmentID, itemID).Scan(&itemState)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return fail(http.StatusNotFound, "not_found", nil)
+		return fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return err
@@ -571,7 +559,7 @@ func (s *Service) doDispute(ctx context.Context, user actor, assignmentID, itemI
 		WHERE assignment_id = $1 AND item_id = $2
 	`, assignmentID, itemID).Scan(&itemState)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return fail(http.StatusNotFound, "not_found", nil)
+		return fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return err
@@ -851,16 +839,14 @@ func (s *Service) listAttempts(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusForbidden, "forbidden", nil)
 		return
 	}
+	if user.role == "student" && isTestKind(head.kind) && head.state != "submitted" {
+		writeCode(w, http.StatusForbidden, "forbidden", nil)
+		return
+	}
 	items, err := loadAttemptList(r.Context(), s.pool, r.PathValue("id"))
 	if err != nil {
 		writeHandlerErr(w, err)
 		return
-	}
-	if user.role == "student" && isTestKind(head.kind) && head.state != "submitted" {
-		for i := range items {
-			items[i].Verdict = ""
-			items[i].Points = 0
-		}
 	}
 	writeJSON(w, http.StatusOK, items)
 }
@@ -1170,13 +1156,21 @@ func (s *Service) getDiscussList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT payload->>'item_id', payload->>'assignment_id', COALESCE(payload->>'variant_id', '')
-		FROM core.journal_event
-		WHERE kind = 'did_not_understand'
-		  AND payload->>'assignment_id' IN (
+		SELECT e.payload->>'item_id', e.payload->>'assignment_id', COALESCE(snap.variant_id, '')
+		FROM core.journal_event AS e
+		LEFT JOIN LATERAL (
+			SELECT item->>'variant_id' AS variant_id
+			FROM core.assignment AS a
+			CROSS JOIN LATERAL jsonb_array_elements(COALESCE(a.snapshot->'items', '[]'::jsonb)) AS item
+			WHERE a.id = e.payload->>'assignment_id'
+			  AND item->>'item_id' = e.payload->>'item_id'
+			LIMIT 1
+		) AS snap ON true
+		WHERE e.kind = 'did_not_understand'
+		  AND e.payload->>'assignment_id' IN (
 			SELECT id FROM core.assignment WHERE student_id = $1
 		  )
-		ORDER BY at
+		ORDER BY e.at
 	`, r.PathValue("id"))
 	if err != nil {
 		writeHandlerErr(w, err)
@@ -1196,9 +1190,6 @@ func (s *Service) getDiscussList(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		seen[key] = true
-		if item.VariantID == "" {
-			item.VariantID = item.ItemID
-		}
 		out = append(out, item)
 	}
 	if err := rows.Err(); err != nil {
