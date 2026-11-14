@@ -24,13 +24,13 @@ const (
 
 // State — состояние пакета перепроверки (RC-R6).
 type State struct {
-	CorrectionID  int
-	State         string
-	Total         int
-	Processed     int
-	Changed       int
-	SkippedManual int
-	Cursor        string
+	CorrectionID  int    `json:"correction_id"`
+	State         string `json:"state"`
+	Total         int    `json:"total"`
+	Processed     int    `json:"processed"`
+	Changed       int    `json:"changed"`
+	SkippedManual int    `json:"skipped_manual"`
+	Cursor        string `json:"cursor"`
 }
 
 // Error — отказ приёма. Error возвращает код.
@@ -128,7 +128,7 @@ func Run(ctx context.Context, conn *pgx.Conn, correctionID int) (State, error) {
 		if err != nil {
 			return State{}, err
 		}
-		if state.State == "done" || state.State == "failed" {
+		if state.State == "done" || state.State == "failed" || state.State == "pending" {
 			return state, nil
 		}
 	}
@@ -154,6 +154,16 @@ func runPortion(ctx context.Context, conn *pgx.Conn, correctionID int) (State, e
 		}
 		return stored.state, nil
 	}
+	earlier, err := earlierOpen(ctx, tx, correctionID)
+	if err != nil {
+		return State{}, err
+	}
+	if earlier {
+		if err := tx.Commit(ctx); err != nil {
+			return State{}, err
+		}
+		return stored.state, nil
+	}
 
 	ids, err := nextAttempts(ctx, tx, stored.variants, stored.state.Cursor)
 	if err != nil {
@@ -169,6 +179,11 @@ func runPortion(ctx context.Context, conn *pgx.Conn, correctionID int) (State, e
 	done := len(ids) < portionSize
 	if err := saveBatch(ctx, tx, stored.state, done); err != nil {
 		return State{}, err
+	}
+	if done {
+		if err := finishBatch(ctx, tx, correctionID); err != nil {
+			return State{}, err
+		}
 	}
 	stored, ok, err = loadBatch(ctx, tx, correctionID, false)
 	if err != nil {
@@ -188,7 +203,7 @@ func rescoreAttempt(ctx context.Context, tx pgx.Tx, correctionID int, attemptID 
 	if err != nil {
 		return err
 	}
-	manual, err := manualCurrent(ctx, tx, attemptID, current.reason)
+	manual, err := manualCurrent(ctx, tx, attemptID)
 	if err != nil {
 		return err
 	}
@@ -284,10 +299,7 @@ func loadCurrent(ctx context.Context, tx pgx.Tx, attemptID string) (verdictNow, 
 	return current, nil
 }
 
-func manualCurrent(ctx context.Context, tx pgx.Tx, attemptID, reason string) (bool, error) {
-	if reason == "" {
-		return false, nil
-	}
+func manualCurrent(ctx context.Context, tx pgx.Tx, attemptID string) (bool, error) {
 	var manual bool
 	err := tx.QueryRow(ctx, `
 		SELECT EXISTS (

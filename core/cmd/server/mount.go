@@ -14,9 +14,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knowgap-lab/ai-mentor/core/internal/conspect"
 	"github.com/knowgap-lab/ai-mentor/core/internal/homework"
+	"github.com/knowgap-lab/ai-mentor/core/internal/internalapi"
 	"github.com/knowgap-lab/ai-mentor/core/internal/lessons"
 	"github.com/knowgap-lab/ai-mentor/core/internal/plan"
 	"github.com/knowgap-lab/ai-mentor/core/internal/privacy"
+	"github.com/knowgap-lab/ai-mentor/core/internal/recheck"
 	"github.com/knowgap-lab/ai-mentor/core/internal/telegram"
 )
 
@@ -116,7 +118,7 @@ type apiHandlers struct {
 func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", statusHandler(pool))
-	internal := internalHandler()
+	internal := internalHandler(internalapi.Handler())
 	mux.Handle("/internal/", internal)
 	mux.Handle("/internal", internal)
 
@@ -159,6 +161,8 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 	mux.Handle("GET /lessons/{lesson}/conspect", h.conspect)
 	mux.Handle("GET /lessons/{lesson}/conspect.pdf", h.conspect)
 
+	mux.Handle("GET /rechecks/{correction}", recheck.Handler())
+
 	// S2. Остальные пути /students/ остаются в fallback.
 	mux.Handle("GET /invite/{token}", h.auth)
 	mux.Handle("POST /students/{id}/invites", h.auth)
@@ -186,13 +190,13 @@ func statusHandler(pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func internalHandler() http.Handler {
+func internalHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !contentTokenOK(r) {
 			writeCode(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		writeCode(w, http.StatusNotFound, "not_found")
+		next.ServeHTTP(w, r)
 	})
 }
 
