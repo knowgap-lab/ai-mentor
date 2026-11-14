@@ -224,8 +224,9 @@ func (s *Service) insertStudent(ctx context.Context, tutorID string, body studen
 }
 
 func newPseudonym() (string, error) {
-	const alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	raw := make([]byte, len(alphabet))
+	// PV-R6: base32 без похожих знаков. 32 символа, без I, L, O и U.
+	const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+	raw := make([]byte, 8)
 	if _, err := rand.Read(raw); err != nil {
 		return "", err
 	}

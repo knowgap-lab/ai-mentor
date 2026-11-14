@@ -86,6 +86,16 @@ func (s *Service) apply(ctx context.Context, studentID, kind, action string, now
 	defer func() { _ = tx.Rollback(ctx) }()
 	switch action {
 	case "give":
+		// PV-R10: ссылка многократна только до отзыва. PV-R18: вернуть согласие
+		// может только отмена, и лишь пока не вышли 7 суток (anonymiseIn).
+		// give после отзыва и после обезличивания запись не оживляет.
+		blocked, blockErr := giveLeavesConsent(ctx, tx, studentID)
+		if blockErr != nil {
+			return blockErr
+		}
+		if blocked {
+			return nil
+		}
 		_, err = tx.Exec(ctx, `
 			INSERT INTO core.consent (
 				student_id, version, state, granted_at, revoked_at, anonymise_at, granted_by, method
@@ -162,6 +172,28 @@ func (s *Service) apply(ctx context.Context, studentID, kind, action string, now
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+// giveLeavesConsent сообщает, что give не должен менять согласие.
+// PV-R10 оставляет повторный give только до отзыва. PV-R18 возвращает согласие
+// действием cancel_revoke, пока не вышли 7 суток (anonymiseIn, поле anonymise_at).
+// Поэтому give не оживляет согласие ни внутри этого срока, ни после него,
+// и не оживляет его после обезличивания.
+func giveLeavesConsent(ctx context.Context, tx pgx.Tx, studentID string) (bool, error) {
+	var state, status *string
+	err := tx.QueryRow(ctx, `
+		SELECT c.state, u.status
+		FROM (SELECT $1::text AS id) AS s
+		LEFT JOIN core.consent AS c ON c.student_id = s.id
+		LEFT JOIN core.app_user AS u ON u.id = s.id
+	`, studentID).Scan(&state, &status)
+	if err != nil {
+		return false, err
+	}
+	if status != nil && *status == "anonymised" {
+		return true, nil
+	}
+	return state != nil && *state == "revoked", nil
 }
 
 func (s *Service) loadPage(ctx context.Context, studentID, kind string) (consentPage, error) {
