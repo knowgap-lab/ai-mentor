@@ -135,6 +135,10 @@ func (s *Service) skipLesson(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if lesson.State == "held" {
+		writeCode(w, http.StatusConflict, "lesson_frozen")
+		return
+	}
 	if lesson.State == "skipped" {
 		if err := tx.Rollback(r.Context()); err != nil {
 			writeHandlerErr(w, failErr(err))
