@@ -14,7 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const sessionCookie = "__Host-session"
+const (
+	sessionCookie = "__Host-session"
+	appOrigin     = "http://localhost"
+)
 
 // Service обслуживает HTTP журнала попыток.
 type Service struct {
@@ -61,10 +64,13 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 	mux.HandleFunc("POST /assignments/{id}/withdraw", svc.withdrawAssignment)
 	mux.HandleFunc("PUT /assignments/{id}/deadline", svc.extendDeadline)
 	mux.HandleFunc("POST /assignments/{id}/submit", svc.submitAssignment)
+	mux.HandleFunc("GET /assignments/{id}/summary", svc.getSummary)
 	mux.HandleFunc("POST /assignments/{id}/items/{item}/did-not-understand", svc.didNotUnderstand)
 	mux.HandleFunc("POST /assignments/{id}/items/{item}/dispute", svc.openDispute)
 	mux.HandleFunc("GET /assignments/{id}/attempts", svc.listAttempts)
 	mux.HandleFunc("POST /attempts/{attempt}/manual-verdict", svc.manualVerdict)
+	mux.HandleFunc("GET /students/{id}/disputes", svc.listDisputes)
+	mux.HandleFunc("GET /students/{id}/discuss-list", svc.getDiscussList)
 	mux.HandleFunc("PATCH /lessons/{lesson}/homework-draft", svc.patchHomeworkDraft)
 	svc.handler = mux
 	return svc, nil
@@ -89,8 +95,12 @@ func (s *Service) authenticate(w http.ResponseWriter, r *http.Request) (actor, b
 		writeCode(w, http.StatusUnauthorized, "unauthorized", nil)
 		return actor{}, false
 	}
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Method != http.MethodOptions {
 		if subtle.ConstantTimeCompare([]byte(r.Header.Get("X-CSRF-Token")), []byte(cookie.Value)) != 1 {
+			writeCode(w, http.StatusForbidden, "csrf", nil)
+			return actor{}, false
+		}
+		if r.Header.Get("Origin") != appOrigin {
 			writeCode(w, http.StatusForbidden, "csrf", nil)
 			return actor{}, false
 		}
@@ -198,7 +208,7 @@ func loadAssignment(ctx context.Context, q queryer, id string) (assignmentHead, 
 		WHERE a.id = $1
 	`, id).Scan(&head.studentID, &head.state, &head.kind, &head.ownerTutor)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return assignmentHead{}, fail(http.StatusNotFound, "not_found", nil)
+		return assignmentHead{}, fail(http.StatusForbidden, "forbidden", nil)
 	}
 	if err != nil {
 		return assignmentHead{}, err
