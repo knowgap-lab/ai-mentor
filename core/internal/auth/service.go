@@ -1,5 +1,5 @@
-// Пакет auth обслуживает локальный вход, сеанс и проверку прав.
-// Telegram, приглашения и подтверждение устройства репетитора сюда не входят.
+// Пакет auth обслуживает вход, сеанс, приглашение и проверку прав.
+// Сеть к Telegram не вызывается: токен бота читается из окружения.
 package auth
 
 import (
@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -78,6 +80,22 @@ func errUnauthorized() *Error { return apiError(http.StatusUnauthorized, "unauth
 
 func errUnavailable() *Error { return apiError(http.StatusServiceUnavailable, "unavailable") }
 
+func errLoginInvalid() *Error { return apiError(http.StatusUnauthorized, "login_invalid") }
+
+func errDevicePending() *Error { return apiError(http.StatusUnauthorized, "device_pending") }
+
+func errInviteGone() *Error { return apiError(http.StatusGone, "invite_gone") }
+
+func errConsentMissing() *Error { return apiError(http.StatusLocked, "consent_missing") }
+
+func errAccountLocked() *Error { return apiError(http.StatusLocked, "account_locked") }
+
+func errTelegramBound() *Error {
+	return apiError(http.StatusConflict, "telegram_already_bound")
+}
+
+func errRateLimited() *Error { return apiError(http.StatusTooManyRequests, "rate_limited") }
+
 // RejectDevMode запрещает старт, если локальный вход включён не в env local (AU-R36).
 func RejectDevMode(env string, enabled bool) error {
 	if enabled && env != "local" {
@@ -86,11 +104,14 @@ func RejectDevMode(env string, enabled bool) error {
 	return nil
 }
 
-// Service — локальный вход и сеансы в Postgres.
+// Service — вход и сеансы в Postgres.
+// botToken — TELEGRAM_BOT_TOKEN на момент Open. В журнал он не пишется.
 type Service struct {
-	pool    *pgxpool.Pool
-	cfg     Config
-	handler http.Handler
+	pool     *pgxpool.Pool
+	cfg      Config
+	botToken string
+	hits     *ipLimit
+	handler  http.Handler
 }
 
 // Open подключается к Postgres и собирает HTTP-обработчик.
@@ -105,12 +126,24 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 		pool.Close()
 		return nil, err
 	}
-	svc := &Service{pool: pool, cfg: cfg}
+	svc := &Service{
+		pool:     pool,
+		cfg:      cfg,
+		botToken: os.Getenv("TELEGRAM_BOT_TOKEN"),
+		hits:     &ipLimit{hits: map[string][]time.Time{}},
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /auth/dev", svc.loginDev)
 	mux.HandleFunc("POST /auth/logout", svc.logout)
 	mux.HandleFunc("GET /me", svc.me)
-	svc.handler = mux
+	mux.HandleFunc("POST /auth/telegram", svc.loginTelegram)
+	mux.HandleFunc("GET /invite/{token}", svc.getInvite)
+	mux.HandleFunc("POST /students/{id}/invites", svc.createInvite)
+	mux.HandleFunc("GET /me/sessions", svc.listSessions)
+	mux.HandleFunc("POST /me/sessions/revoke-all", svc.revokeAllSessions)
+	mux.HandleFunc("POST /students/{id}/revoke-sessions", svc.revokeStudentSessions)
+	mux.HandleFunc("POST /students/{id}/unbind-telegram", svc.unbindTelegram)
+	svc.handler = svc.guard(mux)
 	return svc, nil
 }
 
@@ -122,7 +155,7 @@ func (s *Service) Close() error {
 	return nil
 }
 
-// Handler обслуживает POST /auth/dev, POST /auth/logout и GET /me.
+// Handler обслуживает вход, приглашения, сеансы, POST /auth/dev, POST /auth/logout и GET /me.
 func (s *Service) Handler() http.Handler {
 	return s.handler
 }

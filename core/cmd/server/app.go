@@ -102,7 +102,7 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		return nil, err
 	}
 	fallback := compose.Handler(dsn, authSvc.Handler(), answerSvc.Handler(), attemptSvc.Handler())
-	api, err := mountLocal(ctx, dsn, origin, fallback)
+	api, err := mountLocal(ctx, dsn, origin, fallback, authSvc.Handler())
 	if err != nil {
 		_ = attemptSvc.Close()
 		_ = answerSvc.Close()
