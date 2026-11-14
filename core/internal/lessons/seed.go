@@ -90,7 +90,7 @@ func Seed(ctx context.Context, conn *pgx.Conn, fx Fixture) (World, error) {
 		}
 	}
 	if fx.Schedule != nil {
-		if err := saveSchedule(ctx, tx, studentID, fx.Subject, *fx.Schedule, false); err != nil {
+		if err := saveSchedule(ctx, tx, studentID, fx.Subject, *fx.Schedule, false, "", ""); err != nil {
 			return World{}, err
 		}
 		if err := layoutSubject(ctx, tx, studentID, fx.Subject, fx.Now); err != nil {

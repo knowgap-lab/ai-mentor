@@ -44,7 +44,8 @@ SELECT
         les.student_id,
         les_from.student_id,
         les_ids.student_id,
-        stu.id
+        stu.id,
+        obs_asg.student_id
     ) AS student_id
 FROM core.journal_event AS e
 LEFT JOIN core.assignment AS a
@@ -62,11 +63,21 @@ LEFT JOIN core.lesson AS les_ids
 LEFT JOIN core.app_user AS stu
     ON stu.role = 'student'
    AND stu.id = COALESCE(NULLIF(e.payload->>'user_id', ''), NULLIF(e.payload->>'consent_id', ''))
+LEFT JOIN LATERAL (
+    SELECT asg.student_id
+    FROM core.assignment AS asg
+    WHERE e.kind = 'observation'
+      AND strpos(e.payload->>'observation_id', asg.id || ':') = 1
+    ORDER BY length(asg.id) DESC
+    LIMIT 1
+) AS obs_asg ON true
+WHERE e.kind <> 'answer_request'
 ORDER BY e.journal_seq
 `
 
-// Documents возвращает все записи журнала конвертами events.schema.json
+// Documents возвращает записи журнала конвертами events.schema.json
 // в порядке journal_seq. Каждый элемент — один JSON-документ.
+// kind answer_request — старый счётчик лимита, его нет в схеме, поэтому он не конверт.
 func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 	rows, err := db.Query(ctx, documentsSQL)
 	if err != nil {
