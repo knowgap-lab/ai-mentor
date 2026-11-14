@@ -1,6 +1,7 @@
-import { Button, Checkbox, Radio, TextInput } from "@mantine/core";
+import { Button, Checkbox, Radio, Stack, Text, TextInput } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { ActionBar, ChoiceRow, Screen, TaskSheet } from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
 import {
   dropOutbox,
@@ -9,7 +10,6 @@ import {
   type OutboxItem,
 } from "./outbox";
 import { Statement } from "./Statement";
-import "./task.css";
 
 const INTEGER_HINT = "введите целое число";
 const MINUS = "−";
@@ -289,42 +289,50 @@ export function TaskPage() {
     };
   }, [assignmentId, itemId]);
 
+  const backTo =
+    assignmentId && itemId
+      ? `/assignment/${encodeURIComponent(assignmentId)}`
+      : "/";
+
   if (!assignmentId || !itemId) {
     return (
-      <main>
-        <p>Задача не найдена</p>
-      </main>
+      <Screen title="Задача" backTo="/">
+        <Text>Задача не найдена</Text>
+      </Screen>
     );
   }
 
   if (loadError) {
     return (
-      <main>
-        <p>Нет связи</p>
-        <Button
-          type="button"
-          onClick={() => setReloadKey((value) => value + 1)}
-        >
-          Повторить
-        </Button>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Stack gap="sm">
+          <Text>Нет связи</Text>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => setReloadKey((value) => value + 1)}
+          >
+            Повторить
+          </Button>
+        </Stack>
+      </Screen>
     );
   }
 
   if (!assignment) {
     return (
-      <main>
-        <p>Загрузка</p>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Text>Загрузка</Text>
+      </Screen>
     );
   }
 
   const item = assignment.items.find((entry) => entry.item_id === itemId);
   if (!item) {
     return (
-      <main>
-        <p>Задача не найдена</p>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Text>Задача не найдена</Text>
+      </Screen>
     );
   }
 
@@ -420,81 +428,96 @@ export function TaskPage() {
   const verdict = result ? verdictText(result) : null;
 
   return (
-    <main>
-      <Statement source={item.statement} />
-      {attemptsLeft !== undefined ? <p>{attemptsLabel(attemptsLeft)}</p> : null}
-      {item.answer_format === "ct.choice1" ? (
-        <Radio.Group
-          label="Вариант"
-          name="choice1"
-          value={choice ?? ""}
-          onChange={setChoice}
-        >
-          {options.map((option) => (
-            <Radio
-              key={option.n}
-              value={String(option.n)}
-              label={`${option.n}. ${option.text}`}
-            />
-          ))}
-        </Radio.Group>
-      ) : null}
-      {item.answer_format === "ct.choiceN" ? (
-        <Checkbox.Group label="Варианты" value={choices} onChange={setChoices}>
-          {options.map((option) => (
-            <Checkbox
-              key={option.n}
-              value={String(option.n)}
-              label={`${option.n}. ${option.text}`}
-            />
-          ))}
-        </Checkbox.Group>
-      ) : null}
-      {item.answer_format === "ct.integer" ? (
-        <div>
-          <TextInput
-            label="Ответ"
-            inputMode="numeric"
-            autoComplete="off"
-            value={draft}
-            onChange={(event) => updateDraft(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                onAnswer();
-              }
-            }}
-          />
-          <Button
-            type="button"
-            className="touch-target"
-            variant="default"
-            onClick={toggleMinus}
-          >
-            {MINUS}
-          </Button>
-        </div>
-      ) : null}
-      {formatHint ? <p>{formatHint}</p> : null}
-      <Button
-        type="button"
-        className="touch-target"
-        variant="default"
-        disabled={unsent}
-        onClick={onAnswer}
-      >
-        Ответить
-      </Button>
-      {unsent ? <p>не отправлено</p> : null}
-      {unsent && item.answer_format === "ct.integer" ? <p>ждём связь</p> : null}
-      {verdict ? <p>{verdict}</p> : null}
-      {result?.hint ? <p>{result.hint}</p> : null}
-      {result && showScore(result) ? (
-        <p>{`баллы ${result.points} из ${result.max_points}`}</p>
-      ) : null}
-      {result?.show?.key !== undefined ? <p>{result.show.key}</p> : null}
-      {result?.show?.solution_block ? <p>решение</p> : null}
-      {sendError ? <p>{sendError}</p> : null}
-    </main>
+    <Screen title="Задача" backTo={backTo} withActionBar>
+      <TaskSheet>
+        <Stack gap="md">
+          <Statement source={item.statement} />
+          {attemptsLeft !== undefined ? (
+            <Text>{attemptsLabel(attemptsLeft)}</Text>
+          ) : null}
+          {item.answer_format === "ct.choice1" ? (
+            <Radio.Group
+              label="Вариант"
+              name="choice1"
+              size="md"
+              value={choice ?? ""}
+              onChange={setChoice}
+            >
+              <Stack gap="sm">
+                {options.map((option) => (
+                  <ChoiceRow key={option.n}>
+                    <Radio
+                      value={String(option.n)}
+                      label={`${option.n}. ${option.text}`}
+                    />
+                  </ChoiceRow>
+                ))}
+              </Stack>
+            </Radio.Group>
+          ) : null}
+          {item.answer_format === "ct.choiceN" ? (
+            <Checkbox.Group
+              label="Варианты"
+              size="md"
+              value={choices}
+              onChange={setChoices}
+            >
+              <Stack gap="sm">
+                {options.map((option) => (
+                  <ChoiceRow key={option.n}>
+                    <Checkbox
+                      value={String(option.n)}
+                      label={`${option.n}. ${option.text}`}
+                    />
+                  </ChoiceRow>
+                ))}
+              </Stack>
+            </Checkbox.Group>
+          ) : null}
+          {item.answer_format === "ct.integer" ? (
+            <Stack gap="sm">
+              <TextInput
+                label="Ответ"
+                inputMode="numeric"
+                autoComplete="off"
+                value={draft}
+                onChange={(event) => updateDraft(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onAnswer();
+                  }
+                }}
+              />
+              <Button type="button" variant="default" onClick={toggleMinus}>
+                {MINUS}
+              </Button>
+            </Stack>
+          ) : null}
+          {formatHint ? <Text>{formatHint}</Text> : null}
+          {unsent ? <Text>не отправлено</Text> : null}
+          {unsent && item.answer_format === "ct.integer" ? (
+            <Text>ждём связь</Text>
+          ) : null}
+          {verdict ? <Text>{verdict}</Text> : null}
+          {result?.hint ? <Text>{result.hint}</Text> : null}
+          {result && showScore(result) ? (
+            <Text className="am-num">{`баллы ${result.points} из ${result.max_points}`}</Text>
+          ) : null}
+          {result?.show?.key !== undefined ? (
+            <Text>{result.show.key}</Text>
+          ) : null}
+          {result?.show?.solution_block ? <Text>решение</Text> : null}
+          {sendError ? <Text>{sendError}</Text> : null}
+        </Stack>
+      </TaskSheet>
+      <ActionBar
+        primary={{
+          label: "Ответить",
+          onClick: onAnswer,
+          disabled: unsent,
+        }}
+      />
+    </Screen>
   );
 }

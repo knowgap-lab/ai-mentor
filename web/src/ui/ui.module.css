@@ -67,6 +67,31 @@
   background: var(--mantine-color-gray-1);
 }
 
+/* Та же строка, но кнопка: у строки нет маршрута (DS-R11). */
+.rowButton {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* Вариант ответа: вся строка не ниже зоны касания (DS-R8). */
+.choice {
+  display: flex;
+  align-items: center;
+  min-height: var(--am-target);
+}
+
+.choice > * {
+  flex: 1;
+  min-height: var(--am-target);
+  align-items: center;
+}
+
 .rowText {
   flex: 1;
   min-width: 0;

@@ -1,5 +1,7 @@
+import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { type FormEvent, useLayoutEffect, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import { List, ListButton, Screen } from "../ui";
 
 type Verdict = "correct" | "partial" | "wrong";
 
@@ -194,48 +196,49 @@ export function TutorPage() {
 
   if (!signedIn) {
     return (
-      <main>
+      <Screen title="Войти">
         <form onSubmit={(event) => void onLogin(event)}>
-          <label>
-            telegram_id
-            <input
+          <Stack gap="md">
+            <TextInput
+              label="telegram_id"
               name="telegram_id"
               autoComplete="off"
               value={telegramId}
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
-          </label>
-          <button type="submit">Войти</button>
+            <Button type="submit">Войти</Button>
+          </Stack>
         </form>
-      </main>
+      </Screen>
     );
   }
 
   return (
-    <main>
-      <h1>Ученики</h1>
-      <button type="button" onClick={() => void onLogout()}>
-        Выход
-      </button>
-      <ul>
-        {students.map((student) => (
-          <li key={student.id}>
-            <button type="button" onClick={() => void onOpen(student)}>
-              {student.display_name}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {attempts.length > 0 ? (
-        <section>
-          {attempts.map((attempt) => (
-            <p key={attempt.attempt_id}>
-              {attempt.raw_input}
-              {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
-            </p>
+    <Screen title="Ученики">
+      <Stack gap="md">
+        <Button type="button" variant="default" onClick={() => void onLogout()}>
+          Выход
+        </Button>
+        <List label="Ученики">
+          {students.map((student) => (
+            <ListButton
+              key={student.id}
+              title={student.display_name}
+              onClick={() => void onOpen(student)}
+            />
           ))}
-        </section>
-      ) : null}
-    </main>
+        </List>
+        {attempts.length > 0 ? (
+          <Stack gap="sm" component="section">
+            {attempts.map((attempt) => (
+              <Text key={attempt.attempt_id}>
+                {attempt.raw_input}
+                {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
+              </Text>
+            ))}
+          </Stack>
+        ) : null}
+      </Stack>
+    </Screen>
   );
 }
