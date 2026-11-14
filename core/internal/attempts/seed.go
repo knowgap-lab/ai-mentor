@@ -455,7 +455,6 @@ func hasKey(m map[string]any, key string) bool {
 func snapshotJSON(items []plannedItem) ([]byte, error) {
 	type snapItem struct {
 		ItemID       string `json:"item_id"`
-		VariantID    string `json:"variant_id"`
 		Statement    string `json:"statement"`
 		AnswerFormat string `json:"answer_format"`
 		MaxPoints    int    `json:"max_points"`
@@ -466,7 +465,6 @@ func snapshotJSON(items []plannedItem) ([]byte, error) {
 	for _, item := range items {
 		doc.Items = append(doc.Items, snapItem{
 			ItemID:       item.id,
-			VariantID:    "v-" + item.id,
 			Statement:    item.statement,
 			AnswerFormat: "ct.integer",
 			MaxPoints:    item.maxPoints,
