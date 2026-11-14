@@ -1,6 +1,15 @@
-import { Button, Checkbox, Radio, Stack, Text, TextInput } from "@mantine/core";
+import {
+  Button,
+  Checkbox,
+  NativeSelect,
+  Radio,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { messageForResponse } from "../api-error";
 import { ActionBar, ChoiceRow, Screen, TaskSheet } from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
 import {
@@ -12,7 +21,12 @@ import {
 import { Statement } from "./Statement";
 
 const INTEGER_HINT = "введите целое число";
+const DIGITS_HINT = "цифры не должны повторяться";
 const MINUS = "−";
+const MATCH_LETTERS = ["А", "Б", "В"] as const;
+const MATCH_DIGITS = ["1", "2", "3", "4", "5"] as const;
+
+type MatchLetter = (typeof MATCH_LETTERS)[number];
 
 type Option = {
   n: number;
@@ -68,6 +82,17 @@ function normalizeInteger(value: string): string | null {
     return null;
   }
   return unsigned;
+}
+
+function repeatedDigit(value: string): boolean {
+  const seen = new Set<string>();
+  for (const digit of value) {
+    if (seen.has(digit)) {
+      return true;
+    }
+    seen.add(digit);
+  }
+  return false;
 }
 
 function integerHint(value: string): string | null {
@@ -132,7 +157,9 @@ function verdictText(result: AnswerResponse): string | null {
 }
 
 type Delivered =
-  { kind: "ok"; body: AnswerResponse } | { kind: "http" } | { kind: "offline" };
+  | { kind: "ok"; body: AnswerResponse }
+  | { kind: "http"; text: string }
+  | { kind: "offline" };
 
 async function deliver(entry: OutboxItem): Promise<Delivered> {
   try {
@@ -153,7 +180,7 @@ async function deliver(entry: OutboxItem): Promise<Delivered> {
     );
     rememberCsrfFromResponse(response);
     if (!response.ok) {
-      return { kind: "http" };
+      return { kind: "http", text: await messageForResponse(response) };
     }
     const body = (await response.json()) as AnswerResponse;
     return { kind: "ok", body };
@@ -185,6 +212,11 @@ export function TaskPage() {
   const [choice, setChoice] = useState<string | null>(null);
   const [choices, setChoices] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
+  const [matchDigits, setMatchDigits] = useState<Record<MatchLetter, string>>({
+    А: "",
+    Б: "",
+    В: "",
+  });
   const [formatHint, setFormatHint] = useState<string | null>(null);
   const [result, setResult] = useState<AnswerResponse | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -265,7 +297,7 @@ export function TaskPage() {
         }
         if (outcome.kind === "http") {
           setUnsent(false);
-          setSendError("Нет связи");
+          setSendError(outcome.text);
           return;
         }
         setUnsent(false);
@@ -346,6 +378,12 @@ export function TaskPage() {
     setFormatHint(integerHint(next));
   }
 
+  function updateDigits(next: string) {
+    const digits = next.replace(/\D/g, "");
+    setDraft(digits);
+    setFormatHint(repeatedDigit(digits) ? DIGITS_HINT : null);
+  }
+
   function toggleMinus() {
     const normalized = draft.replace(/^[−–‐]/, "-");
     const next = normalized.startsWith("-")
@@ -371,6 +409,20 @@ export function TaskPage() {
     }
     if (item?.answer_format === "ct.integer") {
       return normalizeInteger(draft);
+    }
+    if (item?.answer_format === "ct.digits") {
+      if (draft === "" || repeatedDigit(draft)) {
+        return null;
+      }
+      return draft;
+    }
+    if (item?.answer_format === "ct.match") {
+      if (MATCH_LETTERS.some((letter) => matchDigits[letter] === "")) {
+        return null;
+      }
+      return MATCH_LETTERS.map(
+        (letter) => `${letter}${matchDigits[letter]}`,
+      ).join("");
     }
     return null;
   }
@@ -401,7 +453,7 @@ export function TaskPage() {
     }
     blocked.current = false;
     if (outcome.kind === "http") {
-      setSendError("Нет связи");
+      setSendError(outcome.text);
       return;
     }
     setResult(outcome.body);
@@ -474,6 +526,39 @@ export function TaskPage() {
               </Stack>
             </Checkbox.Group>
           ) : null}
+          {item.answer_format === "ct.match" ? (
+            <Stack gap="sm">
+              {MATCH_LETTERS.map((letter) => (
+                <NativeSelect
+                  key={letter}
+                  aria-label={letter}
+                  size="md"
+                  value={matchDigits[letter]}
+                  data={[
+                    { value: "", label: " " },
+                    ...MATCH_DIGITS.map((digit) => ({
+                      value: digit,
+                      label: digit,
+                    })),
+                  ]}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setMatchDigits((prev) => ({ ...prev, [letter]: value }));
+                  }}
+                />
+              ))}
+            </Stack>
+          ) : null}
+          {item.answer_format === "ct.digits" ? (
+            <TextInput
+              label="Ответ"
+              inputMode="numeric"
+              autoComplete="off"
+              size="md"
+              value={draft}
+              onChange={(event) => updateDigits(event.currentTarget.value)}
+            />
+          ) : null}
           {item.answer_format === "ct.integer" ? (
             <Stack gap="sm">
               <TextInput
@@ -515,7 +600,10 @@ export function TaskPage() {
         primary={{
           label: "Ответить",
           onClick: onAnswer,
-          disabled: unsent,
+          disabled:
+            unsent ||
+            (item.answer_format === "ct.match" &&
+              MATCH_LETTERS.some((letter) => matchDigits[letter] === "")),
         }}
       />
     </Screen>
