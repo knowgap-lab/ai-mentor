@@ -15,6 +15,7 @@ import (
 	"github.com/knowgap-lab/ai-mentor/core/internal/conspect"
 	"github.com/knowgap-lab/ai-mentor/core/internal/homework"
 	"github.com/knowgap-lab/ai-mentor/core/internal/lessons"
+	"github.com/knowgap-lab/ai-mentor/core/internal/pdf"
 	"github.com/knowgap-lab/ai-mentor/core/internal/plan"
 	"github.com/knowgap-lab/ai-mentor/core/internal/privacy"
 )
@@ -68,6 +69,12 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback http.Handler) 
 	}
 	closeAll = append(closeAll, func() { _ = conspectSvc.Close() })
 
+	pdfSvc, err := pdf.Open(ctx, pdf.Config{DSN: dsn})
+	if err != nil {
+		return nil, fmt.Errorf("pdf: %w", err)
+	}
+	closeAll = append(closeAll, func() { _ = pdfSvc.Close() })
+
 	privacySvc, err := privacy.Open(ctx, privacy.Config{DSN: dsn, Log: io.Discard})
 	if err != nil {
 		return nil, fmt.Errorf("privacy: %w", err)
@@ -88,6 +95,7 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback http.Handler) 
 		homework: homeworkSvc.Handler(),
 		plan:     planSvc.Handler(),
 		conspect: conspectSvc.Handler(),
+		pdf:      pdfSvc.Handler(),
 		privacy:  privacySvc.Handler(),
 	}, pool)
 	ok = true
@@ -99,6 +107,7 @@ type apiHandlers struct {
 	homework http.Handler
 	plan     http.Handler
 	conspect http.Handler
+	pdf      http.Handler
 	privacy  http.Handler
 }
 
@@ -135,6 +144,9 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 
 	mux.Handle("GET /lessons/{lesson}/conspect", h.conspect)
 	mux.Handle("GET /lessons/{lesson}/conspect.pdf", h.conspect)
+
+	mux.Handle("GET /assignments/{id}/sheet.pdf", h.pdf)
+	mux.Handle("GET /tests/{test}/form.pdf", h.pdf)
 
 	mux.Handle("/", fallback)
 	return mux
