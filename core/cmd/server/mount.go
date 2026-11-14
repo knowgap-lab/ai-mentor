@@ -17,11 +17,12 @@ import (
 	"github.com/knowgap-lab/ai-mentor/core/internal/lessons"
 	"github.com/knowgap-lab/ai-mentor/core/internal/plan"
 	"github.com/knowgap-lab/ai-mentor/core/internal/privacy"
+	"github.com/knowgap-lab/ai-mentor/core/internal/telegram"
 )
 
 // mountLocal добавляет модули local-режима перед раздачей compose.
 // Пути, которые журнал уже обслуживает, остаются в fallback.
-func mountLocal(ctx context.Context, dsn, origin string, fallback http.Handler) (http.Handler, error) {
+func mountLocal(ctx context.Context, dsn, origin string, fallback, auth http.Handler) (http.Handler, error) {
 	var closeAll []func()
 	ok := false
 	defer func() {
@@ -74,6 +75,12 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback http.Handler) 
 	}
 	closeAll = append(closeAll, func() { _ = privacySvc.Close() })
 
+	telegramSvc, err := telegram.Open(ctx, telegram.Config{DSN: dsn, Log: io.Discard})
+	if err != nil {
+		return nil, fmt.Errorf("telegram: %w", err)
+	}
+	closeAll = append(closeAll, func() { _ = telegramSvc.Close() })
+
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return nil, fmt.Errorf("status: %w", err)
@@ -89,6 +96,8 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback http.Handler) 
 		plan:     planSvc.Handler(),
 		conspect: conspectSvc.Handler(),
 		privacy:  privacySvc.Handler(),
+		auth:     auth,
+		telegram: telegramSvc.Handler(),
 	}, pool)
 	ok = true
 	return handler, nil
@@ -100,6 +109,8 @@ type apiHandlers struct {
 	plan     http.Handler
 	conspect http.Handler
 	privacy  http.Handler
+	auth     http.Handler
+	telegram http.Handler
 }
 
 func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Handler {
@@ -135,6 +146,15 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 
 	mux.Handle("GET /lessons/{lesson}/conspect", h.conspect)
 	mux.Handle("GET /lessons/{lesson}/conspect.pdf", h.conspect)
+
+	// S2. Остальные пути /students/ остаются в fallback.
+	mux.Handle("GET /invite/{token}", h.auth)
+	mux.Handle("POST /students/{id}/invites", h.auth)
+	mux.Handle("POST /students/{id}/revoke-sessions", h.auth)
+	mux.Handle("POST /students/{id}/unbind-telegram", h.auth)
+	mux.Handle("GET /me/sessions", h.auth)
+	mux.Handle("POST /me/sessions/revoke-all", h.auth)
+	mux.Handle("POST /telegram/webhook", h.telegram)
 
 	mux.Handle("/", fallback)
 	return mux
