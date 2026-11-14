@@ -293,14 +293,18 @@ func allowStudent(ctx context.Context, db q, actorID, studentID string) error {
 }
 
 func insertEvent(ctx context.Context, db q, kind string, payload any) error {
+	return insertOwnedEvent(ctx, db, kind, "", "", "", payload)
+}
+
+func insertOwnedEvent(ctx context.Context, db q, kind, studentID, actorRole, actorID string, payload any) error {
 	raw, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 	_, err = db.Exec(ctx, `
-		INSERT INTO core.journal_event (kind, payload)
-		VALUES ($1, $2::jsonb)
-	`, kind, string(raw))
+		INSERT INTO core.journal_event (kind, payload, student_id, actor_role, actor_id)
+		VALUES ($1, $2::jsonb, NULLIF($3, ''), NULLIF($4, ''), NULLIF($5, ''))
+	`, kind, string(raw), studentID, actorRole, actorID)
 	return err
 }
 

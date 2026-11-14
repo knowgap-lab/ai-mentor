@@ -26,6 +26,10 @@ export function rememberCsrfFromResponse(response: Response): void {
   writeToken(token);
 }
 
+export function hasCsrfToken(): boolean {
+  return readToken() !== null;
+}
+
 export function csrfHeaders(): Record<string, string> {
   const token = readToken();
   if (!token) {

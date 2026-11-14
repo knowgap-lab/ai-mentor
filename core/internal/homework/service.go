@@ -1,6 +1,7 @@
 package homework
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -307,6 +308,11 @@ func (s *Service) doIssue(ctx context.Context, user actor, lessonID string) (tut
 	`, string(payload)); err != nil {
 		return tutorView{}, err
 	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE core.lesson SET issued = true WHERE id = $1
+	`, lessonID); err != nil {
+		return tutorView{}, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return tutorView{}, err
 	}
@@ -427,12 +433,87 @@ func loadLesson(ctx context.Context, tx pgx.Tx, lessonID string) (lessonRow, err
 	if err != nil {
 		return lessonRow{}, err
 	}
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &row.Blob); err != nil {
-			return lessonRow{}, err
+	blob, err := parseLessonTemplate(raw)
+	if err != nil {
+		return lessonRow{}, err
+	}
+	blob, err = fillMark(ctx, tx, lessonID, blob)
+	if err != nil {
+		return lessonRow{}, err
+	}
+	row.Blob = blob
+	return row, nil
+}
+
+func parseLessonTemplate(raw []byte) (lessonBlob, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return lessonBlob{}, nil
+	}
+	if trimmed[0] == '[' {
+		var stages []struct {
+			Blocks   []string `json:"blocks"`
+			Practice []struct {
+				VariantID   string `json:"variant_id"`
+				TypeID      string `json:"type_id"`
+				Position    int    `json:"position"`
+				TheoryBlock string `json:"theory_block"`
+			} `json:"practice"`
+		}
+		if err := json.Unmarshal(trimmed, &stages); err != nil {
+			return lessonBlob{}, err
+		}
+		var blob lessonBlob
+		for _, stage := range stages {
+			blob.Blocks = append(blob.Blocks, stage.Blocks...)
+			for _, slot := range stage.Practice {
+				blob.Tasks = append(blob.Tasks, Task{
+					Position:    slot.Position,
+					VariantID:   slot.VariantID,
+					TypeID:      slot.TypeID,
+					TheoryBlock: slot.TheoryBlock,
+				})
+			}
+		}
+		return blob, nil
+	}
+	var blob lessonBlob
+	if err := json.Unmarshal(trimmed, &blob); err != nil {
+		return lessonBlob{}, err
+	}
+	return blob, nil
+}
+
+func fillMark(ctx context.Context, tx pgx.Tx, lessonID string, blob lessonBlob) (lessonBlob, error) {
+	if blob.Mark != nil {
+		return blob, nil
+	}
+	var theory, stageID *string
+	var position *int
+	err := tx.QueryRow(ctx, `
+		SELECT last_theory_block, practice_stage_id, practice_position
+		FROM core.lesson_mark
+		WHERE lesson_id = $1
+	`, lessonID).Scan(&theory, &stageID, &position)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return blob, nil
+	}
+	if err != nil {
+		return lessonBlob{}, err
+	}
+	mark := &Mark{}
+	if theory != nil {
+		mark.TheorySet = true
+		mark.Theory = *theory
+	}
+	if stageID != nil {
+		mark.PracticeSet = true
+		if position != nil {
+			mark.PracticePosition = *position
 		}
 	}
-	return row, nil
+	blob.Mark = mark
+	return blob, nil
 }
 
 func loadOrBuild(ctx context.Context, tx pgx.Tx, row lessonRow) (storedDraft, error) {
@@ -517,7 +598,7 @@ func saveDraft(ctx context.Context, tx pgx.Tx, lessonID string, draft storedDraf
 
 func loadSiblings(ctx context.Context, tx pgx.Tx, studentID, subject string) ([]sibling, error) {
 	rows, err := tx.Query(ctx, `
-		SELECT place_no, state, starts_at
+		SELECT place_no, state, starts_at, template
 		FROM core.lesson
 		WHERE student_id = $1 AND subject = $2
 	`, studentID, subject)
@@ -529,18 +610,46 @@ func loadSiblings(ctx context.Context, tx pgx.Tx, studentID, subject string) ([]
 	for rows.Next() {
 		var item sibling
 		var starts *time.Time
-		if err := rows.Scan(&item.PlaceNo, &item.State, &starts); err != nil {
+		var template []byte
+		if err := rows.Scan(&item.PlaceNo, &item.State, &starts, &template); err != nil {
 			return nil, err
 		}
 		if starts != nil {
 			item.StartsAt = starts.UTC().Format(time.RFC3339)
 		}
+		item.Topics = templateTopics(template)
 		out = append(out, item)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return out, nil
+}
+
+func templateTopics(raw []byte) []string {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return nil
+	}
+	var blob lessonBlob
+	if err := json.Unmarshal(trimmed, &blob); err != nil {
+		return nil
+	}
+	byID := map[string]string{}
+	for _, item := range blob.Variants {
+		byID[item.ID] = item.Topic
+	}
+	seen := map[string]bool{}
+	var topics []string
+	for _, task := range blob.Tasks {
+		topic := byID[task.VariantID]
+		if topic == "" || seen[topic] {
+			continue
+		}
+		seen[topic] = true
+		topics = append(topics, topic)
+	}
+	return topics
 }
 
 func homeworkIssued(ctx context.Context, tx pgx.Tx, lessonID string) (bool, error) {

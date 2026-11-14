@@ -80,6 +80,45 @@ export function ListRow({
   );
 }
 
+// Строка списка без маршрута: вся строка — одна кнопка (DS-R11).
+export function ListButton({
+  title,
+  subtitle,
+  aside,
+  onClick,
+}: {
+  title: string;
+  subtitle?: string;
+  aside?: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <li className={classes.row}>
+      <button
+        type="button"
+        className={`${classes.rowLink} ${classes.rowButton}`}
+        onClick={onClick}
+      >
+        <span className={classes.rowText}>
+          <span className={classes.rowTitle}>{title}</span>
+          {subtitle ? (
+            <>
+              <br />
+              <span className={classes.rowSub}>{subtitle}</span>
+            </>
+          ) : null}
+        </span>
+        {aside}
+      </button>
+    </li>
+  );
+}
+
+// Строка варианта ответа: зона касания не ниже 44 px (DS-R8).
+export function ChoiceRow({ children }: { children: ReactNode }) {
+  return <div className={classes.choice}>{children}</div>;
+}
+
 // Лист задачи в клетку.
 export function TaskSheet({
   label,

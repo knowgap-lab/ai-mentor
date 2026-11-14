@@ -22,6 +22,9 @@ const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 
 
 const sessionCookieName = "__Host-session"
 
+// Читается страницей: сама cookie сеанса HttpOnly и из скрипта не видна.
+const sessionSeenCookie = "am-session"
+
 func rootHandler() (http.Handler, error) {
 	if !devStackEnabled() {
 		return withCSP(newRouter()), nil
@@ -99,7 +102,7 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		return nil, err
 	}
 	fallback := compose.Handler(dsn, authSvc.Handler(), answerSvc.Handler(), attemptSvc.Handler())
-	api, err := mountLocal(ctx, dsn, origin, fallback)
+	api, err := mountLocal(ctx, dsn, origin, fallback, authSvc.Handler())
 	if err != nil {
 		_ = attemptSvc.Close()
 		_ = answerSvc.Close()
@@ -227,7 +230,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	rel := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
 	if rel == "" || rel == "." {
-		http.ServeFile(w, r, filepath.Join(h.root, "index.html"))
+		h.serveIndex(w, r)
 		return
 	}
 	full := filepath.Join(h.root, filepath.FromSlash(rel))
@@ -245,5 +248,31 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	h.serveIndex(w, r)
+}
+
+func (h spaHandler) serveIndex(w http.ResponseWriter, r *http.Request) {
+	markSession(w, r)
 	http.ServeFile(w, r, filepath.Join(h.root, "index.html"))
+}
+
+func markSession(w http.ResponseWriter, r *http.Request) {
+	if _, ok := requestSession(r); ok {
+		http.SetCookie(w, &http.Cookie{
+			Name:     sessionSeenCookie,
+			Value:    "1",
+			Path:     "/",
+			Secure:   true,
+			SameSite: http.SameSiteLaxMode,
+		})
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionSeenCookie,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
 }

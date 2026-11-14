@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -115,22 +116,64 @@ func (s *Service) sessionUser(ctx context.Context, token string) (string, string
 	if !ok {
 		return "", "", false, nil
 	}
-	var userID, role string
+	var userID, role, state string
+	var reject bool
 	err := s.pool.QueryRow(ctx, `
-		SELECT u.id, u.role
+		SELECT u.id, u.role, sess.state,
+		       sess.state = 'pending' AND sess.created_at < now() - interval '10 minutes'
 		FROM core.session AS sess
 		JOIN core.app_user AS u ON u.id = sess.user_id
 		WHERE sess.token_hash = $1
 		  AND sess.revoked_at IS NULL
 		  AND sess.expires_at > now()
-	`, hash).Scan(&userID, &role)
+	`, hash).Scan(&userID, &role, &state, &reject)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", "", false, nil
 	}
 	if err != nil {
 		return "", "", false, err
 	}
+	if reject {
+		if _, err := s.pool.Exec(ctx, `
+			UPDATE core.session
+			SET revoked_at = now()
+			WHERE token_hash = $1
+			  AND revoked_at IS NULL
+		`, hash); err != nil {
+			return "", "", false, err
+		}
+		return "", "", false, nil
+	}
+	if state == "pending" {
+		return "", "", false, nil
+	}
 	return userID, role, true, nil
+}
+
+func insertSessionTx(ctx context.Context, tx pgx.Tx, userID, role, state string) (string, error) {
+	raw := make([]byte, 32)
+	if _, err := rand.Read(raw); err != nil {
+		return "", err
+	}
+	token := hex.EncodeToString(raw)
+	sum := sha256.Sum256(raw)
+	hash := append([]byte(nil), sum[:]...)
+	hours := int32(90 * 24)
+	if role == "tutor" {
+		hours = 7 * 24
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO core.session (token_hash, user_id, created_at, expires_at, state)
+		VALUES ($1, $2, now(), now() + $3 * interval '1 hour', $4)
+	`, hash, userID, hours, state); err != nil {
+		return "", err
+	}
+	if role == "student" {
+		if _, err := tx.Exec(ctx, revokeStudentOverflow, userID); err != nil {
+			return "", err
+		}
+	}
+	return token, nil
 }
 
 func (s *Service) revokeSession(ctx context.Context, token string) error {
@@ -138,12 +181,33 @@ func (s *Service) revokeSession(ctx context.Context, token string) error {
 	if !ok {
 		return errUnauthorized()
 	}
-	tag, err := s.pool.Exec(ctx, `
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var userID, role string
+	err = tx.QueryRow(ctx, `
+		SELECT u.id, u.role
+		FROM core.session AS sess
+		JOIN core.app_user AS u ON u.id = sess.user_id
+		WHERE sess.token_hash = $1
+		  AND sess.revoked_at IS NULL
+		  AND sess.expires_at > now()
+		FOR UPDATE OF sess
+	`, hash).Scan(&userID, &role)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return errUnauthorized()
+	}
+	if err != nil {
+		return err
+	}
+	tag, err := tx.Exec(ctx, `
 		UPDATE core.session
 		SET revoked_at = now()
 		WHERE token_hash = $1
 		  AND revoked_at IS NULL
-		  AND expires_at > now()
 	`, hash)
 	if err != nil {
 		return err
@@ -151,7 +215,24 @@ func (s *Service) revokeSession(ctx context.Context, token string) error {
 	if tag.RowsAffected() == 0 {
 		return errUnauthorized()
 	}
-	return nil
+	payload, err := json.Marshal(map[string]string{
+		"user_id": userID,
+		"reason":  "logout",
+	})
+	if err != nil {
+		return err
+	}
+	var studentID any
+	if role == "student" {
+		studentID = userID
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO core.journal_event (kind, payload, student_id, actor_role, actor_id)
+		VALUES ('session_revoked', $1::jsonb, $2, $3, $4)
+	`, string(payload), studentID, role, userID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func hashToken(token string) ([]byte, bool) {
