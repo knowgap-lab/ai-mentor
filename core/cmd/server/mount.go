@@ -16,6 +16,7 @@ import (
 	"github.com/knowgap-lab/ai-mentor/core/internal/homework"
 	"github.com/knowgap-lab/ai-mentor/core/internal/internalapi"
 	"github.com/knowgap-lab/ai-mentor/core/internal/lessons"
+	"github.com/knowgap-lab/ai-mentor/core/internal/pdf"
 	"github.com/knowgap-lab/ai-mentor/core/internal/plan"
 	"github.com/knowgap-lab/ai-mentor/core/internal/privacy"
 	"github.com/knowgap-lab/ai-mentor/core/internal/recheck"
@@ -71,6 +72,12 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback, auth http.Han
 	}
 	closeAll = append(closeAll, func() { _ = conspectSvc.Close() })
 
+	pdfSvc, err := pdf.Open(ctx, pdf.Config{DSN: dsn})
+	if err != nil {
+		return nil, fmt.Errorf("pdf: %w", err)
+	}
+	closeAll = append(closeAll, func() { _ = pdfSvc.Close() })
+
 	privacySvc, err := privacy.Open(ctx, privacy.Config{DSN: dsn, Log: io.Discard})
 	if err != nil {
 		return nil, fmt.Errorf("privacy: %w", err)
@@ -97,6 +104,7 @@ func mountLocal(ctx context.Context, dsn, origin string, fallback, auth http.Han
 		homework: homeworkSvc.Handler(),
 		plan:     planSvc.Handler(),
 		conspect: conspectSvc.Handler(),
+		pdf:      pdfSvc.Handler(),
 		privacy:  privacySvc.Handler(),
 		auth:     auth,
 		telegram: telegramSvc.Handler(),
@@ -110,6 +118,7 @@ type apiHandlers struct {
 	homework http.Handler
 	plan     http.Handler
 	conspect http.Handler
+	pdf      http.Handler
 	privacy  http.Handler
 	auth     http.Handler
 	telegram http.Handler
@@ -162,6 +171,9 @@ func newAPIMux(fallback http.Handler, h apiHandlers, pool *pgxpool.Pool) http.Ha
 	mux.Handle("GET /lessons/{lesson}/conspect.pdf", h.conspect)
 
 	mux.Handle("GET /rechecks/{correction}", recheck.Handler())
+
+	mux.Handle("GET /assignments/{id}/sheet.pdf", h.pdf)
+	mux.Handle("GET /tests/{test}/form.pdf", h.pdf)
 
 	// S2. Остальные пути /students/ остаются в fallback.
 	mux.Handle("GET /invite/{token}", h.auth)
