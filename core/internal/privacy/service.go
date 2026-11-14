@@ -79,11 +79,28 @@ func errUnavailable() *Error {
 	return apiError(http.StatusServiceUnavailable, "unavailable")
 }
 
-// Service — ссылки и страница согласия в Postgres.
+func errForbidden() *Error {
+	return apiError(http.StatusForbidden, "forbidden")
+}
+
+func errCSRF() *Error {
+	return apiError(http.StatusForbidden, "csrf")
+}
+
+func errUnauthorized() *Error {
+	return apiError(http.StatusUnauthorized, "unauthorized")
+}
+
+func errConfirmation() *Error {
+	return apiError(http.StatusConflict, "confirmation_required")
+}
+
+// Service — ссылки, согласие и карточка ученика в Postgres.
 type Service struct {
 	pool        *pgxpool.Pool
 	cfg         Config
 	handler     http.Handler
+	origin      string
 	textVersion string
 	version     int
 	text        string
@@ -112,15 +129,34 @@ func Open(ctx context.Context, cfg Config) (*Service, error) {
 	svc := &Service{
 		pool:        pool,
 		cfg:         cfg,
+		origin:      appOrigin(),
 		textVersion: versionText,
 		version:     version,
 		text:        text,
 	}
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /consent/{token}", svc.getConsent)
-	mux.HandleFunc("POST /consent/{token}", svc.postConsent)
-	svc.handler = mux
+	svc.handler = svc.routes()
 	return svc, nil
+}
+
+func appOrigin() string {
+	if origin := os.Getenv("APP_ORIGIN"); origin != "" {
+		return origin
+	}
+	return "http://localhost"
+}
+
+func (s *Service) routes() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /consent/{token}", s.getConsent)
+	mux.HandleFunc("POST /consent/{token}", s.postConsent)
+	mux.HandleFunc("POST /students", s.createStudent)
+	mux.HandleFunc("GET /students/{id}", s.getStudent)
+	mux.HandleFunc("POST /students/{id}/archive", s.archiveStudent)
+	mux.HandleFunc("POST /students/{id}/unarchive", s.unarchiveStudent)
+	mux.HandleFunc("POST /students/{id}/anonymise", s.anonymiseStudent)
+	mux.HandleFunc("POST /students/{id}/consent-links", s.createConsentLink)
+	mux.HandleFunc("POST /students/{id}/consent/cancel-revoke", s.cancelConsentRevoke)
+	return mux
 }
 
 // Close закрывает пул соединений.
@@ -131,7 +167,9 @@ func (s *Service) Close() error {
 	return nil
 }
 
-// Handler обслуживает GET и POST /consent/{token} без сеанса и без CSRF.
+// Handler обслуживает согласие и операции ученика.
+// GET и POST /consent/{token} идут без сеанса. POST без Origin проходит (D307);
+// чужой Origin отклоняется как AU-R24.
 func (s *Service) Handler() http.Handler {
 	return s.handler
 }
