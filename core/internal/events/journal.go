@@ -78,6 +78,7 @@ ORDER BY e.journal_seq
 // Documents возвращает записи журнала конвертами events.schema.json
 // в порядке journal_seq. Каждый элемент — один JSON-документ.
 // kind answer_request — старый счётчик лимита, его нет в схеме, поэтому он не конверт.
+// session_revoked требует student_id. Выход репетитора остаётся строкой таблицы и не возвращается.
 func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 	rows, err := db.Query(ctx, documentsSQL)
 	if err != nil {
@@ -98,6 +99,9 @@ func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 		)
 		if err := rows.Scan(&seq, &kind, &payload, &at, &actorRole, &actorID, &studentID); err != nil {
 			return nil, err
+		}
+		if tutorLogoutWithoutStudent(kind, actorRole, studentID) {
+			continue
 		}
 		raw, err := json.Marshal(buildEnvelope(seq, kind, payload, at, actorRole, actorID, studentID))
 		if err != nil {
@@ -134,6 +138,13 @@ func buildEnvelope(seq int64, kind string, payload []byte, at time.Time, actorRo
 		doc.StudentID = *studentID
 	}
 	return doc
+}
+
+func tutorLogoutWithoutStudent(kind string, actorRole, studentID *string) bool {
+	if kind != "session_revoked" || actorRole == nil || *actorRole != "tutor" {
+		return false
+	}
+	return studentID == nil || *studentID == ""
 }
 
 func globalKind(kind string) bool {
