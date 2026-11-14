@@ -112,7 +112,7 @@ func (s *Service) apply(ctx context.Context, studentID, kind, action string, now
 		if err != nil {
 			return err
 		}
-		err = insertEvent(ctx, tx, "consent_given", map[string]string{
+		err = insertConsentEvent(ctx, tx, "consent_given", studentID, map[string]string{
 			"consent_id":   studentID,
 			"kind":         kind,
 			"text_version": s.textVersion,
@@ -142,7 +142,7 @@ func (s *Service) apply(ctx context.Context, studentID, kind, action string, now
 		if err = insertRevokeNotice(ctx, tx, tutorID, studentID); err != nil {
 			return err
 		}
-		err = insertEvent(ctx, tx, "consent_revoked", map[string]string{
+		err = insertConsentEvent(ctx, tx, "consent_revoked", studentID, map[string]string{
 			"consent_id":   studentID,
 			"anonymise_at": anonymiseAt.UTC().Format(time.RFC3339Nano),
 		})
@@ -162,7 +162,7 @@ func (s *Service) apply(ctx context.Context, studentID, kind, action string, now
 		if tag.RowsAffected() == 0 {
 			return errConfirmation()
 		}
-		err = insertEvent(ctx, tx, "consent_revocation_cancelled", map[string]string{
+		err = insertConsentEvent(ctx, tx, "consent_revocation_cancelled", studentID, map[string]string{
 			"consent_id": studentID,
 		})
 	default:
@@ -194,6 +194,18 @@ func giveLeavesConsent(ctx context.Context, tx pgx.Tx, studentID string) (bool, 
 		return true, nil
 	}
 	return state != nil && *state == "revoked", nil
+}
+
+func insertConsentEvent(ctx context.Context, tx pgx.Tx, kind, studentID string, payload any) error {
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `
+		INSERT INTO core.journal_event (kind, payload, student_id, actor_role)
+		VALUES ($1, $2::jsonb, $3, 'system')
+	`, kind, string(raw), studentID)
+	return err
 }
 
 func (s *Service) loadPage(ctx context.Context, studentID, kind string) (consentPage, error) {
