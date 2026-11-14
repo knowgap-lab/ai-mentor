@@ -62,11 +62,13 @@ LEFT JOIN core.lesson AS les_ids
 LEFT JOIN core.app_user AS stu
     ON stu.role = 'student'
    AND stu.id = COALESCE(NULLIF(e.payload->>'user_id', ''), NULLIF(e.payload->>'consent_id', ''))
+WHERE e.kind <> 'answer_request'
 ORDER BY e.journal_seq
 `
 
-// Documents возвращает все записи журнала конвертами events.schema.json
+// Documents возвращает записи журнала конвертами events.schema.json
 // в порядке journal_seq. Каждый элемент — один JSON-документ.
+// kind answer_request — старый счётчик лимита, его нет в схеме, поэтому он не конверт.
 func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 	rows, err := db.Query(ctx, documentsSQL)
 	if err != nil {

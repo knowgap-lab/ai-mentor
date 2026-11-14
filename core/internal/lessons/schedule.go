@@ -50,7 +50,7 @@ func loadRule(ctx context.Context, db q, studentID, subject string) (*Schedule, 
 	return &rule, nil
 }
 
-func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Schedule, withEvent bool) error {
+func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Schedule, withEvent bool, actorRole, actorID string) error {
 	if _, err := db.Exec(ctx, `
 		INSERT INTO core.schedule_rule (student_id, subject, weekdays, start_time, duration_min)
 		VALUES ($1, $2, $3, $4, $5)
@@ -64,7 +64,7 @@ func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Sch
 	if !withEvent {
 		return nil
 	}
-	return insertEvent(ctx, db, "schedule_rule_set", struct {
+	return insertOwnedEvent(ctx, db, "schedule_rule_set", studentID, actorRole, actorID, struct {
 		Subject     string `json:"subject"`
 		Weekdays    []int  `json:"weekdays"`
 		StartTime   string `json:"start_time"`
@@ -436,7 +436,7 @@ func (s *Service) putSchedule(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusNotFound, "not_found")
 		return
 	}
-	if err := saveSchedule(r.Context(), tx, studentID, subject, rule, true); err != nil {
+	if err := saveSchedule(r.Context(), tx, studentID, subject, rule, true, user.role, user.id); err != nil {
 		writeHandlerErr(w, failErr(err))
 		return
 	}
