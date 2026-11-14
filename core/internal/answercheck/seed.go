@@ -275,8 +275,8 @@ func marshalKey(v any) (json.RawMessage, error) {
 
 func insertRate(ctx context.Context, tx pgx.Tx, userID string, n int) error {
 	_, err := tx.Exec(ctx, `
-		INSERT INTO core.journal_event (kind, payload)
-		SELECT 'answer_request', jsonb_build_object('student_id', $1::text)
+		INSERT INTO core.answer_rate (student_id)
+		SELECT $1
 		FROM generate_series(1, $2)
 	`, userID, n)
 	return err
