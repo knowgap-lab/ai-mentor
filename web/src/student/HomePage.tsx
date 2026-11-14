@@ -1,4 +1,4 @@
-import { Anchor, Button, Stack, Text, Title } from "@mantine/core";
+import { Button, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { List, ListRow, Screen, StatusBadge } from "../ui";
@@ -103,9 +103,9 @@ export function HomePage() {
   return (
     <Screen title="ИИ-ментор">
       <Stack gap="md">
-        <Anchor component={Link} to="/next">
+        <Button component={Link} to="/next" variant="subtle">
           дальше
-        </Anchor>
+        </Button>
         <Title order={2} size="h3">
           Выдачи
         </Title>

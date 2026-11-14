@@ -1,7 +1,7 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { Screen, TaskSheet } from "../ui";
+import { ActionBar, Screen, TaskSheet } from "../ui";
 import { Statement } from "../task/Statement";
 import { rememberCsrfFromResponse } from "../task/csrf";
 
@@ -131,9 +131,10 @@ export function LessonPage() {
   const visible = (blocks ?? []).filter(
     (block) => !hiddenBlock(block.markdown),
   );
+  const canPdf = blocks !== null;
 
   return (
-    <Screen title="Конспект" backTo="/">
+    <Screen title="Конспект" backTo="/" withActionBar={canPdf}>
       <Stack gap="md">
         {loading ? <Text>Загрузка</Text> : null}
         {failed ? (
@@ -153,13 +154,13 @@ export function LessonPage() {
             <Statement source={block.markdown} />
           </TaskSheet>
         ))}
-        {blocks ? (
-          <Button variant="default" onClick={() => void onPdf()}>
-            Скачать PDF
-          </Button>
-        ) : null}
         {pdfError ? <Text>{pdfError}</Text> : null}
       </Stack>
+      {canPdf ? (
+        <ActionBar
+          primary={{ label: "Скачать PDF", onClick: () => void onPdf() }}
+        />
+      ) : null}
     </Screen>
   );
 }
