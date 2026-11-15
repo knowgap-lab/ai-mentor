@@ -1,5 +1,5 @@
 import { Button, Stack, Text } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
 import {
   csrfHeaders,
@@ -20,8 +20,10 @@ export function ProfilePage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [revoked, setRevoked] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const loadGen = useRef(0);
 
   useEffect(() => {
+    const gen = ++loadGen.current;
     let cancelled = false;
     setName(null);
     setOffline(false);
@@ -29,10 +31,13 @@ export function ProfilePage() {
     async function load() {
       try {
         const response = await fetch("/me", { credentials: "include" });
+        if (cancelled || gen !== loadGen.current) {
+          return;
+        }
         rememberCsrfFromResponse(response);
         if (!response.ok) {
           const text = await messageForResponse(response);
-          if (!cancelled) {
+          if (!cancelled && gen === loadGen.current) {
             setLoadError(text);
           }
           return;
@@ -42,12 +47,12 @@ export function ProfilePage() {
           isRecord(body) && typeof body.display_name === "string"
             ? body.display_name
             : null;
-        if (!cancelled) {
+        if (!cancelled && gen === loadGen.current) {
           setName(display);
           setLoadError(null);
         }
       } catch {
-        if (!cancelled) {
+        if (!cancelled && gen === loadGen.current) {
           setLoadError(null);
           setOffline(true);
         }
@@ -73,9 +78,11 @@ export function ProfilePage() {
         return;
       }
       if (path === "/auth/logout") {
+        loadGen.current += 1;
         clearOutbox();
         forgetCsrf();
-        document.cookie = "am-session=; Path=/; Max-Age=0";
+        document.cookie =
+          "am-session=; Path=/; Max-Age=0; Secure; SameSite=Lax";
         setName(null);
       }
       if (path === "/me/sessions/revoke-all") {
