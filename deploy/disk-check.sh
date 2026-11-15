@@ -42,4 +42,4 @@ if [ "${open}" -eq 1 ]; then
   exit 0
 fi
 printf '%s\n' 1 > "${state}"
-"${root}/alert-send.sh" "диск > 80 %"
+"${root}/ops-alert.sh" disk

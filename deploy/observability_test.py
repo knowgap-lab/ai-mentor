@@ -88,6 +88,19 @@ def test_op_r17_three_failures_alert(tmp_path: Path) -> None:
         up.shutdown()
 
 
+def test_op_r16_service_chat_alerts() -> None:
+    expected = {
+        "catalog": "неудачная загрузка каталога\n",
+        "recheck": "неудачный пакет перепроверки\n",
+        "job": "задание в failed\n",
+        "not-me": "Это не я\n",
+    }
+    for reason, text in expected.items():
+        result = _run("ops-alert.sh", reason)
+        if result.returncode != 0 or result.stdout != text:
+            raise AssertionError(f"{reason}: {result.stdout!r} {result.stderr}")
+
+
 def test_op_r18_log_older_than_30_days_deleted(tmp_path: Path) -> None:
     old = tmp_path / "old.log"
     fresh = tmp_path / "fresh.log"
