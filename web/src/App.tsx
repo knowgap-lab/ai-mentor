@@ -4,6 +4,7 @@ import { AssignmentPage } from "./student/AssignmentPage";
 import { HomePage } from "./student/HomePage";
 import { LessonPage } from "./student/LessonPage";
 import { TaskPage } from "./task/TaskPage";
+import { StudentCardPage } from "./tutor/StudentCardPage";
 import { TutorPage } from "./tutor/TutorPage";
 import { DesignPage } from "./design/DesignPage";
 
@@ -40,6 +41,7 @@ export function App() {
       <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
       <Route path="/task/:assignmentId/:itemId" element={<TaskPage />} />
       <Route path="/tutor" element={<TutorPage />} />
+      <Route path="/tutor/students/:studentId" element={<StudentCardPage />} />
       {import.meta.env.DEV ? (
         <Route path="/design" element={<DesignPage />} />
       ) : null}
