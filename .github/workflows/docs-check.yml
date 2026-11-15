@@ -1,8 +1,10 @@
 name: docs-check
 
 # Проверки контрактов и примеров (D97, D133): tools/check.sh.
+# merge_group — событие очереди слияния. Без него обязательная проверка на очереди не стартует.
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
 

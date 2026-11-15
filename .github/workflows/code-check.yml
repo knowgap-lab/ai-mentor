@@ -1,8 +1,10 @@
 name: code-check
 
 # Каркас выпуска 1: tools/check-code.sh и проверки документации tools/check.sh.
+# merge_group — событие очереди слияния. Без него обязательная проверка на очереди не стартует.
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
 
