@@ -71,7 +71,7 @@ services:
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
       OPS_CHAT_ID: ${OPS_CHAT_ID}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN}
-      PDF_GOTENBERG_URL: http://gotenberg:3000
+      GOTENBERG_URL: http://gotenberg:3000
     depends_on:
       db:
         condition: service_healthy
