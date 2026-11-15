@@ -44,7 +44,9 @@ SELECT
         les.student_id,
         les_from.student_id,
         les_ids.student_id,
-        stu.id
+        stu.id,
+        obs_asg.student_id,
+        recheck_stu.student_id
     ) AS student_id
 FROM core.journal_event AS e
 LEFT JOIN core.assignment AS a
@@ -62,11 +64,43 @@ LEFT JOIN core.lesson AS les_ids
 LEFT JOIN core.app_user AS stu
     ON stu.role = 'student'
    AND stu.id = COALESCE(NULLIF(e.payload->>'user_id', ''), NULLIF(e.payload->>'consent_id', ''))
+LEFT JOIN LATERAL (
+    SELECT asg.student_id
+    FROM core.assignment AS asg
+    WHERE e.kind = 'observation'
+      AND strpos(e.payload->>'observation_id', asg.id || ':') = 1
+    ORDER BY length(asg.id) DESC
+    LIMIT 1
+) AS obs_asg ON true
+LEFT JOIN LATERAL (
+    SELECT min(matched.student_id) AS student_id
+    FROM (
+        SELECT asg.student_id
+        FROM core.journal_event AS v
+        JOIN core.attempts AS att_r ON att_r.id = v.payload->>'attempt_id'
+        JOIN core.assignment AS asg ON asg.id = att_r.assignment_id
+        WHERE e.kind = 'recheck_completed'
+          AND v.kind = 'attempt_verdict'
+          AND v.payload->>'origin' = 'recheck'
+          AND v.payload->>'correction_id' = e.payload->>'correction_id'
+        GROUP BY asg.student_id
+        HAVING array_agg(DISTINCT att_r.item_id ORDER BY att_r.item_id)
+             = ARRAY(
+                 SELECT item
+                 FROM jsonb_array_elements_text(e.payload->'changed_items') AS item
+                 ORDER BY item
+             )
+    ) AS matched
+    HAVING count(*) = 1
+) AS recheck_stu ON true
+WHERE e.kind <> 'answer_request'
 ORDER BY e.journal_seq
 `
 
-// Documents возвращает все записи журнала конвертами events.schema.json
+// Documents возвращает записи журнала конвертами events.schema.json
 // в порядке journal_seq. Каждый элемент — один JSON-документ.
+// kind answer_request — старый счётчик лимита, его нет в схеме, поэтому он не конверт.
+// session_revoked требует student_id. Выход репетитора остаётся строкой таблицы и не возвращается.
 func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 	rows, err := db.Query(ctx, documentsSQL)
 	if err != nil {
@@ -87,6 +121,9 @@ func Documents(ctx context.Context, db Queryer) ([][]byte, error) {
 		)
 		if err := rows.Scan(&seq, &kind, &payload, &at, &actorRole, &actorID, &studentID); err != nil {
 			return nil, err
+		}
+		if tutorLogoutWithoutStudent(kind, actorRole, studentID) {
+			continue
 		}
 		raw, err := json.Marshal(buildEnvelope(seq, kind, payload, at, actorRole, actorID, studentID))
 		if err != nil {
@@ -123,6 +160,13 @@ func buildEnvelope(seq int64, kind string, payload []byte, at time.Time, actorRo
 		doc.StudentID = *studentID
 	}
 	return doc
+}
+
+func tutorLogoutWithoutStudent(kind string, actorRole, studentID *string) bool {
+	if kind != "session_revoked" || actorRole == nil || *actorRole != "tutor" {
+		return false
+	}
+	return studentID == nil || *studentID == ""
 }
 
 func globalKind(kind string) bool {
