@@ -1,7 +1,11 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
-import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import {
+  csrfHeaders,
+  forgetCsrf,
+  rememberCsrfFromResponse,
+} from "../task/csrf";
 import { clearOutbox } from "../task/outbox";
 import { Screen } from "../ui";
 
@@ -70,6 +74,9 @@ export function ProfilePage() {
       }
       if (path === "/auth/logout") {
         clearOutbox();
+        forgetCsrf();
+        document.cookie = "am-session=; Path=/; Max-Age=0";
+        setName(null);
       }
       if (path === "/me/sessions/revoke-all") {
         setRevoked(true);

@@ -1,5 +1,5 @@
 import { Button, NativeSelect, Stack, Text, Textarea } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
@@ -68,6 +68,9 @@ export function SummaryPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [reason, setReason] = useState<string>(REASONS[0].value);
   const [note, setNote] = useState("");
+  const [opened, setOpened] = useState<ReadonlySet<string>>(new Set());
+  const openedRef = useRef(new Set<string>());
+  const inflight = useRef(new Set<string>());
 
   useEffect(() => {
     if (!assignmentId) {
@@ -138,6 +141,15 @@ export function SummaryPage() {
       rememberCsrfFromResponse(response);
       if (!response.ok) {
         setActionError(await messageForResponse(response));
+        return;
+      }
+      if (path === "dispute") {
+        openedRef.current.add(itemId);
+        setOpened((prev) => {
+          const next = new Set(prev);
+          next.add(itemId);
+          return next;
+        });
       }
     } catch {
       setOffline(true);
@@ -145,11 +157,17 @@ export function SummaryPage() {
   }
 
   function dispute(itemId: string) {
+    if (inflight.current.has(itemId) || openedRef.current.has(itemId)) {
+      return;
+    }
+    inflight.current.add(itemId);
     const payload: { reason: string; text?: string } = { reason };
     if (note !== "") {
       payload.text = note;
     }
-    void post(itemId, "dispute", JSON.stringify(payload));
+    void post(itemId, "dispute", JSON.stringify(payload)).finally(() => {
+      inflight.current.delete(itemId);
+    });
   }
 
   const showForm = items !== null && items.length > 0;
@@ -188,7 +206,11 @@ export function SummaryPage() {
             >
               не понял
             </Button>
-            <Button type="button" onClick={() => dispute(item.itemId)}>
+            <Button
+              type="button"
+              disabled={opened.has(item.itemId)}
+              onClick={() => dispute(item.itemId)}
+            >
               оспорить
             </Button>{" "}
           </Stack>
