@@ -12,6 +12,26 @@ export function minskTime(value: string): string {
   }).format(date);
 }
 
+// Местное ГГГГ-ММ-ДДTчч:мм в Минске → UTC с секундами и Z.
+// Europe/Minsk без летнего времени: UTC+3 (WB-R2).
+export function minskLocalToUtc(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) {
+    return "";
+  }
+  const utc = new Date(
+    Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+      Number(match[4]) - 3,
+      Number(match[5]),
+      0,
+    ),
+  );
+  return utc.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 // PV-R12: возраст на момент создания ссылки, граница — 18 лет.
 export function isUnderEighteen(birthDate: string, now = new Date()): boolean {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
