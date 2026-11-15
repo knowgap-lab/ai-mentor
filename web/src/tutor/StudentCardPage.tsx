@@ -501,7 +501,12 @@ export function StudentCardPage() {
       );
       if (!response.ok) {
         setActionError(await errorSentence(response));
+        return;
       }
+      // PV-R18: отзыв отменён, согласие снова действующее.
+      setCard((current) =>
+        current ? { ...current, consent: "given" } : current,
+      );
     } catch {
       setActionError("Нет связи");
     }

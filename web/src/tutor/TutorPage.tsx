@@ -158,6 +158,7 @@ export function TutorPage() {
 
   const [telegramId, setTelegramId] = useState("");
   const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
+  const [loginOffline, setLoginOffline] = useState(false);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
 
@@ -165,6 +166,7 @@ export function TutorPage() {
     try {
       const list = await fetch("/students", { credentials: "include" });
       if (!list.ok) {
+        setPhase("login");
         return;
       }
       const payload: unknown = await list.json();
@@ -185,6 +187,7 @@ export function TutorPage() {
 
   async function onLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setLoginOffline(false);
     let response: Response;
     try {
       response = await fetch("/auth/dev", {
@@ -194,7 +197,7 @@ export function TutorPage() {
         body: JSON.stringify({ telegram_id: telegramId, role: "tutor" }),
       });
     } catch {
-      setPhase("offline");
+      setLoginOffline(true);
       return;
     }
     rememberCsrfFromResponse(response);
@@ -250,6 +253,7 @@ export function TutorPage() {
     });
     setAttempts([]);
     setStudents([]);
+    setLoginOffline(false);
     setPhase("login");
   }
 
@@ -266,6 +270,7 @@ export function TutorPage() {
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
             <Button type="submit">Войти</Button>
+            {loginOffline ? <Text>Нет связи</Text> : null}
           </Stack>
         </form>
       </Screen>
