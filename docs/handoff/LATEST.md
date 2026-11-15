@@ -2,28 +2,27 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-15 11:36 (grok)
-**Ветка:** `cursor/gotenberg-url-252c` (от `origin/feat/release1-demo` `61f6fd5`)
-**Этап:** адрес Gotenberg приведён к `GOTENBERG_URL`.
+**Обновлено:** 2026-11-15 11:52 (grok)
+**Ветка:** `feat/r1-gotenberg-name-test` (от `cursor/gotenberg-url-252c` `8ea1991`)
+**Этап:** проверка имени видит `GOTENBERG_URL`.
 
 ## Где мы
 
-`origin/feat/r1-s8-code` (`7c62737`) входит в `origin/feat/release1-demo`. Клиент PDF и файлы `deploy/` читают `GOTENBERG_URL`. Строки D329 в журнале решений нет, последний номер — D316.
+D329 записан: переменная адреса — `GOTENBERG_URL`. Клиент PDF и файлы `deploy/` уже читают это имя. Проверка имени и `gotenbergtest.EnvName` его находят.
 
 ## Что в работе сейчас
 
-Ничего. Замороженная проверка имени не видит `GOTENBERG_URL` и оставлена как есть.
+Ничего. Правка проверки — отдельный PR в `cursor/gotenberg-url-252c`.
 
 ## Следующий шаг
 
-Дефект проверки имени — отдельный PR. D329 записать в журнал тем номером, который уже занят в задании, не выдумывая пропущенные строки.
+Ревью этой проверки. В этот PR её не вливать.
 
 ## Блокеры и вопросы
 
-- Журнал решений на этой ветке не содержит D329.
-- `deploy/ops_s8_test.py` и `gotenbergtest.EnvName` не видят имя, которое начинается с `GOTENBERG`.
+нет
 
 ## Куда смотреть
 
-- Запись: [2026-11-15-1136-grok-gotenberg-url-done](entries/2026-11-15-1136-grok-gotenberg-url-done.md)
+- Запись: [2026-11-15-1150-grok-gotenberg-name-test-done](entries/2026-11-15-1150-grok-gotenberg-name-test-done.md)
 - Решения: [docs/decisions/log.md](../decisions/log.md)
