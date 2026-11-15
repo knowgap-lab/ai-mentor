@@ -2,6 +2,7 @@ import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { type FormEvent, useLayoutEffect, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { List, ListButton, Screen } from "../ui";
+import { errorSentence } from "./api-error";
 import { minskTime } from "./minsk-time";
 
 type Verdict = "correct" | "partial" | "wrong";
@@ -158,7 +159,8 @@ export function TutorPage() {
 
   const [telegramId, setTelegramId] = useState("");
   const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
-  const [loginOffline, setLoginOffline] = useState(false);
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
+  const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
 
@@ -166,7 +168,14 @@ export function TutorPage() {
     try {
       const list = await fetch("/students", { credentials: "include" });
       if (!list.ok) {
-        setPhase("login");
+        const sentence = await errorSentence(list);
+        if (list.status === 401) {
+          setLoginNotice(sentence);
+          setPhase("login");
+          return;
+        }
+        setListNotice(sentence);
+        setPhase("offline");
         return;
       }
       const payload: unknown = await list.json();
@@ -179,15 +188,17 @@ export function TutorPage() {
         .sort(byNextLesson);
       setAttempts([]);
       setStudents(next);
+      setListNotice(null);
       setPhase("ready");
     } catch {
+      setListNotice(null);
       setPhase("offline");
     }
   }
 
   async function onLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoginOffline(false);
+    setLoginNotice(null);
     let response: Response;
     try {
       response = await fetch("/auth/dev", {
@@ -197,7 +208,7 @@ export function TutorPage() {
         body: JSON.stringify({ telegram_id: telegramId, role: "tutor" }),
       });
     } catch {
-      setLoginOffline(true);
+      setLoginNotice("Нет связи");
       return;
     }
     rememberCsrfFromResponse(response);
@@ -253,7 +264,8 @@ export function TutorPage() {
     });
     setAttempts([]);
     setStudents([]);
-    setLoginOffline(false);
+    setLoginNotice(null);
+    setListNotice(null);
     setPhase("login");
   }
 
@@ -270,7 +282,7 @@ export function TutorPage() {
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
             <Button type="submit">Войти</Button>
-            {loginOffline ? <Text>Нет связи</Text> : null}
+            {loginNotice ? <Text>{loginNotice}</Text> : null}
           </Stack>
         </form>
       </Screen>
@@ -285,7 +297,7 @@ export function TutorPage() {
         </Button>
         {phase === "offline" ? (
           <Stack gap="sm">
-            <Text>Нет связи</Text>
+            <Text>{listNotice ?? "Нет связи"}</Text>
             <Button
               type="button"
               variant="default"
