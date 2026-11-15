@@ -44,6 +44,7 @@ import yaml
 MIN_OPERATIONS = 58
 MIN_SCREENS = 14
 PDF_OPS = ("getConspectPdf", "getSheetPdf", "getTestFormPdf")
+PDF_TESTS = ("TestWB_R28_S8_SheetPdf", "TestWB_R29_S8_TutorPdfOmitsKey")
 WAITING_RE = re.compile(
     r"waiting_on_user|ждёт человека|ждет человека|^status:\s*waiting\b",
     re.MULTILINE,
@@ -183,7 +184,7 @@ def literal_secret(text: str) -> bool:
         line = raw.split("#", 1)[0]
         for match in SECRET_ASSIGN.finditer(line):
             value = match.group(2).strip("'\"")
-            if value.startswith(("${", "{{", "?", "env:")):
+            if value.startswith(("${", "{{", "?", "env:", "var.", "local.")):
                 continue
             if value.lower() in {"false", "true", "null"}:
                 continue
@@ -264,7 +265,9 @@ def pinned_gotenberg(tree: Path) -> list[str]:
     return problems
 
 
-def command_problem(kind: str, code: int, out: str, marker: str) -> str | None:
+def command_problem(
+    kind: str, code: int, out: str, marker: str, required: tuple[str, ...] = ()
+) -> str | None:
     if code == 2 or WAITING_RE.search(out):
         return "waiting"
     if code != 0:
@@ -272,7 +275,8 @@ def command_problem(kind: str, code: int, out: str, marker: str) -> str | None:
         extra = tail[-1] if tail else ""
         return f"команда завершилась с кодом {code} {extra}".strip()
     if kind == "go":
-        if "--- SKIP:" in out or "--- PASS:" not in out:
+        missing = [name for name in required if f"--- PASS: {name}" not in out]
+        if "--- SKIP:" in out or missing or (not required and "--- PASS:" not in out):
             extra = next(
                 (
                     line.strip()
@@ -283,6 +287,10 @@ def command_problem(kind: str, code: int, out: str, marker: str) -> str | None:
                 ),
                 "",
             )
+            if missing:
+                extra = (
+                    (extra + "; " if extra else "") + "нет PASS: " + ", ".join(missing)
+                )
             reason = "программный тест не прошёл или пропущен"
             return f"{reason}: {extra}" if extra else reason
         return None
@@ -305,6 +313,7 @@ def settle(
     command: tuple[int, str] | None,
     marker: str,
     kind: str,
+    required: tuple[str, ...] = (),
 ) -> Check:
     out = "" if command is None else command[1]
     if (
@@ -315,7 +324,7 @@ def settle(
         detail = "\n".join([*problems, "ожидание: код 2 или waiting_on_user"])
         return Check(name, "waiting", detail.strip())
     if command is not None:
-        problem = command_problem(kind, command[0], out, marker)
+        problem = command_problem(kind, command[0], out, marker, required)
         if problem == "waiting":
             return Check(name, "waiting", "ожидание: код 2 или waiting_on_user")
         if problem:
@@ -426,7 +435,7 @@ def check_pdf(tree: Path, ops, routes, runner) -> Check:
             ],
             tree / "core",
         )
-    return settle("pdf", problems, "", command, "", "go")
+    return settle("pdf", problems, "", command, "", "go", PDF_TESTS)
 
 
 # D306 и briefs/r1-s7.md: Documents и Validate — интерфейс чтения для тестов.

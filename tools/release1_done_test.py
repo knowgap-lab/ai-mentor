@@ -281,6 +281,17 @@ class Release1DoneTest(unittest.TestCase):
             "fail",
         )
 
+    def test_pdf_requires_both_passes(self) -> None:
+        def only_sheet(args, cwd):
+            if "TestWB_R28_S8_SheetPdf" in " ".join(args):
+                return 0, "--- PASS: TestWB_R28_S8_SheetPdf\n"
+            return passing_runner(args, cwd)
+
+        with self._tree() as root:
+            checks = run(root, only_sheet)
+        pdf = next(item for item in checks if item.name == "pdf")
+        self.assertEqual(pdf.status, "fail")
+
     def test_waiting_marker_is_unfinished(self) -> None:
         with self._tree() as root:
             path = root / "deploy/terraform/main.tf"
@@ -316,6 +327,8 @@ class Release1DoneTest(unittest.TestCase):
         script = (repo / "deploy/restore-check.sh").read_text(encoding="utf-8")
         self.assertFalse(done.literal_secret(script))
         self.assertTrue(done.literal_secret('token: "synthetic-secret-value"\n'))
+        self.assertFalse(done.literal_secret("password = var.db_password\n"))
+        self.assertFalse(done.literal_secret("token = local.bot_token\n"))
 
     def _tree(self):
         return tempfile_tree()
