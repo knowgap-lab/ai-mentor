@@ -51,8 +51,8 @@
 // Чужой ученик, чужой или несуществующий урок — 403, код forbidden.
 // Коды ошибок этих тестов только lesson_frozen и forbidden.
 //
-// Предупреждение prereq_order — тема из Prereqs стоит раньше своей предпосылки;
-// в text или params есть обе темы. Запрета нет.
+// Тема из Prereqs может стоять раньше своей предпосылки. Запрета нет.
+// В warnings нет типа prereq_order.
 // Предупреждение plan_does_not_fit — при заданном расписании у урока не held
 // и не skipped нет слота; число недостающих — в text или params.
 // Пропущенные в это число не входят.
@@ -573,17 +573,6 @@ func asInt(value any) (int, bool) {
 		return n, true
 	}
 	return 0, false
-}
-
-func mentions(w warning, topic string) bool {
-	if strings.Contains(w.Text, topic) {
-		return true
-	}
-	raw, err := json.Marshal(w.Params)
-	if err != nil {
-		return false
-	}
-	return strings.Contains(string(raw), topic)
 }
 
 func login(t *testing.T, dsn, telegramID, role string) string {
