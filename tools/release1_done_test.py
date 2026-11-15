@@ -52,13 +52,11 @@ def build(root: Path) -> None:
     write(
         root / "core/cmd/server/mount.go",
         """package main
-import "github.com/knowgap-lab/ai-mentor/core/internal/events"
-import "go.opentelemetry.io/otel"
+import "log/slog"
 
 func mount() {
-	_ = events.Validate
-	_ = otel.Version
 	telegram.Check(fields, token, now)
+	_ = slog.NewJSONHandler(os.Stdout, nil)
 	mux.HandleFunc("POST /auth/telegram", h)
 	mux.HandleFunc("GET /lessons/{lesson}/conspect.pdf", h)
 	mux.HandleFunc("GET /assignments/{id}/sheet.pdf", h)
@@ -101,56 +99,30 @@ func mount() {
         json.dumps({"Ученик/Главная": "/", "Репетитор/Ученики": "/tutor"}),
     )
     write(root / "web/src/App.tsx", '<Route path="/" /><Route path="/tutor" />\n')
-    compose = (
-        "services:\n"
-        "  gotenberg:\n"
-        "    image: gotenberg/gotenberg:9.5.0\n"
-        "    networks: [app]\n"
-    )
+    compose = """services:
+  migrate:
+    image: example:1.2.3
+  db:
+    image: postgres:16.15
+  content:
+    image: example:1.2.3
+  core:
+    image: example:1.2.3
+    environment:
+      AUTH_DEV_MODE: false
+  web:
+    image: example:1.2.3
+    environment:
+      AUTH_DEV_MODE: false
+  gotenberg:
+    image: gotenberg/gotenberg:9.5.0
+"""
     write(root / "deploy/compose.prod.yml", compose)
     write(root / "deploy/compose.staging.yml", compose)
     write(
-        root / "deploy/terraform/main.tf",
-        'terraform {\n  required_version = "1.9.8"\n}\n'
-        'resource "demo_server" "app" {}\n',
-    )
-    write(
-        root / "deploy/terraform/.terraform.lock.hcl",
-        'provider "registry.terraform.io/example/demo" {\n'
-        '  hashes = ["h1:syntheticlock"]\n}\n',
-    )
-    write(
-        root / "deploy/ansible/install.yml",
-        "- hosts: app\n  tasks:\n    - name: install\n",
-    )
-    write(
-        root / "deploy/ansible/requirements.yml",
-        'collections:\n  - name: community.general\n    version: "9.5.0"\n',
-    )
-    write(
-        root / "deploy/install_repro_test.py",
-        "from pathlib import Path\n\n"
-        "def test_install_repro():\n"
-        "    text = Path('deploy/terraform/main.tf').read_text(encoding='utf-8')\n"
-        "    assert 'required_version' in text\n"
-        "    print('install_repro=passed')\n",
-    )
-    write(root / "deploy/observability/otel-collector.yaml", "receivers:\n  otlp:\n")
-    write(
-        root / "deploy/observability/prometheus.yml",
-        "scrape_configs: []\nretention: 30d\n",
-    )
-    write(root / "deploy/observability/loki.yaml", "loki: 14d\n")
-    write(root / "deploy/observability/tempo.yaml", "tempo: 7d\n")
-    write(root / "deploy/observability/alerts.yml", "groups:\n  - name: synthetic\n")
-    write(root / "deploy/observability/grafana/board.json", '{"title": "synthetic"}\n')
-    write(
-        root / "deploy/observability_test.py",
-        "from pathlib import Path\n\n"
-        "def test_observability():\n"
-        "    text = Path('deploy/observability/prometheus.yml').read_text()\n"
-        "    assert 'scrape_configs' in text\n"
-        "    print('observability=passed')\n",
+        root / "deploy/backup.sh",
+        "#!/bin/sh\nopenssl enc -aes-256-cbc -pbkdf2 -pass env:KEY\n"
+        "echo копия не создана\n",
     )
     write(
         root / "deploy/restore-check.sh",
@@ -161,12 +133,15 @@ func mount() {
         "postgres:16.15\n",
     )
     write(
-        root / "deploy/restore_drill_test.py",
-        "from pathlib import Path\n\n"
-        "def test_restore_drill():\n"
-        "    script = Path('deploy/restore-check.sh')\n"
-        "    assert script.is_file()\n"
-        "    print('restore_drill=passed')\n",
+        root / "deploy/service-watch.sh",
+        "OPS_CHAT_ID\n"
+        "диск > 80 %\n"
+        "загрузка каталога\n"
+        "перепроверка\n"
+        "задание failed\n"
+        "Это не я\n"
+        "внешняя проверка /status раз в минуту, тревога после 3 подряд неудач\n"
+        "журналы сервисов 30 дней, затем удалить\n",
     )
 
 
@@ -244,11 +219,15 @@ class Release1DoneTest(unittest.TestCase):
             "journal": lambda root: (
                 root / "docs/contracts/events.schema.json"
             ).unlink(),
-            "install": lambda root: (root / "deploy/terraform/main.tf").unlink(),
+            "install": lambda root: (root / "deploy/backup.sh").unlink(),
             "observability": lambda root: (
-                root / "deploy/observability/prometheus.yml"
-            ).unlink(),
-            "restore": lambda root: (root / "deploy/restore_drill_test.py").unlink(),
+                root / "core/cmd/server/mount.go"
+            ).write_text(
+                (root / "core/cmd/server/mount.go")
+                .read_text(encoding="utf-8")
+                .replace("\t_ = slog.NewJSONHandler(os.Stdout, nil)\n", ""),
+                encoding="utf-8",
+            ),
         }
         for name, change in cases.items():
             with self.subTest(name=name):
@@ -294,7 +273,7 @@ class Release1DoneTest(unittest.TestCase):
 
     def test_waiting_marker_is_unfinished(self) -> None:
         with self._tree() as root:
-            path = root / "deploy/terraform/main.tf"
+            path = root / "deploy/backup.sh"
             path.write_text(
                 path.read_text(encoding="utf-8") + "status: waiting_on_user\n",
                 encoding="utf-8",
@@ -329,6 +308,9 @@ class Release1DoneTest(unittest.TestCase):
         self.assertTrue(done.literal_secret('token: "synthetic-secret-value"\n'))
         self.assertFalse(done.literal_secret("password = var.db_password\n"))
         self.assertFalse(done.literal_secret("token = local.bot_token\n"))
+        self.assertFalse(
+            done.literal_secret('pg_password=$(urldecode "${pg_userinfo#*:}")\n')
+        )
 
     def _tree(self):
         return tempfile_tree()

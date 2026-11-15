@@ -2,8 +2,8 @@
 """Проверка одного SHA выпуска 1.
 
 Код 0 — на этом коммите сразу все обязательные операции и экраны,
-проверенный вход через Telegram, PDF, журнал, воспроизводимая установка
-Terraform и Ansible, наблюдаемость и проверенное восстановление.
+проверенный вход через Telegram, PDF, журнал, установка по ops.md
+(Compose, backup.sh, restore-check.sh) и наблюдаемость OP-R15…OP-R18.
 Код 1 — проверка не прошла. Код 2 — дочерний процесс завершился с кодом 2
 или в доказательстве написано, что ждём человека. Оба кода значат, что
 выпуск не закончен. Скрипт не объявляет выпуск готовым.
@@ -11,23 +11,10 @@ Terraform и Ansible, наблюдаемость и проверенное во�
 Список операций и экранов берётся из контрактов и web.md рядом с этим
 скриптом (кроме putRtImport, как в tools/release1_inventory.py). Код
 читается только из дерева указанного коммита.
-
-Доказательства, без которых код 0 невозможен:
-- deploy/terraform/*.tf с required_version, resource и .terraform.lock.hcl (h1);
-- deploy/ansible/install.yml и requirements.yml с версией x.y.z;
-- deploy/install_repro_test.py печатает install_repro=passed;
-- deploy/observability/: otel-collector.yaml, prometheus.yml, loki.yaml,
-  tempo.yaml, alerts.yml, grafana/*.json, сроки 30d, 14d и 7d;
-  в сервере /healthz, /readyz, /metrics и go.opentelemetry.io/otel;
-  deploy/observability_test.py печатает observability=passed;
-- deploy/restore-check.sh со шагами расшифровки, Postgres, CONSENT_REPLAY_BIN
-  и JOURNAL_RECALC_BIN; deploy/restore_drill_test.py вызывает этот скрипт
-  и печатает restore_drill=passed.
 """
 
 from __future__ import annotations
 
-import ast
 import io
 import json
 import re
@@ -50,8 +37,14 @@ WAITING_RE = re.compile(
     re.MULTILINE,
 )
 PINNED_IMAGE = re.compile(r":(\d+\.\d+\.\d+)$")
-VERSION_PIN = re.compile(r"version:\s*[\"']?(\d+\.\d+\.\d+)[\"']?")
 SECRET_ASSIGN = re.compile(r"(?i)([A-Za-z0-9_]*(?:password|token))\s*[:=]\s*(\S+)")
+DEV_MODE = re.compile(r"(?i)\bAUTH_DEV_MODE\b\s*[:=]\s*([^\s#]+)")
+MIGRATION = re.compile(r"(?i)migrat|миграц")
+PII_IN_LOG = re.compile(
+    r"(?i)(telegram_id|birth_date|date_of_birth|first_name|display_name|дату рождения)"
+)
+COMPOSE_NAMES = ("compose.prod.yml", "compose.staging.yml")
+COMPOSE_SERVICES = ("web", "core", "content", "db")
 HEX_RUN = re.compile(r"\b[0-9a-fA-F]{32,}\b")
 SHA256_DIGEST = re.compile(r"sha256:[0-9a-fA-F]{64}")
 
@@ -184,43 +177,13 @@ def literal_secret(text: str) -> bool:
         line = raw.split("#", 1)[0]
         for match in SECRET_ASSIGN.finditer(line):
             value = match.group(2).strip("'\"")
-            if value.startswith(("${", "{{", "?", "env:", "var.", "local.")):
+            if value.startswith(("${", "$(", "$", "{{", "?", "env:", "var.", "local.")):
                 continue
             if value.lower() in {"false", "true", "null"}:
                 continue
             return True
     stripped = SHA256_DIGEST.sub("", text)
     return HEX_RUN.search(stripped) is not None
-
-
-def nontrivial_assert(path: Path) -> bool:
-    try:
-        parsed = ast.parse(path.read_text(encoding="utf-8"))
-    except SyntaxError:
-        return False
-    for node in ast.walk(parsed):
-        if not isinstance(node, ast.Assert):
-            continue
-        test = node.test
-        if isinstance(test, ast.Constant) and test.value is True:
-            continue
-        return True
-    return False
-
-
-def calls_restore_script(path: Path) -> bool:
-    try:
-        parsed = ast.parse(path.read_text(encoding="utf-8"))
-    except SyntaxError:
-        return False
-    for node in ast.walk(parsed):
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, str)
-            and "restore-check.sh" in node.value
-        ):
-            return True
-    return False
 
 
 def read_text(path: Path) -> str:
@@ -471,159 +434,151 @@ def check_journal(tree: Path) -> Check:
     return settle("journal", problems, "", None, "", "go")
 
 
+def compose_problems(name: str, text: str) -> list[str]:
+    problems = []
+    if text == "":
+        return [f"нет deploy/{name}"]
+    try:
+        document = yaml.safe_load(text)
+    except yaml.YAMLError as exc:
+        return [f"{name}: не YAML ({exc})"]
+    services = document.get("services") if isinstance(document, dict) else None
+    if not isinstance(services, dict):
+        return [f"{name}: нет services"]
+    missing = [service for service in COMPOSE_SERVICES if service not in services]
+    if missing:
+        problems.append(f"{name}: нет сервисов {', '.join(missing)}")
+    if re.search(r"(?i)\blatest\b", text):
+        problems.append(f"{name}: тег latest")
+    if literal_secret(text):
+        problems.append(f"{name}: литерал секрета")
+    values = [item.strip("'\"").casefold() for item in DEV_MODE.findall(text)]
+    if not values or any(item not in {"false", "0"} for item in values):
+        problems.append(f"{name}: AUTH_DEV_MODE не выключен")
+    mention = MIGRATION.search(text)
+    if mention is None:
+        problems.append(f"{name}: миграция не упомянута")
+    else:
+        for service in ("core", "web"):
+            header = re.search(
+                rf"(?m)^[ \t]+{re.escape(service)}:[ \t]*(?:#.*)?$", text
+            )
+            if header is None:
+                problems.append(f"{name}: нет сервиса {service}")
+            elif mention.start() > header.start():
+                problems.append(f"{name}: миграция после сервиса {service}")
+    return problems
+
+
 def install_problems(tree: Path) -> tuple[list[str], str]:
     problems = []
-    terraform = tree / "deploy" / "terraform"
-    tf_files = sorted(terraform.glob("*.tf")) if terraform.is_dir() else []
-    tf_text = "\n".join(path.read_text(encoding="utf-8") for path in tf_files)
-    if not tf_files:
-        problems.append("нет deploy/terraform/*.tf")
-    elif "required_version" not in tf_text or not re.search(r"\d+\.\d+\.\d+", tf_text):
-        problems.append("Terraform required_version не закреплён")
-    if 'resource "' not in tf_text:
-        problems.append("в Terraform нет resource")
-    lock = terraform / ".terraform.lock.hcl"
-    lock_text = read_text(lock)
-    if "h1:" not in lock_text:
-        problems.append("нет воспроизводимого .terraform.lock.hcl")
-    playbook = read_text(tree / "deploy" / "ansible" / "install.yml")
-    if "hosts:" not in playbook or (
-        "tasks:" not in playbook and "roles:" not in playbook
-    ):
-        problems.append("нет deploy/ansible/install.yml")
-    requirements = read_text(tree / "deploy" / "ansible" / "requirements.yml")
-    if not VERSION_PIN.search(requirements):
-        problems.append("версии Ansible не закреплены как x.y.z")
-    blob = f"{tf_text}\n{lock_text}\n{playbook}\n{requirements}"
-    if re.search(r"(?i)\blatest\b", blob):
-        problems.append("установка содержит тег latest")
-    if (
-        literal_secret(tf_text)
-        or literal_secret(playbook)
-        or literal_secret(requirements)
-    ):
-        problems.append("в установке литерал секрета")
-    test_path = tree / "deploy" / "install_repro_test.py"
-    if not test_path.is_file() or not nontrivial_assert(test_path):
-        problems.append("нет программного теста воспроизводимой установки")
-    return problems, blob + "\n" + read_text(test_path)
-
-
-def check_install(tree: Path, runner) -> Check:
-    problems, blob = install_problems(tree)
-    command = None
-    if not problems:
-        command = run_command(
-            runner,
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "-q",
-                "-s",
-                "deploy/install_repro_test.py",
-            ],
-            tree,
-        )
-    return settle("install", problems, blob, command, "install_repro=passed", "pytest")
-
-
-def observability_problems(tree: Path, sources) -> tuple[list[str], str]:
-    problems = []
-    base = tree / "deploy" / "observability"
-    required = {
-        "otel-collector.yaml": "otlp",
-        "prometheus.yml": "scrape_configs",
-        "loki.yaml": "loki",
-        "tempo.yaml": "tempo",
-        "alerts.yml": "groups:",
-    }
-    blob_parts = []
-    for name, needle in required.items():
-        text = read_text(base / name)
-        blob_parts.append(text)
-        if needle not in text:
-            problems.append(f"нет {needle} в deploy/observability/{name}")
-    dashboards = (
-        sorted((base / "grafana").glob("*.json")) if (base / "grafana").is_dir() else []
-    )
-    if not any('"title"' in read_text(path) for path in dashboards):
-        problems.append("нет дашборда Grafana")
-    evidence = "\n".join(blob_parts + [read_text(path) for path in dashboards])
-    for token in ("30d", "14d", "7d"):
-        if token not in evidence:
-            problems.append(f"нет срока хранения {token}")
-    source = "\n".join(text for _, text in sources)
-    for route in ("/healthz", "/readyz", "/metrics"):
-        if not re.search(rf'(?:["\s]){re.escape(route)}(?:["\s?]|$)', source):
-            problems.append(f"нет маршрута {route}")
-    if "go.opentelemetry.io/otel" not in source:
-        problems.append("сервер не импортирует OpenTelemetry")
-    test_path = tree / "deploy" / "observability_test.py"
-    if not test_path.is_file() or not nontrivial_assert(test_path):
-        problems.append("нет программного теста наблюдаемости")
-    return problems, evidence + "\n" + read_text(test_path)
-
-
-def check_observability(tree: Path, sources, runner) -> Check:
-    problems, blob = observability_problems(tree, sources)
-    command = None
-    if not problems:
-        command = run_command(
-            runner,
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "-q",
-                "-s",
-                "deploy/observability_test.py",
-            ],
-            tree,
-        )
-    return settle(
-        "observability", problems, blob, command, "observability=passed", "pytest"
-    )
-
-
-def check_restore(tree: Path, runner) -> Check:
-    script = read_text(tree / "deploy" / "restore-check.sh")
-    problems = []
+    blobs = []
+    for name in COMPOSE_NAMES:
+        text = read_text(tree / "deploy" / name)
+        blobs.append(text)
+        problems.extend(compose_problems(name, text))
+    backup = read_text(tree / "deploy" / "backup.sh")
+    blobs.append(backup)
+    if backup == "":
+        problems.append("нет deploy/backup.sh")
+    else:
+        if "docker compose up" in backup:
+            problems.append("backup.sh запускает docker compose up")
+        if "openssl enc" not in backup:
+            problems.append("backup.sh не шифрует копию")
+        if literal_secret(backup):
+            problems.append("backup.sh: литерал секрета")
+    restore = read_text(tree / "deploy" / "restore-check.sh")
+    blobs.append(restore)
     for needle in (
         "openssl enc -d",
         "postgres:",
         "CONSENT_REPLAY_BIN",
         "JOURNAL_RECALC_BIN",
     ):
-        if needle not in script:
+        if needle not in restore:
             problems.append(f"в restore-check.sh нет шага {needle}")
-    if script and literal_secret(script):
-        problems.append("в restore-check.sh литерал секрета")
-    test_path = tree / "deploy" / "restore_drill_test.py"
-    if (
-        not test_path.is_file()
-        or not nontrivial_assert(test_path)
-        or not calls_restore_script(test_path)
-    ):
-        problems.append(
-            "нет программного теста восстановления, вызывающего restore-check.sh"
-        )
-    blob = script + "\n" + read_text(test_path)
-    command = None
-    if not problems:
-        command = run_command(
-            runner,
-            [
-                sys.executable,
-                "-m",
-                "pytest",
-                "-q",
-                "-s",
-                "deploy/restore_drill_test.py",
-            ],
-            tree,
-        )
-    return settle("restore", problems, blob, command, "restore_drill=passed", "pytest")
+    if restore and literal_secret(restore):
+        problems.append("restore-check.sh: литерал секрета")
+    return problems, "\n".join(blobs)
+
+
+def check_install(tree: Path, _runner) -> Check:
+    problems, blob = install_problems(tree)
+    return settle("install", problems, blob, None, "", "pytest")
+
+
+def alert_text(tree: Path, sources) -> str:
+    chunks = []
+    for _path, text in sources:
+        if "OPS_CHAT_ID" in text or "ops_alert" in text:
+            chunks.append(text)
+    deploy = tree / "deploy"
+    if deploy.is_dir():
+        for path in sorted(deploy.rglob("*")):
+            if path.is_file() and path.suffix in {".sh", ".yml", ".yaml"}:
+                chunks.append(path.read_text(encoding="utf-8"))
+    return "\n".join(chunks)
+
+
+def observability_problems(tree: Path, sources) -> tuple[list[str], str]:
+    """OP-R15…OP-R18. Стек метрик и чужие сроки хранения spec не называет."""
+    problems = []
+    go_text = "\n".join(text for _, text in sources)
+    log_lines = [
+        line for line in go_text.splitlines() if re.search(r"\b(?:log|slog)\.", line)
+    ]
+    if "slog." not in go_text:
+        problems.append("OP-R15: журналы не структурированы")
+    if any(PII_IN_LOG.search(line) for line in log_lines):
+        problems.append("OP-R15: в журнале есть личные данные")
+    alerts = alert_text(tree, sources)
+    rules = (
+        ("OP-R16: нет тревоги в служебный чат", r"OPS_CHAT_ID|ops_alert"),
+        ("OP-R16: нет тревоги о диске", r"80\s*%|диск\s*>\s*80"),
+        (
+            "OP-R16: нет тревоги о копии или восстановлении",
+            r"копия не создана|проверка восстановления не прошла",
+        ),
+        (
+            "OP-R16: нет тревоги о загрузке каталога",
+            r"загрузк\w* каталога|catalog load",
+        ),
+        ("OP-R16: нет тревоги о перепроверке", r"перепроверк"),
+        ("OP-R16: нет тревоги о задании failed", r"задани\w*.*failed|job.*failed"),
+        ("OP-R16: нет тревоги «Это не я»", r"Это не я"),
+    )
+    for message, pattern in rules:
+        if re.search(pattern, alerts, re.IGNORECASE) is None:
+            problems.append(message)
+    deploy = tree / "deploy"
+    deploy_text = alerts
+    minute = re.search(r"минут|\* \* \* \* \*|per minute", deploy_text, re.IGNORECASE)
+    three = re.search(r"3\s*(?:подряд|неудач)|three failures", deploy_text, re.IGNORECASE)
+    if "/status" not in deploy_text or minute is None or three is None:
+        problems.append("OP-R17: нет внешней проверки страницы состояния")
+    kept = False
+    if deploy.is_dir():
+        for path in deploy.rglob("*"):
+            if not path.is_file() or path.name in {"backup.sh", "restore-check.sh"}:
+                continue
+            if path.suffix not in {".sh", ".yml", ".yaml"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            if (
+                re.search(r"(?i)журнал|service log", text)
+                and "30" in text
+                and re.search(r"(?i)удал|delete", text)
+            ):
+                kept = True
+    if not kept:
+        problems.append("OP-R18: журналы сервисов не удаляются через 30 дней")
+    return problems, alerts
+
+
+def check_observability(tree: Path, sources, _runner) -> Check:
+    problems, blob = observability_problems(tree, sources)
+    return settle("observability", problems, blob, None, "", "pytest")
 
 
 def evaluate(
@@ -648,7 +603,6 @@ def evaluate(
         check_journal(tree),
         check_install(tree, runner),
         check_observability(tree, sources, runner),
-        check_restore(tree, runner),
     ]
 
 
