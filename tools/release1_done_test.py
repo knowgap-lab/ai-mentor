@@ -71,10 +71,31 @@ func mount() {
 """,
     )
     write(
-        root / "core/internal/events/validate.go",
-        "package events\nfunc Validate(doc []byte) error { return nil }\n"
-        "func Documents() [][]byte { return nil }\n",
+        root / "docs/contracts/events.schema.json",
+        '{"schema_version": 1}\n',
     )
+    write(
+        root / "core/internal/events/events_s7_test.go",
+        "package events_test\nfunc TestS7(t *testing.T) {\n"
+        "\tif err := events.Validate(doc); err != nil {}\n}\n",
+    )
+    for folder in (
+        "attempts",
+        "answercheck",
+        "lessons",
+        "plan",
+        "homework",
+        "recheck",
+        "privacy",
+        "auth",
+        "e2e",
+    ):
+        write(
+            root / "core/internal" / folder / "events_s7_test.go",
+            "package demo_test\nfunc TestS7(t *testing.T) {\n"
+            "\tdocs, err := events.Documents(ctx, conn)\n"
+            "\tif err := events.Validate(doc); err != nil {}\n}\n",
+        )
     write(
         root / "web/screens.json",
         json.dumps({"Ученик/Главная": "/", "Репетитор/Ученики": "/tutor"}),
@@ -192,6 +213,22 @@ class Release1DoneTest(unittest.TestCase):
             next(item.name for item in checks if item.status != "pass"), "screens"
         )
 
+    def test_server_need_not_import_events(self) -> None:
+        with self._tree() as root:
+            mount = root / "core/cmd/server/mount.go"
+            mount.write_text(
+                mount.read_text(encoding="utf-8").replace(
+                    'import "github.com/knowgap-lab/ai-mentor/core/internal/events"\n',
+                    "",
+                ),
+                encoding="utf-8",
+            )
+            checks = run(root)
+        journal = next(item for item in checks if item.name == "journal")
+        self.assertEqual(journal.status, "pass")
+        screens = next(item for item in checks if item.name == "screens")
+        self.assertEqual(screens.status, "pass")
+
     def test_each_later_gap_stays_unfinished(self) -> None:
         cases = {
             "telegram": lambda root: (root / "core/cmd/server/mount.go").write_text(
@@ -204,15 +241,9 @@ class Release1DoneTest(unittest.TestCase):
                 "services:\n  gotenberg:\n    image: gotenberg/gotenberg:latest\n",
                 encoding="utf-8",
             ),
-            "journal": lambda root: (root / "core/cmd/server/mount.go").write_text(
-                (root / "core/cmd/server/mount.go")
-                .read_text(encoding="utf-8")
-                .replace(
-                    'import "github.com/knowgap-lab/ai-mentor/core/internal/events"\n',
-                    "",
-                ),
-                encoding="utf-8",
-            ),
+            "journal": lambda root: (
+                root / "docs/contracts/events.schema.json"
+            ).unlink(),
             "install": lambda root: (root / "deploy/terraform/main.tf").unlink(),
             "observability": lambda root: (
                 root / "deploy/observability/prometheus.yml"

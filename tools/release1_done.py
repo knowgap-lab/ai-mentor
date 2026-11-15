@@ -429,32 +429,37 @@ def check_pdf(tree: Path, ops, routes, runner) -> Check:
     return settle("pdf", problems, "", command, "", "go")
 
 
-def check_journal(sources, tree: Path, runner) -> Check:
-    blob = "\n".join(text for _, text in sources)
+# D306 и briefs/r1-s7.md: Documents и Validate — интерфейс чтения для тестов.
+# Модули сами пишут kind и payload. Сервер не обязан импортировать пакет.
+JOURNAL_TESTS = (
+    "core/internal/events/events_s7_test.go",
+    "core/internal/attempts/events_s7_test.go",
+    "core/internal/answercheck/events_s7_test.go",
+    "core/internal/lessons/events_s7_test.go",
+    "core/internal/plan/events_s7_test.go",
+    "core/internal/homework/events_s7_test.go",
+    "core/internal/recheck/events_s7_test.go",
+    "core/internal/privacy/events_s7_test.go",
+    "core/internal/auth/events_s7_test.go",
+    "core/internal/e2e/events_s7_test.go",
+)
+
+
+def check_journal(tree: Path) -> Check:
     problems = []
-    if "internal/events" not in blob:
-        problems.append("сервер не импортирует журнал core/internal/events")
-    if "func Validate(" not in blob or "func Documents(" not in blob:
-        problems.append("в зависимостях сервера нет Documents и Validate")
-    journal_text = "\n".join(text for path, text in sources if "events" in path.parts)
-    command = None
-    if not problems:
-        command = run_command(
-            runner,
-            [
-                "go",
-                "test",
-                "-count=1",
-                "-timeout",
-                "180s",
-                "-v",
-                "./internal/events/",
-                "-run",
-                "^TestS7_ValidateRejectsMissingSchemaVersion$",
-            ],
-            tree / "core",
-        )
-    return settle("journal", problems, journal_text, command, "", "go")
+    schema = read_text(tree / "docs/contracts/events.schema.json")
+    if "schema_version" not in schema:
+        problems.append("нет docs/contracts/events.schema.json")
+    for rel in JOURNAL_TESTS:
+        text = read_text(tree / rel)
+        if text == "":
+            problems.append(f"нет {rel}")
+            continue
+        if "events.Validate" not in text:
+            problems.append(f"{rel} не вызывает Validate")
+        if rel != JOURNAL_TESTS[0] and "events.Documents" not in text:
+            problems.append(f"{rel} не вызывает Documents")
+    return settle("journal", problems, "", None, "", "go")
 
 
 def install_problems(tree: Path) -> tuple[list[str], str]:
@@ -631,7 +636,7 @@ def evaluate(
         check_screens(tree, screens),
         check_telegram(tree, routes, sources, runner),
         check_pdf(tree, ops, routes, runner),
-        check_journal(sources, tree, runner),
+        check_journal(tree),
         check_install(tree, runner),
         check_observability(tree, sources, runner),
         check_restore(tree, runner),
