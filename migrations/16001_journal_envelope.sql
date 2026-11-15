@@ -19,6 +19,12 @@ CREATE TABLE core.answer_rate (
 GRANT SELECT, INSERT ON TABLE core.answer_rate TO core_app;
 REVOKE UPDATE, DELETE ON TABLE core.answer_rate FROM core_app;
 
+INSERT INTO core.answer_rate (student_id, at)
+SELECT payload->>'student_id', at
+FROM core.journal_event
+WHERE kind = 'answer_request'
+  AND COALESCE(payload->>'student_id', '') <> '';
+
 -- +goose Down
 -- +goose StatementBegin
 DO $$

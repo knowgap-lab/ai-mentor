@@ -222,10 +222,14 @@ func (s *Service) revokeSession(ctx context.Context, token string) error {
 	if err != nil {
 		return err
 	}
+	var studentID any
+	if role == "student" {
+		studentID = userID
+	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO core.journal_event (kind, payload, student_id, actor_role, actor_id)
 		VALUES ('session_revoked', $1::jsonb, $2, $3, $4)
-	`, string(payload), userID, role, userID); err != nil {
+	`, string(payload), studentID, role, userID); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
