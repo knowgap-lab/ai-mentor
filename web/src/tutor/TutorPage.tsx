@@ -170,7 +170,8 @@ export function TutorPage() {
       if (!list.ok) {
         const sentence = await errorSentence(list);
         if (list.status === 401) {
-          setLoginNotice(sentence);
+          // Код unauthorized в таблице web.md нет: на форме входа тот же текст, что у login_stale.
+          setLoginNotice(sentence ?? "Войдите ещё раз");
           setPhase("login");
           return;
         }
