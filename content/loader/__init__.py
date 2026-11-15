@@ -259,7 +259,17 @@ def _apply(
     try:
         _psql(dsn, script)
     except RuntimeError as error:
+        _alert_catalog_load()
         raise LoadRefused("load_failed") from error
+
+
+def _alert_catalog_load() -> None:
+    """LD-R10: служебный чат, без текста ошибки и без секрета в аргументах."""
+    path = Path(__file__).resolve().parents[2] / "deploy" / "ops-alert.sh"
+    try:
+        subprocess.run([os.fspath(path), "catalog"], check=False)
+    except OSError:
+        return
 
 
 def _read_revisions(dsn: str) -> list[_Revision]:
