@@ -417,7 +417,16 @@ JOURNAL_TESTS = (
 )
 
 
-def check_journal(tree: Path) -> Check:
+JOURNAL_VALIDATE_TESTS = (
+    "TestS7_ValidateAcceptsEachType",
+    "TestS7_ValidateRejectsMissingSchemaVersion",
+    "TestS7_ValidateRejectsUnknownEventType",
+    "TestS7_ValidateRejectsForeignPayload",
+    "TestS7_ValidateRejectsExtraField",
+)
+
+
+def check_journal(tree: Path, runner) -> Check:
     problems = []
     schema = read_text(tree / "docs/contracts/events.schema.json")
     if "schema_version" not in schema:
@@ -431,7 +440,34 @@ def check_journal(tree: Path) -> Check:
             problems.append(f"{rel} не вызывает Validate")
         if rel != JOURNAL_TESTS[0] and "events.Documents" not in text:
             problems.append(f"{rel} не вызывает Documents")
-    return settle("journal", problems, "", None, "", "go")
+    package = tree / "core/internal/events"
+    bodies = ""
+    if package.is_dir():
+        bodies = "\n".join(
+            path.read_text(encoding="utf-8")
+            for path in package.glob("*.go")
+            if not path.name.endswith("_test.go")
+        )
+    if "func Validate(" not in bodies or "func Documents(" not in bodies:
+        problems.append("в core/internal/events нет Documents и Validate")
+    command = None
+    if not problems:
+        command = run_command(
+            runner,
+            [
+                "go",
+                "test",
+                "-count=1",
+                "-timeout",
+                "180s",
+                "-v",
+                "./internal/events/",
+                "-run",
+                "^TestS7_Validate",
+            ],
+            tree / "core",
+        )
+    return settle("journal", problems, "", command, "", "go", JOURNAL_VALIDATE_TESTS)
 
 
 def compose_problems(name: str, text: str) -> list[str]:
@@ -554,7 +590,9 @@ def observability_problems(tree: Path, sources) -> tuple[list[str], str]:
     deploy = tree / "deploy"
     deploy_text = alerts
     minute = re.search(r"минут|\* \* \* \* \*|per minute", deploy_text, re.IGNORECASE)
-    three = re.search(r"3\s*(?:подряд|неудач)|three failures", deploy_text, re.IGNORECASE)
+    three = re.search(
+        r"3\s*(?:подряд|неудач)|three failures", deploy_text, re.IGNORECASE
+    )
     if "/status" not in deploy_text or minute is None or three is None:
         problems.append("OP-R17: нет внешней проверки страницы состояния")
     kept = False
@@ -600,7 +638,7 @@ def evaluate(
         check_screens(tree, screens),
         check_telegram(tree, routes, sources, runner),
         check_pdf(tree, ops, routes, runner),
-        check_journal(tree),
+        check_journal(tree, runner),
         check_install(tree, runner),
         check_observability(tree, sources, runner),
     ]

@@ -37,8 +37,17 @@ def passing_runner(args, _cwd):
             "--- PASS: TestWB_R28_S8_SheetPdf\n"
             "--- PASS: TestWB_R29_S8_TutorPdfOmitsKey\n"
         )
-    if "TestS7_ValidateRejectsMissingSchemaVersion" in text:
-        return 0, "--- PASS: TestS7_ValidateRejectsMissingSchemaVersion\n"
+    if "TestS7_Validate" in text:
+        return 0, "".join(
+            f"--- PASS: {name}\n"
+            for name in (
+                "TestS7_ValidateAcceptsEachType",
+                "TestS7_ValidateRejectsMissingSchemaVersion",
+                "TestS7_ValidateRejectsUnknownEventType",
+                "TestS7_ValidateRejectsForeignPayload",
+                "TestS7_ValidateRejectsExtraField",
+            )
+        )
     if text.endswith("deploy/install_repro_test.py"):
         return 0, "install_repro=passed\n"
     if text.endswith("deploy/observability_test.py"):
@@ -71,6 +80,11 @@ func mount() {
     write(
         root / "docs/contracts/events.schema.json",
         '{"schema_version": 1}\n',
+    )
+    write(
+        root / "core/internal/events/validate.go",
+        "package events\nfunc Validate(doc []byte) error { return nil }\n"
+        "func Documents() [][]byte { return nil }\n",
     )
     write(
         root / "core/internal/events/events_s7_test.go",
