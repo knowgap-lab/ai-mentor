@@ -273,13 +273,27 @@ func TestAT_R16_S5_SummaryHiddenUntilSubmit(t *testing.T) {
 }
 
 func TestAT_R17_S5_DiscussListOneItem(t *testing.T) {
+	const issuedVariant = "ct-demo:D1.T01.S1.V017"
 	h := newHarness(t)
 	h.seed(map[string]any{
 		"assignment": map[string]any{"state": "submitted"},
 	})
+	if _, err := h.conn.Exec(context.Background(), `
+		UPDATE core.assignment
+		SET snapshot = jsonb_set(snapshot, '{items,0,variant_id}', to_jsonb($2::text), true)
+		WHERE id = $1
+	`, h.assignment(), issuedVariant); err != nil {
+		t.Fatal(err)
+	}
 	path := itemPath(h.assignment(), h.item(), "/did-not-understand")
 	h.status(h.call(http.MethodPost, path, nil, nil), http.StatusNoContent)
 	h.status(h.call(http.MethodPost, path, nil, nil), http.StatusNoContent)
+	if h.count(`
+		SELECT count(*) FROM core.journal_event
+		WHERE kind = 'did_not_understand' AND payload->>'item_id' = $1
+	`, h.item()) != 1 {
+		t.Fatal("повтор создал вторую запись")
+	}
 	rec := s5Call(h, http.MethodGet, s5StudentPath(h.world.StudentID, "/discuss-list"), nil, s5TutorToken(h), nil)
 	h.status(rec, http.StatusOK)
 	var items []struct {
@@ -292,6 +306,9 @@ func TestAT_R17_S5_DiscussListOneItem(t *testing.T) {
 	}
 	if len(items) != 1 || items[0].ItemID != h.item() || items[0].AssignmentID != h.assignment() || items[0].VariantID == "" {
 		t.Fatalf("список %+v", items)
+	}
+	if items[0].VariantID != issuedVariant {
+		t.Fatalf("variant_id %q, нужен %s", items[0].VariantID, issuedVariant)
 	}
 }
 

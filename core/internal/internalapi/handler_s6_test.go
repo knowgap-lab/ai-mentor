@@ -509,6 +509,42 @@ func TestRC_R20_S6_ReportForeignTutorAndStudent(t *testing.T) {
 	`, s6Variant); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := conn.Exec(context.Background(), `
+		INSERT INTO core.assignment (
+			id, student_id, state, kind, catalog_version, deadline, place, snapshot
+		) VALUES (
+			's6-asg-8', 's6-student', 'issued', 'homework', 8, NULL, 'home',
+			jsonb_build_object('items', jsonb_build_array(jsonb_build_object(
+				'item_id', 's6-item-8', 'variant_id', $1::text
+			)))
+		)
+	`, s6Variant); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := conn.Exec(context.Background(), `
+		INSERT INTO core.assignment_item (assignment_id, item_id, state, skipped, max_points)
+		VALUES ('s6-asg-8', 's6-item-8', 'final', false, 1)
+	`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := conn.Exec(context.Background(), `
+		INSERT INTO core.attempts (
+			id, assignment_id, item_id, raw_input, source, place, attempt_no
+		) VALUES ('s6-att-8', 's6-asg-8', 's6-item-8', '14', 'homework', 'home', 1)
+	`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := conn.Exec(context.Background(), `
+		INSERT INTO core.journal_event (kind, payload)
+		VALUES ('attempt_recorded', jsonb_build_object(
+			'attempt_id', 's6-att-8',
+			'assignment_id', 's6-asg-8',
+			'item_id', 's6-item-8',
+			'variant_id', $1::text
+		))
+	`, s6Variant); err != nil {
+		t.Fatal(err)
+	}
 	owner := s6Session(t, conn, "s6-tutor")
 	other := s6Session(t, conn, "s6-other")
 	student := s6Session(t, conn, "s6-student")
