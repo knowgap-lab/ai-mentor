@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,8 +24,8 @@ const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 
 
 const sessionCookieName = "__Host-session"
 
-// Читается страницей: сама cookie сеанса HttpOnly и из скрипта не видна.
-const sessionSeenCookie = "am-session"
+// Признак сеанса в HTML, не cookie. Сам сеанс остаётся HttpOnly (AU-R22).
+const sessionMarker = `<meta name="am-session" content="1">`
 
 func rootHandler() (http.Handler, error) {
 	if !devStackEnabled() {
@@ -252,27 +254,34 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h spaHandler) serveIndex(w http.ResponseWriter, r *http.Request) {
-	markSession(w, r)
-	http.ServeFile(w, r, filepath.Join(h.root, "index.html"))
-}
-
-func markSession(w http.ResponseWriter, r *http.Request) {
-	if _, ok := requestSession(r); ok {
-		http.SetCookie(w, &http.Cookie{
-			Name:     sessionSeenCookie,
-			Value:    "1",
-			Path:     "/",
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+	raw, err := os.ReadFile(filepath.Join(h.root, "index.html")) //nolint:gosec // G304: путь собран из каталога сборки, не из URL
+	if err != nil {
+		http.NotFound(w, r)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     sessionSeenCookie,
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
+	if _, ok := requestSession(r); ok {
+		raw = injectSessionMarker(raw)
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Length", strconv.Itoa(len(raw)))
+	w.WriteHeader(http.StatusOK)
+	if r.Method == http.MethodHead {
+		return
+	}
+	_, _ = w.Write(raw)
+}
+
+func injectSessionMarker(raw []byte) []byte {
+	if bytes.Contains(raw, []byte(sessionMarker)) {
+		return raw
+	}
+	head := []byte("<head>")
+	if i := bytes.Index(raw, head); i >= 0 {
+		out := make([]byte, 0, len(raw)+len(sessionMarker))
+		out = append(out, raw[:i+len(head)]...)
+		out = append(out, sessionMarker...)
+		out = append(out, raw[i+len(head):]...)
+		return out
+	}
+	return append([]byte(sessionMarker), raw...)
 }

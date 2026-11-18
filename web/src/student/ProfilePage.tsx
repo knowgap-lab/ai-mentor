@@ -81,8 +81,7 @@ export function ProfilePage() {
         loadGen.current += 1;
         clearOutbox();
         forgetCsrf();
-        document.cookie =
-          "am-session=; Path=/; Max-Age=0; Secure; SameSite=Lax";
+        document.querySelector('meta[name="am-session"]')?.remove();
         setName(null);
       }
       if (path === "/me/sessions/revoke-all") {
