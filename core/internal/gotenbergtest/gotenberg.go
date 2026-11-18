@@ -239,7 +239,7 @@ func pinned(image string) bool {
 }
 
 func envNames(text string) []string {
-	re := regexp.MustCompile(`\b([A-Z][A-Z0-9_]*GOTENBERG[A-Z0-9_]*)\b`)
+	re := regexp.MustCompile(`\b((?:[A-Z][A-Z0-9_]*)?GOTENBERG[A-Z0-9_]*)\b`)
 	found := re.FindAllString(text, -1)
 	if found == nil {
 		return nil
