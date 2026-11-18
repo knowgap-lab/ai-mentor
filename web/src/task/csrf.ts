@@ -26,6 +26,14 @@ export function rememberCsrfFromResponse(response: Response): void {
   writeToken(token);
 }
 
+export function forgetCsrf(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Сеанс в памяти вкладки недоступен.
+  }
+}
+
 export function hasCsrfToken(): boolean {
   return readToken() !== null;
 }
