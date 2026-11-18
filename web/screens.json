@@ -4,5 +4,7 @@
   "Ученик/Выдача (ДЗ)": "/assignment/:assignmentId",
   "Ученик/Задача": "/task/:assignmentId/:itemId",
   "Репетитор/Ученики": "/tutor",
-  "Репетитор/Ученик": "/tutor/students/:studentId"
+  "Репетитор/Ученик": "/tutor/students/:studentId",
+  "Репетитор/Урок": "/tutor/lessons/:lessonId",
+  "Репетитор/Подготовка": "/tutor/lessons/:lessonId/preparation"
 }

@@ -1,5 +1,6 @@
 // Тексты — таблица «Ошибки» в web.md. Код и техническое сообщение не показываем (WB-R6).
-const ERROR_TEXT: Record<string, string> = {
+
+export const ERROR_TEXT: Record<string, string> = {
   item_closed: "Эта задача уже закрыта",
   assignment_closed: "ДЗ уже сдано",
   rate_limited: "Слишком часто, подождите немного",
@@ -25,7 +26,7 @@ const ERROR_TEXT: Record<string, string> = {
     "Этот ответ уже отправлялся с другим текстом — обновите страницу",
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
