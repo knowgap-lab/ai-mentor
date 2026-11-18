@@ -3,5 +3,10 @@
   "Ученик/Урок": "/lesson/:lessonId",
   "Ученик/Выдача (ДЗ)": "/assignment/:assignmentId",
   "Ученик/Задача": "/task/:assignmentId/:itemId",
-  "Репетитор/Ученики": "/tutor"
+  "Ученик/Итог": "/assignment/:assignmentId/summary",
+  "Ученик/Профиль": "/profile",
+  "Репетитор/Ученики": "/tutor",
+  "Репетитор/Ученик": "/tutor/students/:studentId",
+  "Репетитор/Урок": "/tutor/lessons/:lessonId",
+  "Репетитор/Подготовка": "/tutor/lessons/:lessonId/preparation"
 }

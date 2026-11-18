@@ -3,7 +3,12 @@ import { Route, Routes } from "react-router";
 import { AssignmentPage } from "./student/AssignmentPage";
 import { HomePage } from "./student/HomePage";
 import { LessonPage } from "./student/LessonPage";
+import { ProfilePage } from "./student/ProfilePage";
+import { SummaryPage } from "./student/SummaryPage";
 import { TaskPage } from "./task/TaskPage";
+import { PreparationPage } from "./tutor/PreparationPage";
+import { StudentCardPage } from "./tutor/StudentCardPage";
+import { TutorLessonPage } from "./tutor/TutorLessonPage";
 import { TutorPage } from "./tutor/TutorPage";
 import { DesignPage } from "./design/DesignPage";
 
@@ -37,9 +42,20 @@ export function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/lesson/:lessonId" element={<LessonPage />} />
+      <Route
+        path="/assignment/:assignmentId/summary"
+        element={<SummaryPage />}
+      />
       <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
       <Route path="/task/:assignmentId/:itemId" element={<TaskPage />} />
       <Route path="/tutor" element={<TutorPage />} />
+      <Route path="/tutor/students/:studentId" element={<StudentCardPage />} />
+      <Route
+        path="/tutor/lessons/:lessonId/preparation"
+        element={<PreparationPage />}
+      />
+      <Route path="/tutor/lessons/:lessonId" element={<TutorLessonPage />} />
       {import.meta.env.DEV ? (
         <Route path="/design" element={<DesignPage />} />
       ) : null}
