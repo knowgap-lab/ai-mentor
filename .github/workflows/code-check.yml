@@ -3,6 +3,7 @@ name: code-check
 # Каркас выпуска 1: tools/check-code.sh и проверки документации tools/check.sh.
 on:
   pull_request:
+  merge_group:
   push:
     branches: [main]
 
