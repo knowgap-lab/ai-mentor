@@ -45,7 +45,11 @@ dev_ensure_docker() {
 }
 EOF
     fi
-    sudo dockerd >/tmp/ai-mentor-dockerd.log 2>&1 &
+    if grep -q 'fuse-overlayfs' /etc/docker/daemon.json && ! command -v fuse-overlayfs >/dev/null 2>&1; then
+      echo "Нет программы fuse-overlayfs. Её ставит tools/dev-install.sh: без неё dockerd не запускается." >&2
+      exit 1
+    fi
+    sudo dockerd >/tmp/ai-mentor-dockerd.log 2>&1 </dev/null &
     local _i
     for _i in $(seq 1 60); do
       if docker info >/dev/null 2>&1 || { [[ "${DEV_DOCKER_SG:-}" != 1 ]] && sg docker -c "docker info" >/dev/null 2>&1; }; then
@@ -59,6 +63,10 @@ EOF
     fi
   fi
   if ! docker info >/dev/null 2>&1; then
+    if [[ -s /tmp/ai-mentor-dockerd.log ]]; then
+      echo "Журнал dockerd:" >&2
+      tail -n 30 /tmp/ai-mentor-dockerd.log >&2 || true
+    fi
     echo "Нет штатного доступа к Docker. Добавьте пользователя в группу docker и откройте новую сессию." >&2
     exit 1
   fi
