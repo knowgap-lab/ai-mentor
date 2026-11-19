@@ -21,6 +21,11 @@
 - [#44](https://github.com/knowgap-lab/ai-mentor/pull/44) на `1ceb14fc22125dc7a2da7b050531c38d286c6c1b`: два прогона с кодом 0, третий без новых строк, approve комментарием. CI ещё не зелёный.
 - [#45](https://github.com/knowgap-lab/ai-mentor/pull/45) на `7a53d9136f1942eae5daf4207d92d085eb7040fb`: CI зелёный. Черновик сборки `bld-20261119-d2db2493` SUCCEEDED и не активирован. `dev-start` и `dev-check` на снимке не шли. A1 не принят.
 - [#48](https://github.com/knowgap-lab/ai-mentor/pull/48) на `1eddf44baa4577efaf6330605ab1d49edb54f07b`: список «разобрать». Чужой отчёт на кандидате уже 200 владельцу и 403 чужому.
+- `feat/r1-integrate-candidate` `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`: экраны #36 и CSRF #49. CI, все 3 проверки без падений, событие 2026-11-19. В `main` нет. Кнопка срока: `PATCH` homework-draft 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск, `APP_ORIGIN` `http://127.0.0.1:8080`.
+- Вершина кандидата `8c863dad4290b9f3c632ee8794ea4261f322708f`: squash [#51](https://github.com/knowgap-lab/ai-mentor/pull/51), скрипты среды. CI этого SHA зелёный: все 3 проверки без падений. Это событие ветки.
+- Локальные `tools/dev-start.sh` и `tools/dev-check.sh` на `09413c482a0814832bf2f66fab665e826f9fac25`: оба код 0, веб 136, pytest 263, `walk.spec.ts` 1 passed. Прямой родитель — `4f0b2ccea58a4510184aba45b75683dc434403f9`, его родитель — `6f7f540`. Это локальная машина, не снимок сборки.
+- Снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1`, SHA `8c863dad4290b9f3c632ee8794ea4261f322708f`: вершина кандидата совпала. `dev-start.sh` код 0, `dev-check.sh` код 0. Это прогон на снимке сборки. Код не менялся. Полная приёмка и `main` не закрыты.
+- Стенд [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не сливать: образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`.
 - Наблюдаемость [#20](https://github.com/knowgap-lab/ai-mentor/pull/20), приёмщик [#17](https://github.com/knowgap-lab/ai-mentor/pull/17) и workflow очереди [#24](https://github.com/knowgap-lab/ai-mentor/pull/24) открыты отдельно. У #24 зелёный CI. Очередь в правилах `main` пока не включена.
 - [#12](https://github.com/knowgap-lab/ai-mentor/pull/12) содержит более ранний реестр прогресса и изменения CI. При его разборе сверяйте документацию с этой редакцией и рассматривайте самостоятельные изменения CI отдельно.
 
@@ -28,8 +33,8 @@
 
 Выпуск не готов. Записанные PR не заменяют приёмку этапа.
 
-- Следующий открытый критерий: `dev-check` на снимке сборки `bld-20261119-d2db2493` и CSRF Origin для кнопки срока на `a8d2becc84dfd24e02d16a5985aa9f405f7e47af`.
-- A1 не принят. Сборка #45 не активирована, `dev-start` и `dev-check` на снимке не шли. Прежние пробелы #28 этой записью не закрыты.
+- Следующий открытый критерий: стенд. Снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1` на `8c863dad4290b9f3c632ee8794ea4261f322708f` дал `dev-start.sh` 0 и `dev-check.sh` 0. Локальный прогон на `09413c4` остаётся локальным. Полная приёмка и `main` не закрыты.
+- Кнопка срока на `6f7f540` дала 200; это не приёмка экранов. Стенд #35 не сливать: образы на `d3a5e8e`, живой VM нет.
 - CI #46 и CI #44 не засчитаны. Урок не повторён на принятом main SHA. Живая VM по #35 не ставилась, GHCR ответил 401.
 - Приёмщик #37 на голове #17 даёт код 1. Ноль без полного attestation одного main SHA по-прежнему не означает готовность. [Критерии](../../briefs/CURSOR-PROJECT-RELEASE1.md#7-приёмка-на-доказательствах).
 - D320 для технических PR #15, #16 и #18 и фактическое слияние в `main` остаются открытыми.
@@ -47,15 +52,15 @@
 | ID в Git | Карточка Cursor | Статус на снимке | База и материалы | Следующий шаг |
 |---|---|---|---|---|
 | `release1` | MEN-1 | In Progress | [Полная цель](../../briefs/RELEASE1-GOAL.md) | Принимать этапы по критериям и продолжать до полной приёмки |
-| `a1-cloud-build` | MEN-2 | In Progress | [#45](https://github.com/knowgap-lab/ai-mentor/pull/45), `7a53d9136f1942eae5daf4207d92d085eb7040fb`, черновик `bld-20261119-d2db2493` | CI зелёный, сборка SUCCEEDED и не активирована. `dev-start` и `dev-check` не шли. A1 не принят |
+| `a1-cloud-build` | MEN-2 | In Progress | снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1`, SHA `8c863dad4290b9f3c632ee8794ea4261f322708f` | `dev-start.sh` 0 и `dev-check.sh` 0 на снимке сборки. Код не менялся. Полная приёмка и main не закрыты |
 | `server-review-1` | MEN-3 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти первый независимый вердикт с SHA и замечаниями по техническим PR |
 | `server-review-2` | MEN-4 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти второй независимый вердикт с SHA и замечаниями по техническим PR |
 | `e3-first-lesson` | MEN-5 | In Progress | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34), `8d335c8889e6ad758558974b38ad32e8ce112893` | Права: без сессии 401, ученик и чужой 403, повтор ответа — одна попытка. На main не повторён |
 | `codex-local-env` | MEN-6 | For Review | [#30](https://github.com/knowgap-lab/ai-mentor/pull/30), ветка `cursor/codex-desktop-env-a90e`, SHA `96ad4360a0a270c6618f95af889331da6a148f83`, база #28 | Дождаться CI #30. Не критерий сервера. TOML вызывает `tools/dev-install.sh`, `tools/dev-start.sh`, `tools/dev-check.sh` |
 | `server-integration` | MEN-7 | Queued | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) · [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) | Дождаться независимых ревью, проверить итоговый diff к свежему main и подтвердить слияние |
-| `w7-w8-screens` | MEN-8 | In Progress | [#36](https://github.com/knowgap-lab/ai-mentor/pull/36), CI `3c1ab95ef355cfa1f250ea54702b25aec42f1714`, браузер `a8d2becc84dfd24e02d16a5985aa9f405f7e47af` | CI зелёный. Четыре маршрута, 360 px, CSP чистый. Кнопка срока 403 csrf из-за Origin `127.0.0.1:8080` |
+| `w7-w8-screens` | MEN-8 | For Review | `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`, экраны #36 и CSRF #49 | CI все 3 проверки без падений. Кнопка срока: PATCH 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск. Приёмка не объявлена |
 | `c1-composer` | MEN-9 | For Review | [#39](https://github.com/knowgap-lab/ai-mentor/pull/39), `e1fb4576120c4490dfa8c22f830816de2dd581a3` | `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15 сданы. Приёмка каталога не объявлена |
-| `iac-vm-draft` | MEN-10 | In Progress | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35), `0e63192cc658695a95941ea0b110f11b7341547d` | `terraform validate` и syntax-check Ansible сданы. Живая VM не ставилась, GHCR 401 |
+| `iac-vm-draft` | MEN-10 | In Progress | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35), `0e63192cc658695a95941ea0b110f11b7341547d` | Не сливать. Образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`. Живая VM не ставилась |
 | `env-risk-review` | MEN-11 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) | Только чтение. A1 не принимать до этого разбора |
 | `qa-gate` | MEN-12 | For Review | [#37](https://github.com/knowgap-lab/ai-mentor/pull/37), `50328c6ffe6b70adcee73cf8811df3bad9ea4709`, база #17 | 15 тестов прошли. На голове #17 приёмщик даёт код 1. Это не приёмка выпуска |
 | `pl-r5-tests` | — | For Review | кандидат `f9bc1d068f68ca6b1afe9f4e9eb9e1b387187a32`, [#33](https://github.com/knowgap-lab/ai-mentor/pull/33), [#40](https://github.com/knowgap-lab/ai-mentor/pull/40), [#42](https://github.com/knowgap-lab/ai-mentor/pull/42) | Предупреждение, тест `prereq_order` и тестовый отправитель есть в кандидате. В main нет. Приёмка не объявлена |

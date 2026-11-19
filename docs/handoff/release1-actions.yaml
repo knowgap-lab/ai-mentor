@@ -2,8 +2,8 @@
 - id: cursor-cloud-activation
   status: pending
   owner: integration-agent
-  action: PR 45 на 7a53d9136f1942eae5daf4207d92d085eb7040fb имеет зелёный CI. Черновик bld-20261119-d2db2493 SUCCEEDED и не активирован. dev-start и dev-check на снимке не шли. A1 не принят. Прежние пробелы PR 28 этой записью не закрыты.
-  verification: Прогнать dev-check на снимке сборки. До этого A1 не принят.
+  action: Снимок bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1 на SHA 8c863dad4290b9f3c632ee8794ea4261f322708f. Вершина кандидата совпала. dev-start.sh код 0, dev-check.sh код 0. Это прогон на снимке сборки, не локальная машина. Код не менялся. Полная приёмка и main не закрыты.
+  verification: Прогон снимка записан. Полная приёмка и main не закрыты. Следующий открытый критерий — стенд.
 - id: github-review-author
   status: pending
   owner: integration-agent
@@ -22,8 +22,8 @@
 - id: local-demo-access
   status: pending
   owner: local-qa-agent
-  action: Живая VM не ставилась. PR 35 на 0e63192cc658695a95941ea0b110f11b7341547d прошёл terraform validate и ansible syntax-check. GHCR ответил 401.
-  verification: Подтвердить Terraform create/plan, Ansible converge, перезагрузку и восстановление на чистой Ubuntu VM после доступных образов.
+  action: PR 35 не сливать. Образы на d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715. Живой VM нет. GHCR ранее ответил 401.
+  verification: Не сливать этот стенд. Живой VM нет. Это следующий открытый критерий.
 - id: visual-pilot
   status: pending
   owner: user
@@ -33,12 +33,12 @@
   status: pending
   owner: user
   action: Приёмщик уже опубликован в PR 37 на 50328c6ffe6b70adcee73cf8811df3bad9ea4709. Эта запись не снимает прошлый лимит одновременных агентов и не принимает выпуск.
-  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — dev-check на снимке сборки и CSRF Origin.
+  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — стенд. Снимок сборки уже прогнан.
 - id: screens-csrf-origin
-  status: pending
+  status: done
   owner: local-qa-agent
-  action: На a8d2becc84dfd24e02d16a5985aa9f405f7e47af кнопка срока вернула 403 csrf из-за Origin 127.0.0.1:8080. Четыре маршрута, 360 px и чистый CSP уже записаны. CI 3c1ab95ef355cfa1f250ea54702b25aec42f1714 зелёный.
-  verification: Повторить кнопку срока с тем Origin, который ждёт сервер. До этого экраны не приняты.
+  action: На 6f7f54016e89f71fb369efdd2ba6366bdbfd78a9 кнопка срока дала PATCH homework-draft 200. Deadline 2026-12-01T15:00:00Z, на экране 18:00 Минск, APP_ORIGIN http://127.0.0.1:8080. Прежний 403 на a8d2bec остаётся в старой записи.
+  verification: 200 записан. Это не приёмка экранов и не приёмка выпуска.
 - id: seed-ci
   status: pending
   owner: integration-agent
