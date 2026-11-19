@@ -6,7 +6,23 @@
 
 ## Локальный запуск
 
-Нужны Docker, `psql` и интерпретатор `.venv`. Реальных учеников нет.
+Нужны Ubuntu и работающий Docker. Системный `python3` не заменяется: проект ставит Python из `.python-version` в `.venv`. Если установщик только что добавил пользователя в группу `docker`, откройте новую сессию. Права сокета Docker скрипты не меняют.
+
+```bash
+bash tools/dev-install.sh
+bash tools/dev-start.sh
+bash tools/dev-check.sh
+```
+
+`dev-install.sh` ставит Go из `core/go.mod`, Node 22, если его ещё нет, клиент Postgres, Chrome для Playwright, зависимости `.venv`, `web` и `tools/e2e`, и скачивает образ `postgres:16.15`.
+
+`dev-start.sh` проверяет штатный доступ к Docker и вызывает `tools/dev-up.sh`.
+
+`dev-check.sh` запускает `tools/check-code.sh`, `tools/check.sh` и Playwright smoke из `tools/e2e`. Образ `gotenberg/gotenberg:9.5.0` эти команды не скачивают: тест настоящего PDF без локального образа пропускается.
+
+Cloud Agent вызывает те же скрипты из [`.cursor/environment.json`](.cursor/environment.json).
+
+Реальных учеников нет.
 
 ```bash
 tools/dev-up.sh
