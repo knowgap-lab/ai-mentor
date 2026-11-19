@@ -2,13 +2,13 @@
 - id: cursor-cloud-activation
   status: pending
   owner: integration-agent
-  action: Проверить свежий активный Cloud Build по PR 28 и доступ нового проекта к окружению.
-  verification: Сохранить Build ID, SHA, версии, результаты Docker и Playwright.
+  action: Свежий Cloud Build среды PR 28 на 99c206058b4075b09f70564bdbe93c28c9720c87 ещё не принят. Нет Build ID, lock Python, SHA256 Go и Node, pin Chrome и дайджеста Postgres.
+  verification: Сохранить Build ID, SHA, lock Python, SHA256 Go и Node, pin Chrome, дайджест Postgres, результаты Docker и Playwright. A1 до этого не принят.
 - id: github-review-author
   status: pending
   owner: integration-agent
-  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора.
-  verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR.
+  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора. Для PR 40 на 71bb5175615b03b955923840a50623dfc1d79483 CI и два ревью тоже ещё не засчитаны.
+  verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR, включая PR 40.
 - id: merge-queue
   status: pending
   owner: repository-owner
@@ -22,8 +22,8 @@
 - id: local-demo-access
   status: pending
   owner: local-qa-agent
-  action: Сверить доступ к чистой Ubuntu VM по SSH и отдельный доступ к гипервизору для Terraform.
-  verification: Подтвердить Terraform create/plan, Ansible converge, перезагрузку и восстановление.
+  action: Живая VM не ставилась. PR 35 на 0e63192cc658695a95941ea0b110f11b7341547d прошёл terraform validate и ansible syntax-check. GHCR ответил 401.
+  verification: Подтвердить Terraform create/plan, Ansible converge, перезагрузку и восстановление на чистой Ubuntu VM после доступных образов.
 - id: visual-pilot
   status: pending
   owner: user
@@ -32,8 +32,8 @@
 - id: cloud-agent-plan-limit
   status: pending
   owner: user
-  action: План не создаёт ещё одного одновременного Cloud Agent. Уже запущенные пакеты продолжаются. Следующий новый пакет — усиление tools/release1_done.py от PR 17.
-  verification: Новый агент создаётся и открывает PR приёмщика, не ослабляя критерии.
+  action: Приёмщик уже опубликован в PR 37 на 50328c6ffe6b70adcee73cf8811df3bad9ea4709. Эта запись не снимает прошлый лимит одновременных агентов и не принимает выпуск.
+  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — свежий Cloud Build и повтор урока на принятом main SHA.
 - id: docker-data-root
   status: pending
   owner: repository-owner
