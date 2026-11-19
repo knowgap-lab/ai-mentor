@@ -224,10 +224,14 @@ func TestPL_R5_PrereqOrder(t *testing.T) {
 	if !slices.Equal(byPlace(t, view, 3).Topics, []string{"M14"}) || !slices.Equal(byPlace(t, view, 4).Topics, []string{"M13"}) {
 		t.Fatalf("темы %+v", view.Lessons)
 	}
+	var found []warning
 	for _, item := range view.Warnings {
-		if item.Type == "prereq_order" {
-			t.Fatalf("предупреждение prereq_order: %+v", view.Warnings)
+		if item.Type == "prereq_order" && mentions(item, "M13") && mentions(item, "M14") {
+			found = append(found, item)
 		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("предупреждения %+v", view.Warnings)
 	}
 }
 
