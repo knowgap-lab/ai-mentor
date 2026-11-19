@@ -1,0 +1,7 @@
+#!/bin/sh
+# Удаляет только повёрнутые журналы Docker старше 30 дней (OP-R18).
+# Текущий *-json.log не трогает.
+set -eu
+if [ -d /var/lib/docker/containers ]; then
+  find /var/lib/docker/containers -type f -name '*-json.log.*' -mtime +30 -delete
+fi

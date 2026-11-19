@@ -1,0 +1,89 @@
+---
+- name: Один SHA, образы без тега latest
+  ansible.builtin.assert:
+    that:
+      - app_sha is match("^[0-9a-f]{40}$")
+      - "'latest' not in core_image_repository"
+      - "'latest' not in web_image_repository"
+      - "'latest' not in content_image_repository"
+      - "':' not in core_image_repository"
+      - "':' not in web_image_repository"
+      - "':' not in content_image_repository"
+      - cookie_domain_prod | length > 0
+      - cookie_domain_staging | length > 0
+      - cookie_domain_prod != cookie_domain_staging
+    fail_msg: >-
+      IMAGE_TAG — один SHA из release.json. Репозитории образов не содержат тег.
+      У prod и staging разные cookie_domain (OP-R2).
+
+- name: Каталог исходников
+  ansible.builtin.file:
+    path: "{{ install_root }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Исходники ровно на SHA приложения
+  ansible.builtin.git:
+    repo: "{{ source_repository }}"
+    dest: "{{ install_root }}/src"
+    version: "{{ app_sha }}"
+    force: true
+
+- name: Каталоги состояния
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop:
+    - "{{ state_root }}"
+    - "{{ state_root }}/prod"
+    - "{{ state_root }}/prod/secrets"
+    - "{{ state_root }}/prod/work"
+    - "{{ state_root }}/prod/wal"
+    - "{{ state_root }}/staging"
+    - "{{ state_root }}/staging/secrets"
+    - "{{ state_root }}/staging/work"
+    - "{{ state_root }}/staging/wal"
+
+- name: Токен GHCR на сервере
+  ansible.builtin.stat:
+    path: "{{ state_root }}/ghcr_token"
+  register: stack_ghcr
+
+- name: Для входа в GHCR нужно имя пользователя
+  ansible.builtin.assert:
+    that:
+      - ghcr_username | length > 0
+    fail_msg: "Файл ghcr_token есть, а ghcr_username пуст. Значение токена в git не кладётся."
+  when: stack_ghcr.stat.exists
+
+- name: Войти в GHCR
+  ansible.builtin.shell: >-
+    docker login ghcr.io --username {{ ghcr_username | quote }}
+    --password-stdin < {{ state_root }}/ghcr_token
+  when: stack_ghcr.stat.exists
+  changed_when: false
+  no_log: true
+
+- name: Окружение prod и staging
+  ansible.builtin.include_tasks: environment.yml
+  loop:
+    - name: prod
+      compose: deploy/compose.prod.yml
+      app_env: prod
+      db_port: 5432
+      cookie_domain: "{{ cookie_domain_prod }}"
+      secret_names: "{{ stack_secret_names }}"
+    - name: staging
+      compose: deploy/compose.staging.yml
+      app_env: staging
+      db_port: 5433
+      cookie_domain: "{{ cookie_domain_staging }}"
+      secret_names: "{{ stack_secret_names + ['STAGING_CHAT_ALLOWLIST'] }}"
+  loop_control:
+    loop_var: stack_env
+    label: "{{ stack_env.name }}"
