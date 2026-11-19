@@ -8,5 +8,9 @@
   "Репетитор/Ученики": "/tutor",
   "Репетитор/Ученик": "/tutor/students/:studentId",
   "Репетитор/Урок": "/tutor/lessons/:lessonId",
-  "Репетитор/Подготовка": "/tutor/lessons/:lessonId/preparation"
+  "Репетитор/Подготовка": "/tutor/lessons/:lessonId/preparation",
+  "Репетитор/Просмотр ДЗ": "/tutor/lessons/:lessonId/homework",
+  "Репетитор/Итоги ДЗ": "/tutor/students/:studentId/assignments/:assignmentId",
+  "Репетитор/Новый ученик": "/tutor/students/new",
+  "Репетитор/Сеансы": "/tutor/sessions"
 }
