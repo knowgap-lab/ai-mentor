@@ -6,16 +6,27 @@
 
 - `main` — `ad16958`. В [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) из `feat/release1-demo` в `main` на `61f6fd5` падали S6 JSON 404, AT-R17, RC-R20 и PL-R5. [Лог](https://github.com/knowgap-lab/ai-mentor/actions/runs/43613206881).
 - В [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) на `d3a5e8e` объединены серверные исправления #14–#16, PDF-ветки и экраны ученика и репетитора. Обе обязательные проверки на базе `feat/release1-demo` прошли. В CI прошли Go, 107 веб-тестов и 252 Python-теста при двух пропусках. [Code check](https://github.com/knowgap-lab/ai-mentor/actions/runs/44322308661) · [Docs check](https://github.com/knowgap-lab/ai-mentor/actions/runs/44322308573).
-- Браузерный smoke на `d3a5e8e` прошёл по отчёту облачного запуска. Он проверил тестовый вход, ответ на заранее подготовленное ДЗ и просмотр попытки репетитором. Полный путь создания урока и выдачи ДЗ через API ещё предстоит проверить.
-- [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) на `99c2060` добавляет `.cursor/environment.json` и общие скрипты установки, запуска и проверок. Оба обязательных CI прошли. По отчёту автора, скрипты проверены на свежем worktree #27 в подготовленной машине. Чистый Cloud Build и установка Go, Node и Chrome на машине без этих инструментов ещё требуют прогона. [CI #28](https://github.com/knowgap-lab/ai-mentor/actions/runs/44531901549).
+- Браузерный smoke на `d3a5e8e` прошёл по отчёту облачного запуска. Он проверил тестовый вход, ответ на заранее подготовленное ДЗ и просмотр попытки репетитором. Полный путь создания урока на этом кандидате сначала получил 422 без плана. Повторный прогон записан в #34 и на main не переносился.
+- [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) на `99c206058b4075b09f70564bdbe93c28c9720c87` добавляет `.cursor/environment.json` и общие скрипты установки, запуска и проверок. Оба обязательных CI прошли. По отчёту автора, скрипты проверены на свежем worktree #27 в подготовленной машине. A1 не принят: нет свежего Build ID, lock Python, SHA256 Go и Node, pin Chrome и дайджеста Postgres. [CI #28](https://github.com/knowgap-lab/ai-mentor/actions/runs/44531901549).
+- PDF на кандидате `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`: Gotenberg 9.5.0, `GET /lessons/synth-l01/conspect.pdf` вернул 200 и 17218 байт. Код для этого результата не менялся. Это не приёмка этапа.
+- [#34](https://github.com/knowgap-lab/ai-mentor/pull/34) на `8d335c8889e6ad758558974b38ad32e8ce112893`: на чистой Postgres урок 201, ДЗ 201, верный ответ 5 → 2, повтор без дубля, неверный 1 → 0, журнал две попытки, итог 2/4, чужой репетитор 403. На кандидате первый отказ был 422 без плана. На принятом main SHA прогон не повторялся.
+- [#39](https://github.com/knowgap-lab/ai-mentor/pull/39) на `e1fb4576120c4490dfa8c22f830816de2dd581a3`: `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15. Приёмка каталога не объявлена.
+- [#36](https://github.com/knowgap-lab/ai-mentor/pull/36) на `3c1ab95ef355cfa1f250ea54702b25aec42f1714`: четыре маршрута, локальные тесты зелёные. CI не засчитан.
+- [#37](https://github.com/knowgap-lab/ai-mentor/pull/37) на `50328c6ffe6b70adcee73cf8811df3bad9ea4709`: 15 тестов приёмщика прошли. `python3 tools/release1_done.py` на голове [#17](https://github.com/knowgap-lab/ai-mentor/pull/17) даёт код 1. Это не приёмка выпуска.
+- [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) на `0e63192cc658695a95941ea0b110f11b7341547d`: `terraform validate` и `ansible-playbook --syntax-check` прошли. Живая VM не ставилась. GHCR ответил 401.
+- [#33](https://github.com/knowgap-lab/ai-mentor/pull/33) на `b24f23cde1295d62132e6e7e8a60098fdebfd980`: code-check красный только на `TestPL_R5_PrereqOrder` и `TestPL_R5_S4_WarningsInEnum`. [#40](https://github.com/knowgap-lab/ai-mentor/pull/40) на `71bb5175615b03b955923840a50623dfc1d79483` локально чинит эти тесты. CI и два ревью #40 не засчитаны.
 - Наблюдаемость [#20](https://github.com/knowgap-lab/ai-mentor/pull/20), приёмщик [#17](https://github.com/knowgap-lab/ai-mentor/pull/17) и workflow очереди [#24](https://github.com/knowgap-lab/ai-mentor/pull/24) открыты отдельно. У #24 зелёный CI. Очередь в правилах `main` пока не включена.
 - [#12](https://github.com/knowgap-lab/ai-mentor/pull/12) содержит более ранний реестр прогресса и изменения CI. При его разборе сверяйте документацию с этой редакцией и рассматривайте самостоятельные изменения CI отдельно.
 
 ## Что осталось
 
-- Завершить D320 для технических PR #15, #16 и #18. Сверить состав кандидата, проверить итоговый diff #6 против свежего `main` и зафиксировать фактические слияния.
-- Выполнить серверный сценарий одного урока на чистой БД и повторить его на принятом SHA. В кандидате 58 из 58 объявлений API и 10 из 14 маршрутов экранов. Для четырёх оставшихся экранов нужны W7 и W8. Опись маршрутов не подтверждает поведение.
-- Подтвердить полный выпуск на чистой Ubuntu VM. Нужны Terraform/Ansible, проверка Telegram и PDF, наблюдаемость, восстановление, полноценная браузерная и серверная приёмка и усиленный приёмщик. [Все критерии](../../briefs/CURSOR-PROJECT-RELEASE1.md#7-приёмка-на-доказательствах).
+Выпуск не готов. Записанные PR не заменяют приёмку этапа.
+
+- Следующий открытый критерий: свежий Cloud Build среды #28 и повтор урока на принятом main SHA. Прогон #34 остаётся на своей ветке.
+- A1 по #28 не принят, пока нет Build ID, lock Python, SHA256 Go и Node, pin Chrome и дайджеста Postgres.
+- CI четырёх маршрутов #36 не засчитан. CI и два ревью #40 не засчитаны. Живая VM по #35 не ставилась, GHCR ответил 401.
+- Приёмщик #37 на голове #17 даёт код 1. Ноль без полного attestation одного main SHA по-прежнему не означает готовность. [Критерии](../../briefs/CURSOR-PROJECT-RELEASE1.md#7-приёмка-на-доказательствах).
+- D320 для технических PR #15, #16 и #18 и фактическое слияние в `main` остаются открытыми.
 
 ## Как сохранять доказательства
 
@@ -25,22 +36,23 @@
 
 Используйте ID из этого реестра в заданиях исполнителям, ветках и PR. ID карточки Cursor привязан к конкретной доске и служит ссылкой для сверки. Статус из реестра и опубликованные доказательства позволяют восстановить карточку на новой доске.
 
-Снимок доски `mentor` за 19 ноября. Статусы приведены со слов интерфейса на снимке владельца. Базы в таблице — доступная точка старта, фактическую опубликованную голову каждой работы и её результаты ещё нужно сверить.
+Снимок доски `mentor` за 19 ноября дал ID карточек. Статусы строк с новыми SHA обновлены по сданным PR: For Review значит опубликованный SHA, не приёмку. Done не ставился.
 
 | ID в Git | Карточка Cursor | Статус на снимке | База и материалы | Следующий шаг |
 |---|---|---|---|---|
 | `release1` | MEN-1 | In Progress | [Полная цель](../../briefs/RELEASE1-GOAL.md) | Принимать этапы по критериям и продолжать до полной приёмки |
-| `a1-cloud-build` | MEN-2 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28), `99c2060` | Найти активный Build, сохранить его ID и повторить preflight и Playwright на свежем запуске |
+| `a1-cloud-build` | MEN-2 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28), `99c206058b4075b09f70564bdbe93c28c9720c87` | A1 не принят. Нет свежего Build ID, lock Python, SHA256 Go и Node, pin Chrome и дайджеста Postgres |
 | `server-review-1` | MEN-3 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти первый независимый вердикт с SHA и замечаниями по техническим PR |
 | `server-review-2` | MEN-4 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти второй независимый вердикт с SHA и замечаниями по техническим PR |
-| `e3-first-lesson` | MEN-5 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти ветку и результат живого API-теста. Продолжить с первого незакрытого шага урока |
+| `e3-first-lesson` | MEN-5 | In Progress | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34), `8d335c8889e6ad758558974b38ad32e8ce112893` | Прогон на чистой Postgres сдан, на main не повторён. Первый отказ кандидата был 422 без плана |
 | `codex-local-env` | MEN-6 | For Review | [#30](https://github.com/knowgap-lab/ai-mentor/pull/30), ветка `cursor/codex-desktop-env-a90e`, SHA `96ad4360a0a270c6618f95af889331da6a148f83`, база #28 | Дождаться CI #30. Не критерий сервера. TOML вызывает `tools/dev-install.sh`, `tools/dev-start.sh`, `tools/dev-check.sh` |
 | `server-integration` | MEN-7 | Queued | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) · [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) | Дождаться независимых ревью, проверить итоговый diff к свежему main и подтвердить слияние |
-| `w7-w8-screens` | MEN-8 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Новые экраны ДЗ, итогов, ученика и сеансов. Пути: новые файлы `web/src/tutor/`, маршруты в `web/src/App.tsx` и `web/screens.json` |
-| `c1-composer` | MEN-9 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Составитель в `content/composer/`. Не трогать `content/loader` и `content/catalog_ci` |
-| `iac-vm-draft` | MEN-10 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Только `infra/terraform/` и `infra/ansible/`. Живая VM не принята |
+| `w7-w8-screens` | MEN-8 | For Review | [#36](https://github.com/knowgap-lab/ai-mentor/pull/36), `3c1ab95ef355cfa1f250ea54702b25aec42f1714` | Четыре маршрута сданы, локальные тесты зелёные. CI не засчитан. Приёмка экранов не объявлена |
+| `c1-composer` | MEN-9 | For Review | [#39](https://github.com/knowgap-lab/ai-mentor/pull/39), `e1fb4576120c4490dfa8c22f830816de2dd581a3` | `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15 сданы. Приёмка каталога не объявлена |
+| `iac-vm-draft` | MEN-10 | In Progress | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35), `0e63192cc658695a95941ea0b110f11b7341547d` | `terraform validate` и syntax-check Ansible сданы. Живая VM не ставилась, GHCR 401 |
 | `env-risk-review` | MEN-11 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) | Только чтение. A1 не принимать до этого разбора |
-| `qa-gate` | MEN-12 | Queued | [#17](https://github.com/knowgap-lab/ai-mentor/pull/17), ветка `cursor/release1-done-checker-5c18` | Усилить `tools/release1_done.py`, когда появится слот агента. См. `cloud-agent-plan-limit` |
+| `qa-gate` | MEN-12 | For Review | [#37](https://github.com/knowgap-lab/ai-mentor/pull/37), `50328c6ffe6b70adcee73cf8811df3bad9ea4709`, база #17 | 15 тестов прошли. На голове #17 приёмщик даёт код 1. Это не приёмка выпуска |
+| `pl-r5-tests` | — | For Review | [#33](https://github.com/knowgap-lab/ai-mentor/pull/33) `b24f23cde1295d62132e6e7e8a60098fdebfd980`, [#40](https://github.com/knowgap-lab/ai-mentor/pull/40) `71bb5175615b03b955923840a50623dfc1d79483` | Локальный ремонт двух тестов плана сдан. CI и два ревью #40 не засчитаны |
 
 Интегратор обновляет реестр при назначении, переходе статуса, новых доказательствах и перед передачей. Добавляйте к записи владельца задачи, публикуемые ветку/head SHA, PR, команду и фактический результат последней проверки, зависимости и следующий точный шаг. Статусы: Queued, In Progress, For Review, Done и Canceled. Если работа ждёт внешнего действия, сохраните её фактический статус и ссылку на пункт [очереди действий](release1-actions.yaml). For Review означает, что есть опубликованный SHA и материалы для ревью. Done означает, что критерии подтверждены и нужные изменения действительно влиты.
 
