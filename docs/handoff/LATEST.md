@@ -1,13 +1,14 @@
 # Текущее состояние
 
-**Обновлено:** 2026-11-19 18:15 (Минск). Выпуск 1 не готов. Новый прогон не запускался, приёмка не объявлена.
+**Обновлено:** 2026-11-19 18:23 (Минск). Выпуск 1 не готов. Полная приёмка не объявлена. Код для снимка не менялся.
 
 - `main` остаётся `ad16958`. Кандидат `feat/r1-integrate-candidate`: `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9` — экраны [#36](https://github.com/knowgap-lab/ai-mentor/pull/36) и CSRF [#49](https://github.com/knowgap-lab/ai-mentor/pull/49), CI все 3 проверки без падений, событие 2026-11-19. В `main` нет.
 - Вершина кандидата — `8c863dad4290b9f3c632ee8794ea4261f322708f`, squash [PR #51](https://github.com/knowgap-lab/ai-mentor/pull/51). CI этого SHA зелёный: все 3 проверки без падений.
-- Локальные `dev-start.sh` и `dev-check.sh` на `09413c482a0814832bf2f66fab665e826f9fac25`: оба код 0, веб 136, pytest 263, `walk.spec.ts` 1 passed. Прямой родитель — `4f0b2cc`, не сам `6f7f540`. Это не снимок Cloud Build. A1 не закрыт.
+- Локальные `dev-start.sh` и `dev-check.sh` на `09413c482a0814832bf2f66fab665e826f9fac25`: оба код 0, веб 136, pytest 263, `walk.spec.ts` 1 passed. Прямой родитель — `4f0b2cc`, не сам `6f7f540`. Это локальная машина.
 - Кнопка срока на `6f7f540`: `PATCH` homework-draft 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск, `APP_ORIGIN` `http://127.0.0.1:8080`.
-- Стенд [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не сливать: образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`.
-- Следующий открытый критерий: снимок сборки. A1 не закрыт, локальный `dev-check` остаётся локальным. [Запись](entries/2026-11-19-1809-grok-release1-evidence-3.md).
+- Снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1`, SHA `8c863dad4290b9f3c632ee8794ea4261f322708f`: вершина кандидата совпала. `dev-start.sh` код 0, `dev-check.sh` код 0. Это прогон на снимке сборки, не локальная машина. Код не менялся. Полная приёмка и `main` не закрыты.
+- Стенд [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не сливать: образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`. Живой VM нет.
+- Следующий открытый критерий: стенд. [Запись](entries/2026-11-19-1823-grok-release1-evidence-4.md).
 
 Сверяйте [проверяемый прогресс](release1-progress.md), [внешние действия](release1-actions.yaml), [цель выпуска](../../briefs/RELEASE1-GOAL.md) и [правила для агентов](../../AGENTS.md). Оставляйте записи «начал» и «закончил» по [протоколу](README.md).
 
