@@ -1,6 +1,9 @@
 {
   "name": "AI Mentor",
   "user": "ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "install": "set -euo pipefail\n[ ! -d '/agent/repos/ai-mentor' ] || cd '/agent/repos/ai-mentor' || exit $?\nbash tools/dev-install.sh",
   "start": "set -euo pipefail\n[ ! -d '/agent/repos/ai-mentor' ] || cd '/agent/repos/ai-mentor' || exit $?\nbash tools/dev-start.sh"
 }
