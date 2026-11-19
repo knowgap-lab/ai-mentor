@@ -2,8 +2,8 @@
 - id: cursor-cloud-activation
   status: pending
   owner: integration-agent
-  action: Снимок bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1 на SHA 8c863dad4290b9f3c632ee8794ea4261f322708f. Вершина кандидата совпала. dev-start.sh код 0, dev-check.sh код 0. Это прогон на снимке сборки, не локальная машина. Код не менялся. Полная приёмка и main не закрыты.
-  verification: Прогон снимка записан. Полная приёмка и main не закрыты. Следующий открытый критерий — стенд.
+  action: Снимок dev-check был на 8c863dad4290b9f3c632ee8794ea4261f322708f, не на вершине dc1e1604836ea8e7130031a4ee0d2151956d956e. Полная приёмка и main не закрыты.
+  verification: Снимок не покрывает dc1e160. Следующий открытый критерий — стенд.
 - id: github-review-author
   status: pending
   owner: integration-agent
@@ -22,8 +22,8 @@
 - id: local-demo-access
   status: pending
   owner: local-qa-agent
-  action: PR 35 не сливать. Образы на d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715. Живой VM нет. GHCR ранее ответил 401.
-  verification: Не сливать этот стенд. Живой VM нет. Это следующий открытый критерий.
+  action: Стенд не сдвинулся. PR 35 не менялся. Образы dc1e160 собраны локально. Push в ghcr.io/knowgap-lab отклонён, installation not allowed to Create organization package. Живой VM нет.
+  verification: Не сливать PR 35. Живой VM нет. Это следующий открытый критерий.
 - id: visual-pilot
   status: pending
   owner: user

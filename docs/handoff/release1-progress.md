@@ -26,6 +26,7 @@
 - Локальные `tools/dev-start.sh` и `tools/dev-check.sh` на `09413c482a0814832bf2f66fab665e826f9fac25`: оба код 0, веб 136, pytest 263, `walk.spec.ts` 1 passed. Прямой родитель — `4f0b2ccea58a4510184aba45b75683dc434403f9`, его родитель — `6f7f540`. Это локальная машина, не снимок сборки.
 - Снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1`, SHA `8c863dad4290b9f3c632ee8794ea4261f322708f`: вершина кандидата совпала. `dev-start.sh` код 0, `dev-check.sh` код 0. Это прогон на снимке сборки. Код не менялся. Полная приёмка и `main` не закрыты.
 - Стенд [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не сливать: образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`.
+- Вершина кандидата `dc1e1604836ea8e7130031a4ee0d2151956d956e`: squash [#52](https://github.com/knowgap-lab/ai-mentor/pull/52) поверх `8c863da`. CI все 3 проверки без падений. В `main` нет. Снимок `dev-check` был на `8c863da`, не на `dc1e160`. Стенд не сдвинулся: образы `dc1e160` собраны локально, push в `ghcr.io/knowgap-lab` отклонён (`installation not allowed to Create organization package`). PR #35 не менялся. Полная приёмка и `main` не закрыты.
 - Наблюдаемость [#20](https://github.com/knowgap-lab/ai-mentor/pull/20), приёмщик [#17](https://github.com/knowgap-lab/ai-mentor/pull/17) и workflow очереди [#24](https://github.com/knowgap-lab/ai-mentor/pull/24) открыты отдельно. У #24 зелёный CI. Очередь в правилах `main` пока не включена.
 - [#12](https://github.com/knowgap-lab/ai-mentor/pull/12) содержит более ранний реестр прогресса и изменения CI. При его разборе сверяйте документацию с этой редакцией и рассматривайте самостоятельные изменения CI отдельно.
 
@@ -33,8 +34,8 @@
 
 Выпуск не готов. Записанные PR не заменяют приёмку этапа.
 
-- Следующий открытый критерий: стенд. Снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1` на `8c863dad4290b9f3c632ee8794ea4261f322708f` дал `dev-start.sh` 0 и `dev-check.sh` 0. Локальный прогон на `09413c4` остаётся локальным. Полная приёмка и `main` не закрыты.
-- Кнопка срока на `6f7f540` дала 200; это не приёмка экранов. Стенд #35 не сливать: образы на `d3a5e8e`, живой VM нет.
+- Следующий открытый критерий: стенд. Вершина кандидата теперь `dc1e1604836ea8e7130031a4ee0d2151956d956e`. Снимок `dev-check` был на `8c863da`, не на этом SHA. PR #35 не менялся. Полная приёмка и `main` не закрыты.
+- Кнопка срока на `6f7f540` дала 200; это не приёмка экранов. Стенд не сдвинулся: образы `dc1e160` собраны локально, push в `ghcr.io/knowgap-lab` отклонён. Живой VM нет.
 - CI #46 и CI #44 не засчитаны. Урок не повторён на принятом main SHA. Живая VM по #35 не ставилась, GHCR ответил 401.
 - Приёмщик #37 на голове #17 даёт код 1. Ноль без полного attestation одного main SHA по-прежнему не означает готовность. [Критерии](../../briefs/CURSOR-PROJECT-RELEASE1.md#7-приёмка-на-доказательствах).
 - D320 для технических PR #15, #16 и #18 и фактическое слияние в `main` остаются открытыми.
@@ -52,7 +53,7 @@
 | ID в Git | Карточка Cursor | Статус на снимке | База и материалы | Следующий шаг |
 |---|---|---|---|---|
 | `release1` | MEN-1 | In Progress | [Полная цель](../../briefs/RELEASE1-GOAL.md) | Принимать этапы по критериям и продолжать до полной приёмки |
-| `a1-cloud-build` | MEN-2 | In Progress | снимок `bld-20261119-d2db2493-2f91-4650-af03-74dcfb950fa1`, SHA `8c863dad4290b9f3c632ee8794ea4261f322708f` | `dev-start.sh` 0 и `dev-check.sh` 0 на снимке сборки. Код не менялся. Полная приёмка и main не закрыты |
+| `a1-cloud-build` | MEN-2 | In Progress | снимок на `8c863dad4290b9f3c632ee8794ea4261f322708f`, вершина `dc1e1604836ea8e7130031a4ee0d2151956d956e` | Снимок `dev-check` не покрывает `dc1e160`. Полная приёмка и main не закрыты |
 | `server-review-1` | MEN-3 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти первый независимый вердикт с SHA и замечаниями по техническим PR |
 | `server-review-2` | MEN-4 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти второй независимый вердикт с SHA и замечаниями по техническим PR |
 | `e3-first-lesson` | MEN-5 | In Progress | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34), `8d335c8889e6ad758558974b38ad32e8ce112893` | Права: без сессии 401, ученик и чужой 403, повтор ответа — одна попытка. На main не повторён |
@@ -60,7 +61,7 @@
 | `server-integration` | MEN-7 | Queued | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) · [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) | Дождаться независимых ревью, проверить итоговый diff к свежему main и подтвердить слияние |
 | `w7-w8-screens` | MEN-8 | For Review | `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`, экраны #36 и CSRF #49 | CI все 3 проверки без падений. Кнопка срока: PATCH 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск. Приёмка не объявлена |
 | `c1-composer` | MEN-9 | For Review | [#39](https://github.com/knowgap-lab/ai-mentor/pull/39), `e1fb4576120c4490dfa8c22f830816de2dd581a3` | `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15 сданы. Приёмка каталога не объявлена |
-| `iac-vm-draft` | MEN-10 | In Progress | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35), `0e63192cc658695a95941ea0b110f11b7341547d` | Не сливать. Образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`. Живая VM не ставилась |
+| `iac-vm-draft` | MEN-10 | In Progress | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не менялся, образы `dc1e160` локально | Стенд не сдвинулся. Push в `ghcr.io/knowgap-lab` отклонён. Живой VM нет |
 | `env-risk-review` | MEN-11 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) | Только чтение. A1 не принимать до этого разбора |
 | `qa-gate` | MEN-12 | For Review | [#37](https://github.com/knowgap-lab/ai-mentor/pull/37), `50328c6ffe6b70adcee73cf8811df3bad9ea4709`, база #17 | 15 тестов прошли. На голове #17 приёмщик даёт код 1. Это не приёмка выпуска |
 | `pl-r5-tests` | — | For Review | кандидат `f9bc1d068f68ca6b1afe9f4e9eb9e1b387187a32`, [#33](https://github.com/knowgap-lab/ai-mentor/pull/33), [#40](https://github.com/knowgap-lab/ai-mentor/pull/40), [#42](https://github.com/knowgap-lab/ai-mentor/pull/42) | Предупреждение, тест `prereq_order` и тестовый отправитель есть в кандидате. В main нет. Приёмка не объявлена |
