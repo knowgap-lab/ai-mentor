@@ -167,8 +167,189 @@ def packages(root: Path) -> set[Path]:
     }
 
 
-def run(root: Path, runner=passing_runner):
-    return done.evaluate(root, OPS, SCREENS, packages=packages(root), runner=runner)
+def action(p95: int) -> dict:
+    return {
+        "attempts": 120,
+        "successes": 120,
+        "p50_ms": 80,
+        "p95_ms": p95,
+        "max_ms": p95,
+        "errors": 0,
+        "throughput": 1.2,
+        "active_users": 20,
+        "queue_ms": 15,
+        "samples": 120,
+    }
+
+
+def lesson_step(status: int, command: str, **extra) -> dict:
+    step = {"result": "pass", "command": command, "http_status": status}
+    step.update(extra)
+    return step
+
+
+def complete_evidence(sha: str, screens: list[str]) -> dict:
+    return {
+        "sha": sha,
+        "artifact_sha": sha,
+        "integrated_ref": "main",
+        "merged": True,
+        "pull_request": {"state": "merged", "merge_sha": sha},
+        "ci": {
+            "sha": sha,
+            "partial": False,
+            "checks": [
+                {
+                    "name": name,
+                    "conclusion": "success",
+                    "sha": sha,
+                    **({"diff_empty": True} if name == "generation" else {}),
+                }
+                for name in done.CI_JOBS
+            ],
+        },
+        "catalog": {
+            "sha": sha,
+            "lesson_files": ["synthetic/lesson.md"],
+            "topic_cards": ["synthetic/topic.json"],
+            "catalog_ci": "pass",
+            "postgres_load": "pass",
+            "command": "python3 tools/catalog_ci.py synthetic/lesson.md",
+            "result": "loaded 1 lesson and 1 card",
+        },
+        "lesson": {
+            "sha": sha,
+            "transport": "live_api",
+            "depends_on": ["catalog"],
+            "steps": {
+                "clean_postgres": {
+                    "result": "pass",
+                    "command": "createdb ai_mentor_synthetic",
+                },
+                "tutor_creates_lesson": lesson_step(201, "POST /lessons"),
+                "tutor_assigns_homework": lesson_step(201, "POST /assignments"),
+                "student_correct": lesson_step(200, "POST /attempts correct"),
+                "student_incorrect": lesson_step(200, "POST /attempts incorrect"),
+                "tutor_sees_score_and_attempts": lesson_step(200, "GET /attempts"),
+                "foreign_tutor_denied": lesson_step(403, "GET /attempts foreign"),
+                "repeat_keeps_one_attempt": lesson_step(
+                    200, "POST /attempts repeat", attempt_count=1
+                ),
+            },
+        },
+        "browser": {
+            "sha": sha,
+            "depends_on": ["lesson", "catalog"],
+            "backend": "real",
+            "database": "synthetic",
+            "screenshots_only": False,
+            "screens": {
+                screen: {"behavior": "pass", "evidence": "scenario"}
+                for screen in screens
+            },
+            "behaviors": {name: "pass" for name in done.BROWSER_BEHAVIORS},
+        },
+        "vm": {
+            "sha": sha,
+            "depends_on": ["ci", "browser"],
+            "environment": "clean_ubuntu_vm",
+            "terraform": {"create": "pass", "second_plan": "no_changes"},
+            "ansible": {"converge": "pass", "second_converge": "no_changes"},
+            "reboot": {"services": "pass", "readiness": "pass", "data": "persisted"},
+            "background_job": "pass",
+            "pdf": {"gotenberg": "real", "bytes_stable": True},
+            "telemetry": {
+                "logs": "pass",
+                "traces": "pass",
+                "prometheus": "pass",
+                "grafana": "pass",
+                "alert_rule": "pass",
+                "pii": "absent",
+            },
+            "restore": {
+                "separate_environment": True,
+                "records_compared": True,
+                "backup_file_only": False,
+            },
+            "telegram": {
+                "login": "verified",
+                "device_confirmation": "verified",
+                "notification": "verified",
+            },
+            "recorded": {
+                "commands": True,
+                "versions": True,
+                "resources": True,
+                "timings": True,
+                "results": True,
+            },
+        },
+        "load": {
+            "sha": sha,
+            "depends_on": ["vm"],
+            "students": 20,
+            "tutors": 2,
+            "profile": {"vcpu": 4, "ram_gib": 8, "observability": True},
+            "ubuntu": "24.04",
+            "virtualization": "kvm",
+            "browser": "chrome",
+            "viewport": "1280x720",
+            "seed": "release1-pilot",
+            "warmup_seconds": 300,
+            "measure_seconds": 1200,
+            "browser_repeats": 5,
+            "mix": {"read": 0.6, "answer_or_submit": 0.3, "tutor": 0.1},
+            "think_seconds": {"min": 3, "max": 10},
+            "auth_failures_only": False,
+            "unexpected_5xx": 0,
+            "lost_confirmed_answers": 0,
+            "pdf_worker_separate": True,
+            "reviewers": ["reviewer-a", "reviewer-b"],
+            "actions": {
+                "read": action(400),
+                "answer": action(800),
+                "submit": action(900),
+                "tutor_review": action(450),
+            },
+        },
+        "reviews": [
+            {
+                "reviewer": "reviewer-a",
+                "author": "author-1",
+                "sha": sha,
+                "state": "approved",
+                "requirements": ["CI", "E2", "E3", "VM"],
+                "comments_closed": True,
+            },
+            {
+                "reviewer": "reviewer-b",
+                "author": "author-1",
+                "sha": sha,
+                "state": "approved",
+                "requirements": ["CI", "E2", "E3", "VM"],
+                "comments_closed": True,
+            },
+        ],
+        "findings": [],
+        "open_findings": [],
+        "blockers": [],
+    }
+
+
+def run(root: Path, runner=passing_runner, evidence=None, sha: str | None = None, **kwargs):
+    sha = sha or ("a" * 40)
+    if evidence is None:
+        evidence = complete_evidence(sha, SCREENS)
+    return done.evaluate(
+        root,
+        OPS,
+        SCREENS,
+        packages=packages(root),
+        runner=runner,
+        evidence=evidence,
+        sha=sha,
+        **kwargs,
+    )
 
 
 class Release1DoneTest(unittest.TestCase):
@@ -178,7 +359,8 @@ class Release1DoneTest(unittest.TestCase):
         waiting = done.Check("install", "waiting")
         self.assertEqual(done.exit_code([passed]), 0)
         self.assertEqual(done.exit_code([passed, failed, waiting]), 1)
-        self.assertEqual(done.exit_code([passed, waiting, failed]), 2)
+        self.assertEqual(done.exit_code([passed, waiting, failed]), 1)
+        self.assertEqual(done.exit_code([passed, waiting]), 2)
 
     def test_complete_tree_exits_0(self) -> None:
         with self._tree() as root:
@@ -309,6 +491,159 @@ class Release1DoneTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("unfinished", buf.getvalue())
         self.assertNotIn("all_checks_passed", buf.getvalue())
+
+    def test_quick_partial_open_pr_and_bare_acceptance_are_unfinished(self) -> None:
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = done.main(["--quick"])
+        self.assertEqual(code, 1)
+        self.assertIn("quick: fail", buf.getvalue())
+        self.assertNotIn("all_checks_passed", buf.getvalue())
+        sha = "a" * 40
+        with self._tree() as root:
+            quick = run(root, quick=True)
+            partial = complete_evidence(sha, SCREENS)
+            partial["ci"]["checks"] = partial["ci"]["checks"][:2]
+            partial_checks = run(root, evidence=partial)
+            opened = complete_evidence(sha, SCREENS)
+            opened["pull_request"]["state"] = "open"
+            opened["merged"] = False
+            open_checks = run(root, evidence=opened)
+            accepted = {"sha": sha, "artifact_sha": sha, "result": "принято"}
+            accepted_checks = run(root, evidence=accepted)
+        self.assertEqual(done.exit_code(quick), 1)
+        self.assertEqual(quick[0].name, "quick")
+        self.assertEqual(self._status(partial_checks, "ci"), "fail")
+        self.assertIn("частичный", self._detail(partial_checks, "ci"))
+        self.assertEqual(self._status(open_checks, "integration"), "fail")
+        self.assertIn("открытый PR", self._detail(open_checks, "integration"))
+        self.assertEqual(self._status(accepted_checks, "attestation"), "fail")
+        self.assertIn("принято", self._detail(accepted_checks, "attestation"))
+        for checks in (quick, partial_checks, open_checks, accepted_checks):
+            self.assertNotEqual(done.exit_code(checks), 0)
+
+    def test_stale_review_skip_comment_stub_and_sha_mismatch(self) -> None:
+        sha = "a" * 40
+        other = "b" * 40
+        with self._tree() as root:
+            stale = complete_evidence(sha, SCREENS)
+            stale["reviews"][0]["sha"] = other
+            stale_checks = run(root, evidence=stale)
+            skipped = complete_evidence(sha, SCREENS)
+            skipped["browser"]["screens"][SCREENS[0]]["behavior"] = "skip"
+            skipped_checks = run(root, evidence=skipped)
+            comment = complete_evidence(sha, SCREENS)
+            comment["browser"]["screens"][SCREENS[0]] = "экран упомянут в комментарии"
+            comment_checks = run(root, evidence=comment)
+            stub = complete_evidence(sha, SCREENS)
+            stub["lesson"]["steps"]["tutor_creates_lesson"]["http_status"] = 501
+            stub_checks = run(root, evidence=stub)
+            mismatch = run(root, evidence=complete_evidence(other, SCREENS), sha=sha)
+        self.assertIn("старое ревью", self._detail(stale_checks, "reviews"))
+        self.assertIn("пропущенный", self._detail(skipped_checks, "browser"))
+        self.assertIn("комментарии", self._detail(comment_checks, "browser"))
+        self.assertIn("501", self._detail(stub_checks, "lesson"))
+        self.assertIn("SHA", self._detail(mismatch, "attestation"))
+        for checks in (
+            stale_checks,
+            skipped_checks,
+            comment_checks,
+            stub_checks,
+            mismatch,
+        ):
+            self.assertEqual(done.exit_code(checks), 1)
+
+    def test_blocker_dependency_and_checker_error(self) -> None:
+        sha = "a" * 40
+        with self._tree() as root:
+            active = complete_evidence(sha, SCREENS)
+            active["blockers"] = [
+                {
+                    "id": "telegram-bot",
+                    "category": "telegram",
+                    "status": "waiting",
+                    "dependency": "vm.telegram",
+                }
+            ]
+            active_checks = run(root, evidence=active)
+            duplicated = complete_evidence(sha, SCREENS)
+            duplicated["blockers"] = [
+                {
+                    "id": "telegram-bot",
+                    "category": "telegram",
+                    "status": "waiting",
+                    "dependency": "vm.telegram",
+                },
+                {
+                    "id": "telegram-bot",
+                    "category": "not-a-category",
+                    "status": "waiting",
+                    "dependency": "vm.telegram",
+                },
+            ]
+            duplicated_checks = run(root, evidence=duplicated)
+            missing = complete_evidence(sha, SCREENS)
+            del missing["catalog"]
+            missing_checks = run(root, evidence=missing)
+        self.assertEqual(done.exit_code(active_checks), 2)
+        self.assertEqual(self._status(active_checks, "operations"), "pass")
+        self.assertEqual(self._status(active_checks, "blockers"), "waiting")
+        self.assertEqual(done.exit_code(duplicated_checks), 1)
+        self.assertIn("дублированный", self._detail(duplicated_checks, "blockers"))
+        self.assertEqual(done.exit_code(missing_checks), 1)
+        self.assertIn("зависимости", self._detail(missing_checks, "lesson"))
+        checks = done.collect_checks(self._explode)
+        self.assertEqual(checks[0].name, "checker")
+        self.assertEqual(done.exit_code(checks), 1)
+
+    def test_substitute_runs_are_not_the_release(self) -> None:
+        sha = "a" * 40
+        with self._tree() as root:
+            mocked = complete_evidence(sha, SCREENS)
+            mocked["browser"]["backend"] = "msw"
+            cloud = complete_evidence(sha, SCREENS)
+            cloud["vm"]["environment"] = "cloud_container"
+            backup = complete_evidence(sha, SCREENS)
+            backup["vm"]["restore"]["backup_file_only"] = True
+            backup["vm"]["restore"]["records_compared"] = False
+            denied = complete_evidence(sha, SCREENS)
+            for step in denied["lesson"]["steps"].values():
+                step["http_status"] = 401
+            checks = {
+                "browser": run(root, evidence=mocked),
+                "vm": run(root, evidence=cloud),
+                "restore": run(root, evidence=backup),
+                "lesson": run(root, evidence=denied),
+            }
+        self.assertIn("настоящий сервер", self._detail(checks["browser"], "browser"))
+        self.assertIn("контейнер", self._detail(checks["vm"], "vm"))
+        self.assertIn("файл копии", self._detail(checks["restore"], "vm"))
+        self.assertIn("401/403", self._detail(checks["lesson"], "lesson"))
+        for item in checks.values():
+            self.assertEqual(done.exit_code(item), 1)
+
+    def test_attestation_must_stay_outside_the_commit(self) -> None:
+        with self._tree() as root:
+            write(
+                root / "docs/handoff/release1-attestation.json",
+                '{"result": "принято"}\n',
+            )
+            data, error = done.load_attestation(root, root)
+        self.assertIsNone(data)
+        self.assertIn("не отделён", error)
+        with self._tree() as root:
+            data, error = done.load_attestation(root, root)
+        self.assertIsNone(data)
+        self.assertIn("нет отдельного", error)
+
+    def _explode(self) -> list[done.Check]:
+        raise RuntimeError("boom")
+
+    def _status(self, checks, name: str) -> str:
+        return next(item.status for item in checks if item.name == name)
+
+    def _detail(self, checks, name: str) -> str:
+        return next(item.detail for item in checks if item.name == name)
 
     def test_real_contract_floor_and_restore_script(self) -> None:
         repo = Path(__file__).resolve().parents[1]
