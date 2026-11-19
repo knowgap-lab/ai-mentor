@@ -113,7 +113,7 @@ export function SessionsPage() {
 
   return (
     <Screen title="Сеансы" withActionBar={showBar}>
-      <Stack gap="md">
+      <Stack gap="md" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
         {phase === "loading" ? <Text>Загрузка</Text> : null}
         {phase === "offline" ? (
           <Stack gap="sm">

@@ -1,6 +1,10 @@
 import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { useState } from "react";
-import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import {
+  csrfHeaders,
+  hasCsrfToken,
+  rememberCsrfFromResponse,
+} from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
 import { errorSentence, isRecord } from "./api-error";
 import { isUnderEighteen, minskTime } from "./minsk-time";
@@ -46,6 +50,10 @@ function readLink(value: unknown): LinkView | null {
 }
 
 async function postJson(path: string, body?: unknown): Promise<Response> {
+  if (!hasCsrfToken()) {
+    const primed = await fetch("/me", { credentials: "include" });
+    rememberCsrfFromResponse(primed);
+  }
   return fetch(path, {
     method: "POST",
     credentials: "include",
@@ -159,7 +167,7 @@ export function NewStudentPage() {
 
   return (
     <Screen title="Новый ученик" withActionBar={created === null}>
-      <Stack gap="md">
+      <Stack gap="md" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
         {offline ? (
           <Stack gap="sm">
             <Text>Нет связи</Text>
