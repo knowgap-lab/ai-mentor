@@ -9,6 +9,7 @@ import (
 var s4WarningTypes = map[string]bool{
 	"variants_needed":   true,
 	"plan_does_not_fit": true,
+	"prereq_order":      true,
 	"consent_outdated":  true,
 	"not_delivered":     true,
 }
