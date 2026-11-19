@@ -34,8 +34,13 @@
 | `server-review-1` | MEN-3 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти первый независимый вердикт с SHA и замечаниями по техническим PR |
 | `server-review-2` | MEN-4 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти второй независимый вердикт с SHA и замечаниями по техническим PR |
 | `e3-first-lesson` | MEN-5 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти ветку и результат живого API-теста. Продолжить с первого незакрытого шага урока |
-| `codex-local-env` | MEN-6 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28), `99c2060` | Найти отдельную ветку TOML и результаты проверки действий Codex |
+| `codex-local-env` | MEN-6 | For Review | [#30](https://github.com/knowgap-lab/ai-mentor/pull/30), ветка `cursor/codex-desktop-env-a90e`, SHA `96ad4360a0a270c6618f95af889331da6a148f83`, база #28 | Дождаться CI #30. Не критерий сервера. TOML вызывает `tools/dev-install.sh`, `tools/dev-start.sh`, `tools/dev-check.sh` |
 | `server-integration` | MEN-7 | Queued | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) · [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) | Дождаться независимых ревью, проверить итоговый diff к свежему main и подтвердить слияние |
+| `w7-w8-screens` | MEN-8 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Новые экраны ДЗ, итогов, ученика и сеансов. Пути: новые файлы `web/src/tutor/`, маршруты в `web/src/App.tsx` и `web/screens.json` |
+| `c1-composer` | MEN-9 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Составитель в `content/composer/`. Не трогать `content/loader` и `content/catalog_ci` |
+| `iac-vm-draft` | MEN-10 | In Progress | база `feat/r1-integrate-candidate` `d3a5e8e` | Только `infra/terraform/` и `infra/ansible/`. Живая VM не принята |
+| `env-risk-review` | MEN-11 | In Progress | [#28](https://github.com/knowgap-lab/ai-mentor/pull/28) | Только чтение. A1 не принимать до этого разбора |
+| `qa-gate` | MEN-12 | Queued | [#17](https://github.com/knowgap-lab/ai-mentor/pull/17), ветка `cursor/release1-done-checker-5c18` | Усилить `tools/release1_done.py`, когда появится слот агента. См. `cloud-agent-plan-limit` |
 
 Интегратор обновляет реестр при назначении, переходе статуса, новых доказательствах и перед передачей. Добавляйте к записи владельца задачи, публикуемые ветку/head SHA, PR, команду и фактический результат последней проверки, зависимости и следующий точный шаг. Статусы: Queued, In Progress, For Review, Done и Canceled. Если работа ждёт внешнего действия, сохраните её фактический статус и ссылку на пункт [очереди действий](release1-actions.yaml). For Review означает, что есть опубликованный SHA и материалы для ревью. Done означает, что критерии подтверждены и нужные изменения действительно влиты.
 
