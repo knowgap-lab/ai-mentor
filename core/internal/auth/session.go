@@ -111,6 +111,13 @@ func insertUser(ctx context.Context, tx pgx.Tx, telegramID, role string) (string
 	return id, nil
 }
 
+// SessionLive отличает живой сеанс от непустой cookie.
+// Битый, отозванный, просроченный и pending токен живым не считается.
+func (s *Service) SessionLive(ctx context.Context, token string) (bool, error) {
+	_, _, alive, err := s.sessionUser(ctx, token)
+	return alive, err
+}
+
 func (s *Service) sessionUser(ctx context.Context, token string) (string, string, bool, error) {
 	hash, ok := hashToken(token)
 	if !ok {
