@@ -1,0 +1,4 @@
+*.retry
+inventory/guest.yml
+*.secret
+secret.env

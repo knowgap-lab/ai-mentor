@@ -1,0 +1,10 @@
+[Unit]
+Description=Ночная проверка восстановления {{ stack_env.name }}
+
+[Timer]
+OnCalendar=*-*-* 04:15:00 UTC
+Persistent=true
+Unit=ai-mentor-restore-{{ stack_env.name }}.service
+
+[Install]
+WantedBy=timers.target

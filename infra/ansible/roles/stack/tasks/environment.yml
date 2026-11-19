@@ -1,0 +1,98 @@
+---
+- name: Несекретный env {{ stack_env.name }}
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ state_root }}/{{ stack_env.name }}/env"
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Файл секретов {{ stack_env.name }}
+  ansible.builtin.stat:
+    path: "{{ state_root }}/{{ stack_env.name }}/secret.env"
+  register: stack_secret_env
+
+- name: Секретов {{ stack_env.name }} в git нет
+  ansible.builtin.fail:
+    msg: >-
+      Нет {{ state_root }}/{{ stack_env.name }}/secret.env.
+      Нужные имена, без значений: {{ stack_env.secret_names | join(', ') }}.
+      Значения ставит отдельная задача секретов. Повторный запуск после этого
+      файлы не переписывает.
+  when: not stack_secret_env.stat.exists
+
+- name: Имена секретов {{ stack_env.name }} заполнены
+  ansible.builtin.script:
+    cmd: "require_secret_names.py {{ state_root }}/{{ stack_env.name }}/secret.env {{ stack_env.secret_names | join(' ') }}"
+  changed_when: false
+
+- name: Файлы секретов Compose {{ stack_env.name }}
+  ansible.builtin.stat:
+    path: "{{ state_root }}/{{ stack_env.name }}/secrets/{{ item }}"
+  loop: "{{ stack_secret_files }}"
+  register: stack_files
+
+- name: Файлы секретов {{ stack_env.name }} есть и закрыты
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.size | int > 0
+      - item.stat.mode is match("0?600")
+    fail_msg: >-
+      Секрет Compose {{ item.item }} для {{ stack_env.name }} отсутствует,
+      пуст или доступен не только root. Нужны права 600 (OP-R4).
+  loop: "{{ stack_files.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Скачать образы {{ stack_env.name }}
+  ansible.builtin.command:
+    argv: "{{ ['docker', 'compose', '--project-directory', install_root + '/src', '--env-file', state_root + '/' + stack_env.name + '/env', '--env-file', state_root + '/' + stack_env.name + '/secret.env', '-f', install_root + '/src/' + stack_env.compose, 'pull', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
+  register: stack_pull
+  changed_when: >-
+    ('Pulled' in (stack_pull.stdout + stack_pull.stderr))
+    or ('Downloaded newer image' in (stack_pull.stdout + stack_pull.stderr))
+
+- name: Поднять сервисы {{ stack_env.name }}
+  ansible.builtin.command:
+    argv: "{{ ['docker', 'compose', '--project-directory', install_root + '/src', '--env-file', state_root + '/' + stack_env.name + '/env', '--env-file', state_root + '/' + stack_env.name + '/secret.env', '-f', install_root + '/src/' + stack_env.compose, 'up', '-d', '--remove-orphans', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
+  register: stack_up
+  changed_when: >-
+    ('Created' in stack_up.stdout)
+    or ('Started' in stack_up.stdout)
+    or ('Recreated' in stack_up.stdout)
+    or ('Removed' in stack_up.stdout)
+
+- name: backup.env {{ stack_env.name }}
+  ansible.builtin.stat:
+    path: "{{ state_root }}/{{ stack_env.name }}/backup.env"
+  register: stack_backup
+
+- name: Юниты копий {{ stack_env.name }}
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - src: backup.service.j2
+      dest: "ai-mentor-backup-{{ stack_env.name }}.service"
+    - src: backup.timer.j2
+      dest: "ai-mentor-backup-{{ stack_env.name }}.timer"
+    - src: restore.service.j2
+      dest: "ai-mentor-restore-{{ stack_env.name }}.service"
+    - src: restore.timer.j2
+      dest: "ai-mentor-restore-{{ stack_env.name }}.timer"
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Таймеры копий {{ stack_env.name }}
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: "{{ stack_backup.stat.exists | bool }}"
+    state: "{{ 'started' if stack_backup.stat.exists else 'stopped' }}"
+    daemon_reload: true
+  loop:
+    - "ai-mentor-backup-{{ stack_env.name }}.timer"
+    - "ai-mentor-restore-{{ stack_env.name }}.timer"

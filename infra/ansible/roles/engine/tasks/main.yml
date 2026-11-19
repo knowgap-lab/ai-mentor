@@ -1,0 +1,101 @@
+---
+- name: Архитектура гостя известна
+  ansible.builtin.assert:
+    that:
+      - ansible_facts["architecture"] in ["x86_64", "aarch64"]
+      - ansible_facts["distribution"] == "Ubuntu"
+    fail_msg: "Docker закреплён для Ubuntu amd64 или arm64. Другую архитектуру этот пакет не ставит."
+
+- name: Имена пакетов Docker для этого выпуска Ubuntu
+  ansible.builtin.set_fact:
+    engine_deb_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_facts['architecture']] }}"
+    engine_deb_suffix: "ubuntu.{{ ansible_facts['distribution_version'] }}~{{ ansible_facts['distribution_release'] }}"
+
+- name: Каталог ключей apt
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Публичный ключ репозитория Docker
+  ansible.builtin.copy:
+    src: docker.asc
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Источник пакетов Docker
+  ansible.builtin.template:
+    src: docker.list.j2
+    dest: /etc/apt/sources.list.d/docker.list
+    owner: root
+    group: root
+    mode: "0644"
+  register: engine_source
+
+- name: Закрепить версии Docker
+  ansible.builtin.template:
+    src: docker.preferences.j2
+    dest: /etc/apt/preferences.d/docker
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Какие пакеты Docker уже стоят
+  ansible.builtin.command:
+    argv: ["dpkg-query", "-W", "{{ item }}"]
+  loop:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+  register: engine_installed
+  changed_when: false
+  failed_when: false
+
+- name: Обновить индекс apt, если источник новый или пакета нет
+  ansible.builtin.apt:
+    update_cache: true
+  when: >-
+    engine_source.changed or
+    (engine_installed.results | selectattr("rc", "ne", 0) | list | length > 0)
+
+- name: Поставить закреплённые пакеты Docker
+  ansible.builtin.apt:
+    name:
+      - "docker-ce={{ engine_docker_ce_version }}~{{ engine_deb_suffix }}"
+      - "docker-ce-cli={{ engine_docker_ce_version }}~{{ engine_deb_suffix }}"
+      - "containerd.io={{ engine_containerd_version }}~{{ engine_deb_suffix }}"
+      - "docker-buildx-plugin={{ engine_buildx_version }}~{{ engine_deb_suffix }}"
+      - "docker-compose-plugin={{ engine_compose_version }}~{{ engine_deb_suffix }}"
+    state: present
+
+- name: Каталог настроек Docker
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Журнал контейнеров с ограничением размера
+  ansible.builtin.copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart docker
+
+- name: Применить daemon.json до стека
+  ansible.builtin.meta: flush_handlers
+
+- name: Docker запущен
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true

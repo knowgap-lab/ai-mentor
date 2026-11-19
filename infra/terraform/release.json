@@ -1,0 +1,7 @@
+{
+  "app_sha": "d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715",
+  "source_repository": "https://github.com/knowgap-lab/ai-mentor.git",
+  "core_image_repository": "ghcr.io/knowgap-lab/ai-mentor-core",
+  "web_image_repository": "ghcr.io/knowgap-lab/ai-mentor-web",
+  "content_image_repository": "ghcr.io/knowgap-lab/ai-mentor-content"
+}

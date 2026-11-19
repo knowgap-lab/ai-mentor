@@ -1,0 +1,10 @@
+[Unit]
+Description=Ежедневная очистка журналов Docker
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 UTC
+Persistent=true
+Unit=ai-mentor-log-cleanup.service
+
+[Install]
+WantedBy=timers.target
