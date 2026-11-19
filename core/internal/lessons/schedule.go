@@ -34,6 +34,37 @@ func loadPlan(ctx context.Context, db q, studentID, subject string) (planHead, e
 	return head, nil
 }
 
+// ensurePlan открывает план предмета, если каталог уже загружен, а плана ещё нет.
+// Дата экзамена та же, что пишет импорт плана, когда запрос её не присылает.
+func ensurePlan(ctx context.Context, db q, studentID, subject string) (planHead, error) {
+	head, err := loadPlan(ctx, db, studentID, subject)
+	if err != nil || head.ok {
+		return head, err
+	}
+	var version int
+	err = db.QueryRow(ctx, `
+		SELECT catalog_version
+		FROM catalog.load
+		ORDER BY catalog_version DESC
+		LIMIT 1
+	`).Scan(&version)
+	if errors.Is(err, pgx.ErrNoRows) || version < 1 {
+		return planHead{}, nil
+	}
+	if err != nil {
+		return planHead{}, err
+	}
+	exam := time.Date(2027, 6, 1, 0, 0, 0, 0, time.UTC)
+	if _, err := db.Exec(ctx, `
+		INSERT INTO core.study_plan (student_id, subject, exam_at, catalog_version)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (student_id, subject) DO NOTHING
+	`, studentID, subject, exam, version); err != nil {
+		return planHead{}, err
+	}
+	return loadPlan(ctx, db, studentID, subject)
+}
+
 func loadRule(ctx context.Context, db q, studentID, subject string) (*Schedule, error) {
 	var rule Schedule
 	err := db.QueryRow(ctx, `
@@ -427,7 +458,7 @@ func (s *Service) putSchedule(w http.ResponseWriter, r *http.Request) {
 		writeHandlerErr(w, failErr(err))
 		return
 	}
-	head, err := loadPlan(r.Context(), tx, studentID, subject)
+	head, err := ensurePlan(r.Context(), tx, studentID, subject)
 	if err != nil {
 		writeHandlerErr(w, failErr(err))
 		return
