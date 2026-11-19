@@ -2,8 +2,8 @@
 - id: cursor-cloud-activation
   status: pending
   owner: integration-agent
-  action: Локальные dev-start и dev-check на 09413c482a0814832bf2f66fab665e826f9fac25 дали код 0. Это не снимок Cloud Build. Вершина 8c863dad4290b9f3c632ee8794ea4261f322708f — squash PR 51, её CI ещё не подтверждён. A1 не закрыт.
-  verification: Сначала зелёный CI 8c863da, затем dev-check на снимке сборки. До этого A1 не закрыт.
+  action: CI вершины 8c863dad4290b9f3c632ee8794ea4261f322708f зелёный, все 3 проверки без падений. Локальные dev-start и dev-check на 09413c482a0814832bf2f66fab665e826f9fac25 дали код 0 и остаются локальными. Это не снимок Cloud Build. A1 не закрыт.
+  verification: Прогнать dev-check на снимке сборки. До этого A1 не закрыт.
 - id: github-review-author
   status: pending
   owner: integration-agent
@@ -33,7 +33,7 @@
   status: pending
   owner: user
   action: Приёмщик уже опубликован в PR 37 на 50328c6ffe6b70adcee73cf8811df3bad9ea4709. Эта запись не снимает прошлый лимит одновременных агентов и не принимает выпуск.
-  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — CI вершины 8c863da, затем снимок сборки.
+  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — снимок сборки. CI вершины 8c863da уже зелёный.
 - id: screens-csrf-origin
   status: done
   owner: local-qa-agent

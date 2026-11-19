@@ -22,7 +22,7 @@
 - [#45](https://github.com/knowgap-lab/ai-mentor/pull/45) на `7a53d9136f1942eae5daf4207d92d085eb7040fb`: CI зелёный. Черновик сборки `bld-20261119-d2db2493` SUCCEEDED и не активирован. `dev-start` и `dev-check` на снимке не шли. A1 не принят.
 - [#48](https://github.com/knowgap-lab/ai-mentor/pull/48) на `1eddf44baa4577efaf6330605ab1d49edb54f07b`: список «разобрать». Чужой отчёт на кандидате уже 200 владельцу и 403 чужому.
 - `feat/r1-integrate-candidate` `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`: экраны #36 и CSRF #49. CI, все 3 проверки без падений, событие 2026-11-19. В `main` нет. Кнопка срока: `PATCH` homework-draft 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск, `APP_ORIGIN` `http://127.0.0.1:8080`.
-- Вершина кандидата `8c863dad4290b9f3c632ee8794ea4261f322708f`: squash [#51](https://github.com/knowgap-lab/ai-mentor/pull/51), скрипты среды. CI этого SHA ещё не подтверждён.
+- Вершина кандидата `8c863dad4290b9f3c632ee8794ea4261f322708f`: squash [#51](https://github.com/knowgap-lab/ai-mentor/pull/51), скрипты среды. CI этого SHA зелёный: все 3 проверки без падений. Это событие ветки.
 - Локальные `tools/dev-start.sh` и `tools/dev-check.sh` на `09413c482a0814832bf2f66fab665e826f9fac25`: оба код 0, веб 136, pytest 263, `walk.spec.ts` 1 passed. Прямой родитель — `4f0b2ccea58a4510184aba45b75683dc434403f9`, его родитель — `6f7f540`. Это не снимок Cloud Build. A1 не закрыт.
 - Стенд [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) не сливать: образы на `d3a5e8ed06fd2e9aeb5fa4e11a37cb8a1de95715`.
 - Наблюдаемость [#20](https://github.com/knowgap-lab/ai-mentor/pull/20), приёмщик [#17](https://github.com/knowgap-lab/ai-mentor/pull/17) и workflow очереди [#24](https://github.com/knowgap-lab/ai-mentor/pull/24) открыты отдельно. У #24 зелёный CI. Очередь в правилах `main` пока не включена.
@@ -32,7 +32,7 @@
 
 Выпуск не готов. Записанные PR не заменяют приёмку этапа.
 
-- Следующий открытый критерий: CI вершины `8c863dad4290b9f3c632ee8794ea4261f322708f`, затем снимок сборки. Локальный `dev-check` на `09413c4` снимок не заменяет.
+- Следующий открытый критерий: снимок сборки. CI вершины `8c863dad4290b9f3c632ee8794ea4261f322708f` зелёный. Локальный `dev-check` на `09413c4` снимок не заменяет. A1 не закрыт.
 - A1 не закрыт. Кнопка срока на `6f7f540` дала 200; это не приёмка экранов. Стенд #35 не сливать.
 - CI #46 и CI #44 не засчитаны. Урок не повторён на принятом main SHA. Живая VM по #35 не ставилась, GHCR ответил 401.
 - Приёмщик #37 на голове #17 даёт код 1. Ноль без полного attestation одного main SHA по-прежнему не означает готовность. [Критерии](../../briefs/CURSOR-PROJECT-RELEASE1.md#7-приёмка-на-доказательствах).
@@ -51,7 +51,7 @@
 | ID в Git | Карточка Cursor | Статус на снимке | База и материалы | Следующий шаг |
 |---|---|---|---|---|
 | `release1` | MEN-1 | In Progress | [Полная цель](../../briefs/RELEASE1-GOAL.md) | Принимать этапы по критериям и продолжать до полной приёмки |
-| `a1-cloud-build` | MEN-2 | In Progress | вершина `8c863dad4290b9f3c632ee8794ea4261f322708f`, локально `09413c482a0814832bf2f66fab665e826f9fac25` | Локальные скрипты дали код 0. Это не снимок. CI вершины не подтверждён. A1 не закрыт |
+| `a1-cloud-build` | MEN-2 | In Progress | вершина `8c863dad4290b9f3c632ee8794ea4261f322708f`, локально `09413c482a0814832bf2f66fab665e826f9fac25` | CI вершины зелёный, все 3 проверки без падений. Локальные скрипты не снимок. A1 не закрыт |
 | `server-review-1` | MEN-3 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти первый независимый вердикт с SHA и замечаниями по техническим PR |
 | `server-review-2` | MEN-4 | In Progress | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27), `d3a5e8e` | Найти второй независимый вердикт с SHA и замечаниями по техническим PR |
 | `e3-first-lesson` | MEN-5 | In Progress | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34), `8d335c8889e6ad758558974b38ad32e8ce112893` | Права: без сессии 401, ученик и чужой 403, повтор ответа — одна попытка. На main не повторён |
