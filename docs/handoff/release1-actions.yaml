@@ -29,6 +29,11 @@
   owner: user
   action: Посмотреть визуальный пилот и согласовать оформление и движения по D323.
   verification: Записать решение в журнал и проверить reduced motion.
+- id: cloud-agent-plan-limit
+  status: pending
+  owner: user
+  action: План не создаёт ещё одного одновременного Cloud Agent. Уже запущенные пакеты продолжаются. Следующий новый пакет — усиление tools/release1_done.py от PR 17.
+  verification: Новый агент создаётся и открывает PR приёмщика, не ослабляя критерии.
 - id: docker-data-root
   status: pending
   owner: repository-owner
