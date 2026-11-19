@@ -335,9 +335,17 @@ func loadKey(ctx context.Context, tx pgx.Tx, variantID string, correctionID int)
 	var data struct {
 		AnswerFormat string          `json:"answer_format"`
 		Key          json.RawMessage `json:"key"`
+		Subvariant   string          `json:"subvariant"`
 	}
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return scoreKey{}, err
+	}
+	if data.AnswerFormat == "" && data.Subvariant != "" {
+		format, err := formatBySubvariant(ctx, tx, correctionID, data.Subvariant)
+		if err != nil {
+			return scoreKey{}, err
+		}
+		data.AnswerFormat = format
 	}
 	if data.AnswerFormat != formatInteger {
 		return scoreKey{}, fmt.Errorf("recheck: format %s", data.AnswerFormat)
@@ -347,6 +355,67 @@ func loadKey(ctx context.Context, tx pgx.Tx, variantID string, correctionID int)
 		return scoreKey{}, err
 	}
 	return scoreKey{format: data.AnswerFormat, value: value}, nil
+}
+
+func formatBySubvariant(ctx context.Context, tx pgx.Tx, correctionID int, subvariant string) (string, error) {
+	var format string
+	err := tx.QueryRow(ctx, `
+		SELECT COALESCE(data->>'answer_format', '')
+		FROM catalog.revision
+		WHERE catalog_version_from <= $1
+		  AND jsonb_typeof(data->'subvariants') = 'array'
+		  AND data->'subvariants' ? $2
+		ORDER BY catalog_version_from DESC
+		LIMIT 1
+	`, correctionID, subvariant).Scan(&format)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return format, nil
+}
+
+// Resume продолжает открытые пакеты (RC-R6, RC-R7).
+// Пустой список — не ошибка. Пакеты идут по возрастанию correction_id.
+func Resume(ctx context.Context, dsn string) error {
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close(ctx) }()
+
+	rows, err := conn.Query(ctx, `
+		SELECT correction_id
+		FROM core.recheck_batch
+		WHERE state IN ('pending', 'running')
+		ORDER BY correction_id
+	`)
+	if err != nil {
+		return err
+	}
+	var ids []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	for _, id := range ids {
+		if _, err := Run(ctx, conn, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func integerKey(raw json.RawMessage) (any, error) {
