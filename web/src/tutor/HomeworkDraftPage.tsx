@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
 import { errorSentence, isRecord } from "./api-error";
+import classes from "./field-focus.module.css";
 import { minskLocalToUtc, minskTime } from "./minsk-time";
 
 // HomeworkDraft не содержит id выдачи. После «Выдать» он берётся из ответа.
@@ -372,6 +373,7 @@ export function HomeworkDraftPage() {
               <>
                 <TextInput
                   aria-label="вариант"
+                  classNames={{ input: classes.field }}
                   value={variantId}
                   onChange={(event) => setVariantId(event.currentTarget.value)}
                 />
@@ -384,6 +386,7 @@ export function HomeworkDraftPage() {
                 </Button>
                 <TextInput
                   aria-label="срок"
+                  classNames={{ input: classes.field }}
                   value={deadline}
                   onChange={(event) => setDeadline(event.currentTarget.value)}
                 />
@@ -399,6 +402,7 @@ export function HomeworkDraftPage() {
             {withdrawEnabled ? (
               <TextInput
                 aria-label="причина"
+                classNames={{ input: classes.field }}
                 value={reason}
                 onChange={(event) => setReason(event.currentTarget.value)}
               />

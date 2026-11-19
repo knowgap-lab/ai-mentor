@@ -11,6 +11,7 @@ import { useParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen, StatusBadge, type Status } from "../ui";
 import { ERROR_TEXT, errorSentence, isRecord } from "./api-error";
+import classes from "./field-focus.module.css";
 
 // Причины спора — подписи AT-R18. Ключ и решение сюда не выводятся (WB-R4, WB-R22).
 
@@ -449,6 +450,7 @@ export function HomeworkResultsPage() {
                   {badge(attempt.verdict)}
                   <NativeSelect
                     aria-label="вердикт"
+                    classNames={{ input: classes.field }}
                     size="md"
                     value={form.verdict}
                     data={[...VERDICTS]}
@@ -460,6 +462,7 @@ export function HomeworkResultsPage() {
                   />
                   <TextInput
                     aria-label="баллы"
+                    classNames={{ input: classes.field }}
                     value={form.points}
                     onChange={(event) =>
                       setField(attempt.id, {
@@ -469,6 +472,7 @@ export function HomeworkResultsPage() {
                   />
                   <TextInput
                     aria-label="причина"
+                    classNames={{ input: classes.field }}
                     value={form.reason}
                     onChange={(event) =>
                       setField(attempt.id, {

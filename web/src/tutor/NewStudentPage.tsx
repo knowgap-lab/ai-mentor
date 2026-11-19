@@ -7,6 +7,7 @@ import {
 } from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
 import { errorSentence, isRecord } from "./api-error";
+import classes from "./field-focus.module.css";
 import { isUnderEighteen, minskTime } from "./minsk-time";
 
 // Состав экрана — имя, дата рождения, ссылка согласия и приглашение.
@@ -181,11 +182,13 @@ export function NewStudentPage() {
           <>
             <TextInput
               aria-label="имя"
+              classNames={{ input: classes.field }}
               value={name}
               onChange={(event) => setName(event.currentTarget.value)}
             />
             <TextInput
               aria-label="дата рождения"
+              classNames={{ input: classes.field }}
               value={birthDate}
               onChange={(event) => setBirthDate(event.currentTarget.value)}
             />
