@@ -20,7 +20,7 @@ bash tools/dev-check.sh
 
 `dev-check.sh` запускает `tools/check-code.sh`, `tools/check.sh` и Playwright smoke из `tools/e2e`. Образ `gotenberg/gotenberg:9.5.0` эти команды не скачивают: тест настоящего PDF без локального образа пропускается.
 
-Cloud Agent вызывает те же скрипты из [`.cursor/environment.json`](.cursor/environment.json).
+Cloud Agent вызывает те же скрипты из [`.cursor/environment.json`](.cursor/environment.json). Codex Desktop вызывает их из [`.codex/environments/environment.toml`](.codex/environments/environment.toml).
 
 Реальных учеников нет.
 
