@@ -111,7 +111,7 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		_ = authSvc.Close()
 		return nil, err
 	}
-	web := spaHandler{root: root, files: http.FileServer(http.Dir(root))}
+	web := spaHandler{root: root, files: http.FileServer(http.Dir(root)), live: authSvc.SessionLive}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/healthz" {
 			health.ServeHTTP(w, r)
@@ -219,6 +219,7 @@ func findWebDist() (string, error) {
 type spaHandler struct {
 	root  string
 	files http.Handler
+	live  func(context.Context, string) (bool, error)
 }
 
 func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -259,16 +260,27 @@ func (h spaHandler) serveIndex(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if _, ok := requestSession(r); ok {
+	if h.sessionLive(r) {
 		raw = injectSessionMarker(raw)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Vary", "Cookie")
 	w.Header().Set("Content-Length", strconv.Itoa(len(raw)))
 	w.WriteHeader(http.StatusOK)
 	if r.Method == http.MethodHead {
 		return
 	}
 	_, _ = w.Write(raw)
+}
+
+func (h spaHandler) sessionLive(r *http.Request) bool {
+	token, ok := requestSession(r)
+	if !ok || h.live == nil {
+		return false
+	}
+	alive, err := h.live(r.Context(), token)
+	return err == nil && alive
 }
 
 func injectSessionMarker(raw []byte) []byte {

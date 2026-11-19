@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 )
 
 type apiWarning struct {
@@ -57,6 +58,28 @@ func lessonJSON(row lessonRow) apiLesson {
 	}
 }
 
+func loadPrereqs(ctx context.Context, db q, studentID, subject string) (map[string][]string, error) {
+	rows, err := db.Query(ctx, `
+		SELECT topic, prereq
+		FROM core.topic_prereq
+		WHERE student_id = $1 AND subject = $2
+		ORDER BY topic, prereq
+	`, studentID, subject)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string][]string{}
+	for rows.Next() {
+		var topic, prereq string
+		if err := rows.Scan(&topic, &prereq); err != nil {
+			return nil, err
+		}
+		out[topic] = append(out[topic], prereq)
+	}
+	return out, rows.Err()
+}
+
 func hasSchedule(ctx context.Context, db q, studentID, subject string) (bool, error) {
 	var ok bool
 	err := db.QueryRow(ctx, `
@@ -73,6 +96,10 @@ func buildPlan(ctx context.Context, db q, studentID, subject string) (apiPlan, e
 	if err != nil {
 		return apiPlan{}, err
 	}
+	prereqs, err := loadPrereqs(ctx, db, studentID, subject)
+	if err != nil {
+		return apiPlan{}, err
+	}
 	scheduled, err := hasSchedule(ctx, db, studentID, subject)
 	if err != nil {
 		return apiPlan{}, err
@@ -81,14 +108,21 @@ func buildPlan(ctx context.Context, db q, studentID, subject string) (apiPlan, e
 		Lessons:  make([]apiLesson, 0, len(lessons)),
 		Warnings: []apiWarning{},
 	}
+	first := map[string]int{}
 	missing := 0
 	for _, lesson := range lessons {
 		view.Lessons = append(view.Lessons, lessonJSON(lesson))
+		for _, topic := range lesson.Topics {
+			if _, seen := first[topic]; !seen {
+				first[topic] = lesson.PlaceNo
+			}
+		}
 		if !scheduled || lesson.State == "held" || lesson.State == "skipped" || lesson.StartsAt != nil {
 			continue
 		}
 		missing++
 	}
+	view.Warnings = append(view.Warnings, prereqWarnings(first, prereqs)...)
 	if missing > 0 {
 		view.Warnings = append(view.Warnings, apiWarning{
 			Type:   "plan_does_not_fit",
@@ -97,6 +131,42 @@ func buildPlan(ctx context.Context, db q, studentID, subject string) (apiPlan, e
 		})
 	}
 	return view, nil
+}
+
+func prereqWarnings(first map[string]int, prereqs map[string][]string) []apiWarning {
+	type pair struct {
+		topic string
+		pre   string
+	}
+	var pairs []pair
+	for topic, deps := range prereqs {
+		topicAt, ok := first[topic]
+		if !ok {
+			continue
+		}
+		for _, pre := range deps {
+			preAt, seen := first[pre]
+			if !seen || topicAt >= preAt {
+				continue
+			}
+			pairs = append(pairs, pair{topic: topic, pre: pre})
+		}
+	}
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].topic != pairs[j].topic {
+			return pairs[i].topic < pairs[j].topic
+		}
+		return pairs[i].pre < pairs[j].pre
+	})
+	out := make([]apiWarning, 0, len(pairs))
+	for _, item := range pairs {
+		out = append(out, apiWarning{
+			Type:   "prereq_order",
+			Text:   fmt.Sprintf("Тема %s стоит раньше предпосылки %s", item.topic, item.pre),
+			Params: map[string]any{"topic": item.topic, "prereq": item.pre},
+		})
+	}
+	return out
 }
 
 func buildDivergence(ctx context.Context, db q, studentID, subject string) ([]apiDivergence, error) {
