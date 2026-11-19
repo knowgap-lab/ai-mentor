@@ -2,13 +2,13 @@
 - id: cursor-cloud-activation
   status: pending
   owner: integration-agent
-  action: Свежий Cloud Build среды PR 28 на 99c206058b4075b09f70564bdbe93c28c9720c87 ещё не принят. Нет Build ID, lock Python, SHA256 Go и Node, pin Chrome и дайджеста Postgres.
-  verification: Сохранить Build ID, SHA, lock Python, SHA256 Go и Node, pin Chrome, дайджест Postgres, результаты Docker и Playwright. A1 до этого не принят.
+  action: PR 45 на 7a53d9136f1942eae5daf4207d92d085eb7040fb имеет зелёный CI. Черновик bld-20261119-d2db2493 SUCCEEDED и не активирован. dev-start и dev-check на снимке не шли. A1 не принят. Прежние пробелы PR 28 этой записью не закрыты.
+  verification: Прогнать dev-check на снимке сборки. До этого A1 не принят.
 - id: github-review-author
   status: pending
   owner: integration-agent
-  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора. Для PR 40 на 71bb5175615b03b955923840a50623dfc1d79483 CI и два ревью тоже ещё не засчитаны.
-  verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR, включая PR 40.
+  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора. Коммиты PR 33, 40 и 42 есть в кандидате f9bc1d068f68ca6b1afe9f4e9eb9e1b387187a32 и отсутствуют в main. Отдельный зачёт двух ревью PR 40 этой записью не добавляется.
+  verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR.
 - id: merge-queue
   status: pending
   owner: repository-owner
@@ -33,7 +33,22 @@
   status: pending
   owner: user
   action: Приёмщик уже опубликован в PR 37 на 50328c6ffe6b70adcee73cf8811df3bad9ea4709. Эта запись не снимает прошлый лимит одновременных агентов и не принимает выпуск.
-  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — свежий Cloud Build и повтор урока на принятом main SHA.
+  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — dev-check на снимке сборки и CSRF Origin.
+- id: screens-csrf-origin
+  status: pending
+  owner: local-qa-agent
+  action: На a8d2becc84dfd24e02d16a5985aa9f405f7e47af кнопка срока вернула 403 csrf из-за Origin 127.0.0.1:8080. Четыре маршрута, 360 px и чистый CSP уже записаны. CI 3c1ab95ef355cfa1f250ea54702b25aec42f1714 зелёный.
+  verification: Повторить кнопку срока с тем Origin, который ждёт сервер. До этого экраны не приняты.
+- id: seed-ci
+  status: pending
+  owner: integration-agent
+  action: PR 44 на 1ceb14fc22125dc7a2da7b050531c38d286c6c1b имеет два прогона с кодом 0, третий без новых строк и approve комментарием. CI ещё не зелёный.
+  verification: Зелёный CI этого SHA. До этого сид не засчитан.
+- id: consent-recheck-ci
+  status: pending
+  owner: integration-agent
+  action: PR 46 на e4a9e62186632fe05ffe87d649abf0b68d46b5a8 сдал отказ без согласия 423, приглашение 201, перепроверку 0 в 2, сохранённый старый вердикт и чужой 403. CI не засчитан.
+  verification: Зелёный CI этого SHA. До этого согласие и перепроверка не засчитаны.
 - id: docker-data-root
   status: pending
   owner: repository-owner
