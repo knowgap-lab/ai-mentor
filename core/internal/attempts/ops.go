@@ -1156,14 +1156,18 @@ func (s *Service) getDiscussList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT e.payload->>'item_id', e.payload->>'assignment_id', COALESCE(snap.variant_id, '')
+		SELECT e.payload->>'item_id', e.payload->>'assignment_id',
+		       COALESCE(NULLIF(snap.variant_id, ''), NULLIF(snap.item_id, ''), '')
 		FROM core.journal_event AS e
 		LEFT JOIN LATERAL (
-			SELECT item->>'variant_id' AS variant_id
+			SELECT item->>'variant_id' AS variant_id, item->>'item_id' AS item_id
 			FROM core.assignment AS a
 			CROSS JOIN LATERAL jsonb_array_elements(COALESCE(a.snapshot->'items', '[]'::jsonb)) AS item
 			WHERE a.id = e.payload->>'assignment_id'
-			  AND item->>'item_id' = e.payload->>'item_id'
+			  AND (
+				item->>'item_id' = e.payload->>'item_id'
+				OR item->>'variant_id' = e.payload->>'item_id'
+			  )
 			LIMIT 1
 		) AS snap ON true
 		WHERE e.kind = 'did_not_understand'
