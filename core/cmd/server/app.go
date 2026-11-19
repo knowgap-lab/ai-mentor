@@ -90,7 +90,7 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		_ = authSvc.Close()
 		return nil, fmt.Errorf("answercheck: %w", err)
 	}
-	attemptSvc, err := attempts.Open(ctx, attempts.Config{DSN: dsn})
+	attemptSvc, err := attempts.Open(ctx, attempts.Config{DSN: dsn, AppOrigin: origin})
 	if err != nil {
 		_ = answerSvc.Close()
 		_ = authSvc.Close()
