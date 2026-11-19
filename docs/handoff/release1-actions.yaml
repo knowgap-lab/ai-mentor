@@ -1,0 +1,36 @@
+# Реестр внешних действий выпуска 1. Пункты не заменяют проверку готовности.
+- id: cursor-cloud-activation
+  status: pending
+  owner: integration-agent
+  action: Проверить свежий активный Cloud Build по PR 28 и доступ нового проекта к окружению.
+  verification: Сохранить Build ID, SHA, версии, результаты Docker и Playwright.
+- id: github-review-author
+  status: pending
+  owner: integration-agent
+  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора.
+  verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR.
+- id: merge-queue
+  status: pending
+  owner: repository-owner
+  action: После интеграции PR 24 включить очередь слияния на main.
+  verification: Ruleset содержит очередь, обязательные workflow запускаются на merge_group.
+- id: telegram-bot
+  status: pending
+  owner: telegram-setup-agent
+  action: Настроить демонстрационного бота, вход и webhook по deploy/secrets.md.
+  verification: Пройти настоящий вход, подтверждение устройства и доставку уведомления.
+- id: local-demo-access
+  status: pending
+  owner: local-qa-agent
+  action: Сверить доступ к чистой Ubuntu VM по SSH и отдельный доступ к гипервизору для Terraform.
+  verification: Подтвердить Terraform create/plan, Ansible converge, перезагрузку и восстановление.
+- id: visual-pilot
+  status: pending
+  owner: user
+  action: Посмотреть визуальный пилот и согласовать оформление и движения по D323.
+  verification: Записать решение в журнал и проверить reduced motion.
+- id: docker-data-root
+  status: pending
+  owner: repository-owner
+  action: Перед локальной сборкой образов проверить место на разделе Docker. При нехватке выделить место для тестового стенда по согласованной схеме.
+  verification: Docker сообщает путь к данным, на выбранном разделе хватает места и сборка образов завершается.
