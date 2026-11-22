@@ -1,0 +1,47 @@
+---
+- name: Каталог настроек journald
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Журналы systemd хранить 30 дней
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf.d/ai-mentor.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart systemd-journald
+
+- name: Скрипт удаления старых повёрнутых журналов Docker
+  ansible.builtin.template:
+    src: log-cleanup.sh.j2
+    dest: /usr/local/sbin/ai-mentor-log-cleanup
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Юнит очистки журналов
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "/etc/systemd/system/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - src: log-cleanup.service.j2
+      dest: ai-mentor-log-cleanup.service
+    - src: log-cleanup.timer.j2
+      dest: ai-mentor-log-cleanup.timer
+  loop_control:
+    label: "{{ item.dest }}"
+
+- name: Очистка журналов по расписанию
+  ansible.builtin.systemd:
+    name: ai-mentor-log-cleanup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

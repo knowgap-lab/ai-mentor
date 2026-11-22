@@ -1,0 +1,12 @@
+[Unit]
+Description=Ночная проверка восстановления {{ stack_env.name }}
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile={{ state_root }}/{{ stack_env.name }}/env
+EnvironmentFile={{ state_root }}/{{ stack_env.name }}/secret.env
+EnvironmentFile={{ state_root }}/{{ stack_env.name }}/backup.env
+WorkingDirectory={{ install_root }}/src
+ExecStart={{ install_root }}/src/deploy/restore-check.sh

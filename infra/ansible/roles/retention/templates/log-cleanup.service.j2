@@ -1,0 +1,6 @@
+[Unit]
+Description=Удаление журналов Docker старше 30 дней
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/ai-mentor-log-cleanup

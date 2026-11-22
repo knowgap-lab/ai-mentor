@@ -1,0 +1,10 @@
+---
+# Пример для ansible-playbook --syntax-check. Это не живой гость.
+# 192.0.2.10 — сеть документации (TEST-NET-1). Домены example не куплены.
+all:
+  hosts:
+    guest:
+      ansible_host: 192.0.2.10
+      ansible_user: deploy
+      cookie_domain_prod: prod.example
+      cookie_domain_staging: staging.example
