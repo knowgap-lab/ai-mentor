@@ -54,6 +54,84 @@
       }
     ]
   },
+  "catalog": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "lesson_files": [
+      "content/tests/fixtures/demo-catalog/ct-demo/lessons/L01.yaml"
+    ],
+    "topic_cards": [
+      "content/tests/fixtures/demo-catalog/ct-demo/topics/D1.yaml"
+    ],
+    "catalog_ci": "pass",
+    "postgres_load": "pass",
+    "command": "bash tools/dev-start.sh",
+    "result": "seed loads demo-catalog into Postgres via tools/dev_seed.py (synthetic tg-demo-tutor / tg-demo-student)"
+  },
+  "lesson": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "transport": "live_api",
+    "depends_on": ["catalog"],
+    "environment": {
+      "server": "ENV=local AUTH_DEV_MODE=true go run ./core/cmd/server",
+      "origin": "http://127.0.0.1:8080",
+      "database_url_host": "postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable"
+    },
+    "steps": {
+      "clean_postgres": {
+        "result": "pass",
+        "command": "docker stop ai-mentor-dev && docker rm ai-mentor-dev && docker volume rm ai-mentor-dev-data && bash tools/dev-start.sh"
+      },
+      "tutor_creates_lesson": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/students/student-demo/lessons -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>' -d '{\"subject\":\"math\",\"starts_at\":\"2026-12-20T18:00:00Z\"}'",
+        "http_status": 201,
+        "content_type": "application/json",
+        "note": "live 201, lesson id 6b96e6156ec2149af607bccf20a2924b; then POST /lessons/{lesson}/move and POST /lessons/{lesson}/marks coverage=all"
+      },
+      "tutor_assigns_homework": {
+        "result": "pass",
+        "command": "GET /lessons/{lesson}/homework-draft; PATCH /lessons/{lesson}/homework-draft add ct-demo:D1.T01.S1.V003,V004 deadline 2026-03-20T18:00:00Z; curl -sS -X POST http://127.0.0.1:8080/lessons/{lesson}/homework-draft/issue -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>'",
+        "http_status": 201,
+        "content_type": "application/json",
+        "note": "assignment id 1420520e82f8af182de271273225546e"
+      },
+      "student_correct": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V003/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"9\",\"idempotency_key\":\"syn-attest-ok\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "verdict correct, points 2"
+      },
+      "student_incorrect": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V004/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"0\",\"idempotency_key\":\"syn-attest-bad\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "verdict wrong, points 0"
+      },
+      "tutor_sees_score_and_attempts": {
+        "result": "pass",
+        "command": "curl -sS http://127.0.0.1:8080/assignments/{assignment}/attempts -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "raw_input 9 correct/2 points and 0 wrong/0 points for both items"
+      },
+      "foreign_tutor_denied": {
+        "result": "pass",
+        "command": "curl -sS http://127.0.0.1:8080/assignments/{assignment}/attempts -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor-other>' -H 'X-CSRF-Token: <tutor-other>' (POST /auth/dev telegram_id=tg-demo-other role=tutor)",
+        "http_status": 403,
+        "content_type": "application/json",
+        "note": "forbidden for tutor-other (synthetic)"
+      },
+      "repeat_keeps_one_attempt": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V003/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"9\",\"idempotency_key\":\"syn-attest-ok\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "attempt_count": 1
+      }
+    }
+  },
   "findings": [],
   "open_findings": [],
   "blockers": []
