@@ -115,6 +115,7 @@ async function startPostgres(): Promise<{
     await waitPostgres(name);
     const port = await publishedPort(name);
     const dsn = `postgres://postgres@127.0.0.1:${port}/ai_mentor_test?sslmode=disable`;
+    await waitPostgresAccepts(dsn);
     return { name, dsn, stop };
   } catch (error) {
     await stop();
@@ -139,6 +140,58 @@ async function waitPostgres(name: string): Promise<void> {
     }
   }
   throw new Error(`postgres not ready:\n${last}`);
+}
+
+async function waitPostgresAccepts(dsn: string): Promise<void> {
+  const deadline = Date.now() + 60_000;
+  const stableChecks = 3;
+  const stableGapMs = 400;
+  let last = "";
+  let ok = 0;
+  while (Date.now() < deadline) {
+    try {
+      await probePostgresDsn(dsn);
+      ok += 1;
+      if (ok >= stableChecks) {
+        return;
+      }
+      await delay(stableGapMs);
+    } catch (error) {
+      ok = 0;
+      last = errorText(error);
+      await delay(300);
+    }
+  }
+  throw new Error(`postgres not accepting on published port:\n${last}`);
+}
+
+async function probePostgresDsn(dsn: string): Promise<void> {
+  try {
+    await run("pg_isready", ["-d", dsn], 5_000);
+    return;
+  } catch (error) {
+    const text = errorText(error);
+    if (!/enoent|not found|spawn pg_isready/i.test(text)) {
+      throw error;
+    }
+  }
+  const hostDsn = dsn.replace("127.0.0.1", "host.docker.internal");
+  await run(
+    "docker",
+    [
+      "run",
+      "--rm",
+      "--pull",
+      "never",
+      "--add-host",
+      "host.docker.internal:host-gateway",
+      "postgres:16.15",
+      "pg_isready",
+      "-d",
+      hostDsn,
+    ],
+    10_000,
+  );
 }
 
 async function publishedPort(name: string): Promise<string> {
