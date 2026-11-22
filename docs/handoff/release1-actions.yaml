@@ -3,11 +3,11 @@
   status: pending
   owner: integration-agent
   action: Снимок dev-check был на 8c863dad4290b9f3c632ee8794ea4261f322708f, не на вершине dc1e1604836ea8e7130031a4ee0d2151956d956e. Полная приёмка и main не закрыты.
-  verification: Снимок не покрывает dc1e160. Следующий открытый критерий — стенд.
+  verification: Записать активный Build ID, точный SHA и результат dev-start.sh и dev-check.sh на свежем запуске.
 - id: github-review-author
   status: pending
   owner: integration-agent
-  action: Получить два независимых ревью по D320 для технических PR 15, 16 и 18; если нужен GitHub APPROVED, запросить его у участника с правом ревью, отличного от автора. Коммиты PR 33, 40 и 42 есть в кандидате f9bc1d068f68ca6b1afe9f4e9eb9e1b387187a32 и отсутствуют в main. Отдельный зачёт двух ревью PR 40 этой записью не добавляется.
+  action: Сверить вошедшие патчи PR 15, 16, 18, 33 и 40 с актуальным кандидатом и собрать два независимых вердикта по D320 для технических правок замороженных тестов. Если нужен формальный GitHub APPROVED, привлечь участника с правом ревью.
   verification: Зафиксировать отдельные вердикты по точным SHA и зелёный CI технических PR.
 - id: merge-queue
   status: pending
@@ -23,7 +23,7 @@
   status: pending
   owner: local-qa-agent
   action: Стенд не сдвинулся. PR 35 не менялся. Образы dc1e160 собраны локально. Push в ghcr.io/knowgap-lab отклонён, installation not allowed to Create organization package. Живой VM нет.
-  verification: Не сливать PR 35. Живой VM нет. Это следующий открытый критерий.
+  verification: Согласовать доступный путь публикации или доставки образов одного SHA, обновить манифест PR 35 и подтвердить чистый запуск Ubuntu VM.
 - id: visual-pilot
   status: pending
   owner: user
@@ -32,23 +32,23 @@
 - id: cloud-agent-plan-limit
   status: pending
   owner: user
-  action: Приёмщик уже опубликован в PR 37 на 50328c6ffe6b70adcee73cf8811df3bad9ea4709. Эта запись не снимает прошлый лимит одновременных агентов и не принимает выпуск.
-  verification: 15 тестов PR 37 прошли, python3 tools/release1_done.py на голове PR 17 даёт код 1. Следующий открытый критерий — стенд. Снимок сборки уже прогнан.
+  action: Перед следующим запуском сверить фактические доступные слоты аккаунта. Перенесённый приёмщик опубликован в PR 55 на 3ad3c9f.
+  verification: Новый облачный пакет запущен в пределах включённого лимита. При отсутствии слотов продолжить подходящую работу локально.
 - id: screens-csrf-origin
   status: done
   owner: local-qa-agent
   action: На 6f7f54016e89f71fb369efdd2ba6366bdbfd78a9 кнопка срока дала PATCH homework-draft 200. Deadline 2026-12-01T15:00:00Z, на экране 18:00 Минск, APP_ORIGIN http://127.0.0.1:8080. Прежний 403 на a8d2bec остаётся в старой записи.
   verification: 200 записан. Это не приёмка экранов и не приёмка выпуска.
 - id: seed-ci
-  status: pending
+  status: done
   owner: integration-agent
-  action: PR 44 на 1ceb14fc22125dc7a2da7b050531c38d286c6c1b имеет два прогона с кодом 0, третий без новых строк и approve комментарием. CI ещё не зелёный.
-  verification: Зелёный CI этого SHA. До этого сид не засчитан.
+  action: PR 44 на 1ceb14fc22125dc7a2da7b050531c38d286c6c1b имеет два прогона с кодом 0, третий без новых строк и approve комментарием. PR влит в ветку кандидата.
+  verification: При сверке 22 ноября code-check и docs-check зелёные.
 - id: consent-recheck-ci
-  status: pending
+  status: done
   owner: integration-agent
-  action: PR 46 на e4a9e62186632fe05ffe87d649abf0b68d46b5a8 сдал отказ без согласия 423, приглашение 201, перепроверку 0 в 2, сохранённый старый вердикт и чужой 403. CI не засчитан.
-  verification: Зелёный CI этого SHA. До этого согласие и перепроверка не засчитаны.
+  action: PR 46 на e4a9e62186632fe05ffe87d649abf0b68d46b5a8 сдал отказ без согласия 423, приглашение 201, перепроверку 0 в 2, сохранённый старый вердикт и чужой 403. Результат вошёл в историю кандидата через #34.
+  verification: При сверке 22 ноября code-check и docs-check зелёные.
 - id: docker-data-root
   status: pending
   owner: repository-owner
