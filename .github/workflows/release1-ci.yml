@@ -65,10 +65,28 @@ jobs:
     name: generation
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — generation
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - name: Regenerate committed artifacts (D97, gen/README, DS-R5)
         run: |
-          echo "GAP: docs/contracts/README.md — «Генерация типов (не настроена)»; скрипта перегенерации с проверкой пустого diff в репозитории нет."
-          exit 1
+          set -euo pipefail
+          if [[ -x tools/generate.sh ]]; then
+            tools/generate.sh
+          else
+            (cd web && npm run theme:css)
+          fi
+      - name: Fail only when regenerated output differs from git
+        run: git diff --exit-code
 
   build:
     name: build
@@ -89,19 +107,38 @@ jobs:
     name: storybook
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — storybook
-        run: |
-          echo "GAP: F1 (briefs/CURSOR-PROJECT-RELEASE1.md, D315–D318) требует Storybook; в web/package.json нет скрипта storybook."
-          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - name: Storybook production build (D315)
+        run: npm run build-storybook
+        working-directory: web
 
   size-limit:
     name: size-limit
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — size-limit
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - name: Bundle size budgets (D315)
         run: |
-          echo "GAP: F1 (briefs/CURSOR-PROJECT-RELEASE1.md, D315–D318) требует size-limit; конфигурации и команды в репозитории нет."
-          exit 1
+          if node -e 'const s=require("./package.json").scripts||{}; process.exit(s["size-limit"]?0:1)'; then
+            npm run size-limit
+          else
+            npx --no-install size-limit
+          fi
+        working-directory: web
 
   e2e:
     name: e2e
@@ -167,14 +204,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: hashicorp/setup-terraform@v3
         with:
-          python-version-file: .python-version
-          cache: pip
-          cache-dependency-path: tools/requirements.txt
-      - name: Python venv
+          terraform_wrapper: false
+      - name: Terraform contract for Ubuntu VM path (brief §8, infra/terraform)
         run: |
-          python -m venv .venv
-          .venv/bin/pip install -r tools/requirements.txt
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
-      - run: pytest deploy/
+          set -euo pipefail
+          cd infra/terraform
+          terraform fmt -check -recursive
+          terraform init -input=false
+          terraform validate
+          terraform test
