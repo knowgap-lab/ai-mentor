@@ -77,14 +77,14 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: web
-      - name: Regenerate committed artifacts (D97, gen/README, DS-R5)
+      - name: Contract type generation (D97, gen/README)
         run: |
           set -euo pipefail
-          if [[ -x tools/generate.sh ]]; then
-            tools/generate.sh
-          else
-            (cd web && npm run theme:css)
+          if [[ ! -f tools/generate.sh ]]; then
+            echo "Отсутствует tools/generate.sh: контрактная генерация типов из docs/contracts/ (D97, gen/README) не настроена."
+            exit 1
           fi
+          bash tools/generate.sh
       - name: Fail only when regenerated output differs from git
         run: git diff --exit-code
 
@@ -204,14 +204,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/setup-python@v5
         with:
-          terraform_wrapper: false
-      - name: Terraform contract for Ubuntu VM path (brief §8, infra/terraform)
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - name: Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - name: Ubuntu VM acceptance (brief §8, IAC-VM / QA-VM)
+        env:
+          VM_HYPERVISOR_ACCESS: ${{ secrets.VM_HYPERVISOR_ACCESS }}
+          QA_VM_SSH_HOST: ${{ secrets.QA_VM_SSH_HOST }}
         run: |
           set -euo pipefail
-          cd infra/terraform
-          terraform fmt -check -recursive
-          terraform init -input=false
-          terraform validate
-          terraform test
+          if [[ -x tools/vm-acceptance.sh ]]; then
+            tools/vm-acceptance.sh
+          elif [[ -f deploy/install_repro_test.py ]]; then
+            pytest deploy/install_repro_test.py
+          else
+            echo "§8 Ubuntu VM: нет tools/vm-acceptance.sh и deploy/install_repro_test.py (проверка «с нуля VM → развёртывание → перезагрузка», brief §8)."
+            if [[ -z "${VM_HYPERVISOR_ACCESS:-}" && -z "${QA_VM_SSH_HOST:-}" ]]; then
+              echo "В репозитории нет секретов GitHub VM_HYPERVISOR_ACCESS (доступ к гипервизору для одноразовой VM) и QA_VM_SSH_HOST (SSH к выделенной гостевой Ubuntu): облачная проверка §8 не может выполняться здесь."
+            fi
+            exit 1
+          fi
