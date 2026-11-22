@@ -38,10 +38,11 @@
       dest: ai-mentor-log-cleanup.timer
   loop_control:
     label: "{{ item.dest }}"
+  register: retention_log_units
 
 - name: Очистка журналов по расписанию
   ansible.builtin.systemd:
     name: ai-mentor-log-cleanup.timer
     enabled: true
     state: started
-    daemon_reload: false
+    daemon_reload: "{{ retention_log_units is changed }}"
