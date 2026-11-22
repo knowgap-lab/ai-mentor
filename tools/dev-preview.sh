@@ -21,7 +21,12 @@ if [[ "$docker_host" != unix://* ]]; then
   exit 1
 fi
 docker_cmd=(env -u DOCKER_CONTEXT docker --host "$docker_host")
-"${docker_cmd[@]}" info --format '{{.ServerVersion}}' >/dev/null
+docker_version="$("${docker_cmd[@]}" info --format '{{.ServerVersion}}')"
+# Older engines can expose localhost-published ports on the local network.
+if [[ ! "$docker_version" =~ ^([0-9]+)[.] ]] || (( 10#${BASH_REMATCH[1]} < 28 )); then
+  echo "Для изоляции PostgreSQL нужен Docker Engine 28 или новее (сейчас: $docker_version)." >&2
+  exit 1
+fi
 
 sha="$(git rev-parse HEAD)"
 source_state="рабочая копия без изменений"
