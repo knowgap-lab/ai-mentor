@@ -267,8 +267,12 @@ def _alert_catalog_load() -> None:
     """LD-R10: служебный чат, без текста ошибки и без секрета в аргументах."""
     path = Path(__file__).resolve().parents[2] / "deploy" / "ops-alert.sh"
     try:
-        subprocess.run([os.fspath(path), "catalog"], check=False)
-    except OSError:
+        subprocess.run(
+            [os.fspath(path), "catalog"],
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
         return
 
 

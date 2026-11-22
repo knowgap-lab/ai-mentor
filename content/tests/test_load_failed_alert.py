@@ -28,8 +28,11 @@ def test_ld_r10_load_failed_calls_catalog_alert(monkeypatch) -> None:
 
     seen: list[list[str]] = []
 
-    def record(args, **_kwargs):
+    timeouts: list[float | None] = []
+
+    def record(args, **kwargs):
         seen.append([str(item) for item in args])
+        timeouts.append(kwargs.get("timeout"))
         return subprocess.CompletedProcess(args, 0)
 
     monkeypatch.setattr(loader, "_psql", fail_psql)
@@ -50,6 +53,7 @@ def test_ld_r10_load_failed_calls_catalog_alert(monkeypatch) -> None:
     assert len(seen) == 1
     assert seen[0][0].endswith("deploy/ops-alert.sh")
     assert seen[0][1] == "catalog"
+    assert timeouts == [15]
 
 
 def test_ld_r10_other_refusal_does_not_alert(monkeypatch) -> None:

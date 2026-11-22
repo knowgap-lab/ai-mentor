@@ -13,6 +13,8 @@ fi
 
 body=$(printf '{"chat_id":"%s","text":"%s"}' "${OPS_CHAT_ID}" "${text}")
 curl -fsS -o /dev/null \
+  --connect-timeout 5 \
+  --max-time 10 \
   --variable '%TELEGRAM_BOT_TOKEN' \
   -H "Content-Type: application/json" \
   -d "${body}" \

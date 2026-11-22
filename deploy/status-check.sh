@@ -6,9 +6,10 @@ set -eu
 
 url=${1:?}
 state=${2:?}
+url=${url%/}
 case ${url} in
   */status) ;;
-  *) url="${url%/}/status" ;;
+  *) url="${url}/status" ;;
 esac
 
 fails=0

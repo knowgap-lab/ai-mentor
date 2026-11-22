@@ -67,6 +67,25 @@ def _serve(code: int) -> tuple[ThreadingHTTPServer, str]:
     return server, f"http://{host}:{port}/status"
 
 
+def test_alert_send_curl_has_timeouts() -> None:
+    text = (DEPLOY / "alert-send.sh").read_text(encoding="utf-8")
+    if "--connect-timeout" not in text or "--max-time" not in text:
+        raise AssertionError("curl без ограничения времени")
+
+
+def test_op_r17_status_url_trailing_slash(tmp_path: Path) -> None:
+    up, up_url = _serve(200)
+    state = tmp_path / "status"
+    try:
+        result = _run("status-check.sh", f"{up_url}/", str(state))
+        if result.returncode != 0:
+            raise AssertionError(result.stderr or result.stdout)
+        if state.read_text(encoding="utf-8") != "0\n":
+            raise AssertionError(state.read_text(encoding="utf-8"))
+    finally:
+        up.shutdown()
+
+
 def test_op_r17_three_failures_alert(tmp_path: Path) -> None:
     down, down_url = _serve(503)
     up, up_url = _serve(200)
