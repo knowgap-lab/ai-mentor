@@ -29,7 +29,7 @@
     repo: "{{ source_repository }}"
     dest: "{{ install_root }}/src"
     version: "{{ app_sha }}"
-    force: true
+    force: false
 
 - name: Каталоги состояния
   ansible.builtin.file:

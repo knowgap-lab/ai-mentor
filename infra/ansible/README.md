@@ -4,7 +4,7 @@
 
 SHA и репозитории образов задаются в `release.json` рядом с плейбуком. На госте клонируется тот же SHA; `IMAGE_TAG` у prod и staging совпадает с ним (OP-R9).
 
-Повторный запуск рассчитан на отсутствие неожиданных изменений: пакеты закреплены версией, юниты — шаблоном, `docker compose up` без `--force-recreate`, загрузчик каталога в обычный запуск не входит.
+Повторный запуск на уже настроенном госте с тем же SHA в `release.json` должен дать **ноль изменений** в recap Ansible (`changed=0`). Пакеты закреплены версией, индекс apt не обновляется повторно, `docker compose pull` при повторе не вызывается, `migrate` не запускается снова, `docker compose up -d --no-recreate` при повторе не считается изменением. Загрузчик каталога в обычный запуск не входит (OP-R8). Новый SHA в `release.json` снимает маркер converge и снова выполняет bootstrap, включая миграцию.
 
 Это не приёмка VM. Запуск на выделенной Ubuntu в этой сессии не выполнялся.
 
@@ -48,12 +48,8 @@ ansible-playbook -i inventory/guest.yml site.yml
 |------|-----------------|------------|
 | `access` | OP-R19 | `ufw`, `ca-certificates`, `curl`, `gnupg`, `git`, `python3`; UFW: deny incoming, allow SSH/80/443; SSH без root и без пароля при наличии ключа |
 | `engine` | — | Репозиторий Docker CE с закреплёнными версиями пакетов; `daemon.json` (ограничение логов); служба `docker` включена |
-| `stack` | OP-R2, OP-R7, OP-R9, `deploy/compose*.yml` | Клон git на SHA; каталоги `/etc/ai-mentor`; env-файлы; при готовых секретах — `docker compose pull` и `up` для `db`, `gotenberg`, `migrate`, `core`, `web` (prod и staging); юниты backup/restore (таймеры выключены без `backup.env`) |
+| `stack` | OP-R2, OP-R7, OP-R9, `deploy/compose*.yml` | Клон git на SHA; каталоги `/etc/ai-mentor`; env-файлы; при готовых секретах — первичный bootstrap: `pull` (не в recap), `up` db/gotenberg, `run --rm migrate`, `up` core/web, маркер `.converge_sha`; повтор — только `up -d --no-recreate` без pull и без migrate (`changed_when: false`); юниты backup/restore (таймеры выключены без `backup.env`) |
 | `retention` | OP-R18 | `journald` 30 дней; таймер очистки повёрнутых логов Docker |
-
-## Повторный запуск
-
-Допустимые изменения при втором converge перечислены в исходном пакете IAC-VM (индекс apt, новый слой образа, несовпадение контейнера). Каталог (`--profile catalog`) в обычный запуск не входит (OP-R8).
 
 ## Пробелы (в спецификации нет — в плейбуке нет)
 

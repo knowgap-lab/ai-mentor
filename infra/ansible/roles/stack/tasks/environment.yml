@@ -1,4 +1,18 @@
 ---
+- name: Базовый вызов compose {{ stack_env.name }}
+  ansible.builtin.set_fact:
+    stack_compose_argv:
+      - docker
+      - compose
+      - --project-directory
+      - "{{ install_root }}/src"
+      - --env-file
+      - "{{ state_root }}/{{ stack_env.name }}/env"
+      - --env-file
+      - "{{ state_root }}/{{ stack_env.name }}/secret.env"
+      - -f
+      - "{{ install_root }}/src/{{ stack_env.compose }}"
+
 - name: Несекретный env {{ stack_env.name }}
   ansible.builtin.template:
     src: env.j2
@@ -45,23 +59,77 @@
   loop_control:
     label: "{{ item.item }}"
 
+- name: Маркер converge {{ stack_env.name }}
+  ansible.builtin.stat:
+    path: "{{ state_root }}/{{ stack_env.name }}/.converge_sha"
+  register: stack_marker
+
+- name: Прочитать маркер converge {{ stack_env.name }}
+  ansible.builtin.slurp:
+    src: "{{ state_root }}/{{ stack_env.name }}/.converge_sha"
+  register: stack_marker_slurp
+  when: stack_marker.stat.exists
+
+- name: Нужен первичный bootstrap {{ stack_env.name }}
+  ansible.builtin.set_fact:
+    stack_bootstrap: >-
+      {{
+        not stack_marker.stat.exists
+        or (
+          stack_marker.stat.exists
+          and (stack_marker_slurp.content | b64decode | trim) != app_sha
+        )
+      }}
+
 - name: Скачать образы {{ stack_env.name }}
   ansible.builtin.command:
-    argv: "{{ ['docker', 'compose', '--project-directory', install_root + '/src', '--env-file', state_root + '/' + stack_env.name + '/env', '--env-file', state_root + '/' + stack_env.name + '/secret.env', '-f', install_root + '/src/' + stack_env.compose, 'pull', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
-  register: stack_pull
-  changed_when: >-
-    ('Pulled' in (stack_pull.stdout + stack_pull.stderr))
-    or ('Downloaded newer image' in (stack_pull.stdout + stack_pull.stderr))
+    argv: "{{ stack_compose_argv + ['pull', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
+  when: stack_bootstrap | bool
+  changed_when: false
 
-- name: Поднять сервисы {{ stack_env.name }}
+- name: Поднять db и gotenberg {{ stack_env.name }}
   ansible.builtin.command:
-    argv: "{{ ['docker', 'compose', '--project-directory', install_root + '/src', '--env-file', state_root + '/' + stack_env.name + '/env', '--env-file', state_root + '/' + stack_env.name + '/secret.env', '-f', install_root + '/src/' + stack_env.compose, 'up', '-d', '--remove-orphans', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
-  register: stack_up
+    argv: "{{ stack_compose_argv + ['up', '-d', 'db', 'gotenberg'] }}"
+  when: stack_bootstrap | bool
+  register: stack_bootstrap_db
   changed_when: >-
-    ('Created' in stack_up.stdout)
-    or ('Started' in stack_up.stdout)
-    or ('Recreated' in stack_up.stdout)
-    or ('Removed' in stack_up.stdout)
+    ('Created' in stack_bootstrap_db.stdout)
+    or ('Started' in stack_bootstrap_db.stdout)
+
+- name: Миграция один раз {{ stack_env.name }}
+  ansible.builtin.command:
+    argv: "{{ stack_compose_argv + ['run', '--rm', 'migrate'] }}"
+  when: stack_bootstrap | bool
+  register: stack_bootstrap_migrate
+  changed_when: stack_bootstrap_migrate.rc == 0
+
+- name: Поднять core и web {{ stack_env.name }}
+  ansible.builtin.command:
+    argv: "{{ stack_compose_argv + ['up', '-d', '--no-recreate', 'core', 'web'] }}"
+  when: stack_bootstrap | bool
+  register: stack_bootstrap_app
+  changed_when: >-
+    ('Created' in stack_bootstrap_app.stdout)
+    or ('Started' in stack_bootstrap_app.stdout)
+
+- name: Запомнить converge {{ stack_env.name }}
+  ansible.builtin.copy:
+    dest: "{{ state_root }}/{{ stack_env.name }}/.converge_sha"
+    content: "{{ app_sha }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  when: stack_bootstrap | bool
+
+- name: Проверить сервисы {{ stack_env.name }}
+  ansible.builtin.command:
+    argv: >-
+      {{
+        stack_compose_argv
+        + ['up', '-d', '--no-recreate', 'db', 'gotenberg', 'core', 'web']
+      }}
+  when: not (stack_bootstrap | bool)
+  changed_when: false
 
 - name: backup.env {{ stack_env.name }}
   ansible.builtin.stat:
@@ -86,13 +154,14 @@
       dest: "ai-mentor-restore-{{ stack_env.name }}.timer"
   loop_control:
     label: "{{ item.dest }}"
+  register: stack_units
 
 - name: Таймеры копий {{ stack_env.name }}
   ansible.builtin.systemd:
     name: "{{ item }}"
     enabled: "{{ stack_backup.stat.exists | bool }}"
     state: "{{ 'started' if stack_backup.stat.exists else 'stopped' }}"
-    daemon_reload: true
+    daemon_reload: "{{ stack_units is changed }}"
   loop:
     - "ai-mentor-backup-{{ stack_env.name }}.timer"
     - "ai-mentor-restore-{{ stack_env.name }}.timer"

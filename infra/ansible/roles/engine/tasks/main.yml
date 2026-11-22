@@ -57,12 +57,10 @@
   changed_when: false
   failed_when: false
 
-- name: Обновить индекс apt, если источник новый или пакета нет
+- name: Обновить индекс apt, если пакета Docker ещё нет
   ansible.builtin.apt:
     update_cache: true
-  when: >-
-    engine_source.changed or
-    (engine_installed.results | selectattr("rc", "ne", 0) | list | length > 0)
+  when: engine_installed.results | selectattr("rc", "ne", 0) | list | length > 0
 
 - name: Поставить закреплённые пакеты Docker
   ansible.builtin.apt:
