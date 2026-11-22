@@ -1,0 +1,5 @@
+---
+ssh_port: 22
+install_root: /opt/ai-mentor
+state_root: /etc/ai-mentor
+ghcr_username: ""

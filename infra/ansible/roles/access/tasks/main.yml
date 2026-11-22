@@ -1,0 +1,86 @@
+---
+- name: Базовые пакеты, индекс apt только если пакета нет
+  ansible.builtin.command:
+    argv: ["dpkg-query", "-W", "{{ item }}"]
+  loop:
+    - ufw
+    - ca-certificates
+    - curl
+    - gnupg
+    - git
+    - python3
+  register: access_packages
+  changed_when: false
+  failed_when: false
+
+- name: Обновить индекс apt перед первой установкой пакета
+  ansible.builtin.apt:
+    update_cache: true
+  when: access_packages.results | selectattr("rc", "ne", 0) | list | length > 0
+
+- name: Поставить пакеты доступа
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - ca-certificates
+      - curl
+      - gnupg
+      - git
+      - python3
+    state: present
+
+- name: Вход Ansible не под root
+  ansible.builtin.assert:
+    that:
+      - ansible_user != "root"
+      - ssh_port | int > 0
+      - ssh_port | int < 65536
+    fail_msg: >-
+      Вход под root закрывается (OP-R19). Ansible должен заходить другим
+      пользователем с sudo, иначе сервер останется без входа.
+
+- name: Проверить ключ пользователя Ansible
+  ansible.builtin.stat:
+    path: "/home/{{ ansible_user }}/.ssh/authorized_keys"
+  register: access_authorized_keys
+
+- name: Не выключать пароль, пока ключа нет
+  ansible.builtin.assert:
+    that:
+      - access_authorized_keys.stat.exists
+      - access_authorized_keys.stat.size | int > 0
+    fail_msg: >-
+      Вход по паролю не выключается: нет authorized_keys у пользователя Ansible (OP-R19).
+
+- name: Прочитать ufw
+  ansible.builtin.command: ufw status verbose
+  register: access_ufw
+  changed_when: false
+
+- name: Запретить входящие, кроме открытых портов
+  ansible.builtin.command: ufw default deny incoming
+  when: "'deny (incoming)' not in access_ufw.stdout"
+  changed_when: true
+
+- name: Разрешить SSH, 80 и 443
+  ansible.builtin.command: "ufw allow {{ item }}/tcp"
+  loop:
+    - "{{ ssh_port }}"
+    - "80"
+    - "443"
+  register: access_allow
+  changed_when: "'Skipping' not in access_allow.stdout"
+
+- name: Включить ufw
+  ansible.builtin.command: ufw --force enable
+  when: "'Status: active' not in access_ufw.stdout"
+  changed_when: true
+
+- name: Закрыть пароль и вход root
+  ansible.builtin.template:
+    src: sshd.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ai-mentor.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload ssh

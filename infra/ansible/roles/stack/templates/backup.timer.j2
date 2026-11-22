@@ -1,0 +1,10 @@
+[Unit]
+Description=Ежедневная копия {{ stack_env.name }}
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+Unit=ai-mentor-backup-{{ stack_env.name }}.service
+
+[Install]
+WantedBy=timers.target
