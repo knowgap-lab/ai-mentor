@@ -12,9 +12,11 @@ docs/handoff/release1-attestation.json лежит вне проверяемог�
 --quick, частичный зелёный прогон, открытый PR и отчёт «принято» без
 доказательств не дают код 0. Ошибка самого приёмщика даёт код 1.
 
-Список операций и экранов берётся из контрактов и web.md рядом с этим
-скриптом (кроме putRtImport, как в tools/release1_inventory.py). Код
-читается только из дерева указанного коммита.
+Список операций и экранов берётся из контрактов и web.md проверяемого
+коммита (кроме putRtImport, как в tools/release1_inventory.py). Перед
+приёмкой обновите origin/main командой git fetch origin main. Приёмщик
+сверяет историю Git локально. Происхождение остальных записей отчёта
+подтверждается при ревью по исходным результатам прогонов.
 """
 
 from __future__ import annotations
@@ -169,6 +171,25 @@ def resolve_sha(repo: Path, ref: str) -> str:
         message = proc.stderr.strip() or f"не один коммит: {ref}"
         raise LookupError(message)
     return sha
+
+
+def main_history_error(repo: Path, sha: str) -> str:
+    try:
+        main_sha = resolve_sha(repo, "refs/remotes/origin/main")
+    except LookupError:
+        return "нет origin/main, обновите его командой git fetch origin main"
+    proc = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", sha, main_sha],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode == 0:
+        return ""
+    if proc.returncode == 1:
+        return "SHA не найден в истории origin/main. Проверьте глубину клона"
+    return f"не удалось сверить историю origin/main: {proc.stderr.strip()}"
 
 
 def extract_commit(repo: Path, sha: str, dest: Path) -> None:
@@ -787,10 +808,11 @@ def check_attestation(evidence, sha: str, evidence_error: str) -> Check:
     return Check("attestation", "pass", "")
 
 
-def check_integration(evidence, sha: str) -> Check:
-    problems = []
+def check_integration(evidence, sha: str, history_error: str) -> Check:
+    problems = [history_error] if history_error else []
     if not isinstance(evidence, dict):
-        return Check("integration", "fail", "нет доказательства слияния в main")
+        problems.append("нет доказательства слияния в main")
+        return Check("integration", "fail", "\n".join(problems))
     pr = evidence.get("pull_request")
     state = pr.get("state") if isinstance(pr, dict) else None
     if state == "open":
@@ -1230,11 +1252,11 @@ def check_blockers(evidence) -> Check:
 
 
 def proof_checks(
-    evidence, sha: str, screens: list[str], evidence_error: str
+    evidence, sha: str, screens: list[str], evidence_error: str, history_error: str
 ) -> list[Check]:
     return [
         check_attestation(evidence, sha, evidence_error),
-        check_integration(evidence, sha),
+        check_integration(evidence, sha, history_error),
         check_ci(evidence, sha),
         check_catalog(evidence, sha),
         check_lesson(evidence, sha),
@@ -1280,6 +1302,7 @@ def evaluate(
     evidence=None,
     sha: str = "",
     evidence_error: str = "",
+    history_error: str = "",
     quick: bool = False,
 ) -> list[Check]:
     package_error = ""
@@ -1296,7 +1319,7 @@ def evaluate(
         check_journal(tree, runner),
         check_install(tree, runner),
         check_observability(tree, sources, runner),
-        *proof_checks(evidence, sha, screens, evidence_error),
+        *proof_checks(evidence, sha, screens, evidence_error, history_error),
     ]
     if quick:
         checks.insert(0, Check("quick", "fail", "--quick не подтверждает завершение"))
@@ -1331,6 +1354,23 @@ def floor_checks(ops, screens) -> list[Check] | None:
     return short
 
 
+def evaluate_commit(repo: Path, tree: Path, sha: str) -> list[Check]:
+    ops, screens = load_mandatory(tree)
+    short = floor_checks(ops, screens)
+    if short is not None:
+        return short
+    evidence, evidence_error = load_attestation(repo, tree)
+    return evaluate(
+        tree,
+        ops,
+        screens,
+        evidence=evidence,
+        sha=sha,
+        evidence_error=evidence_error,
+        history_error=main_history_error(repo, sha),
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if "--quick" in args:
@@ -1349,18 +1389,12 @@ def main(argv: list[str] | None = None) -> int:
     repo = Path(__file__).resolve().parent.parent
     try:
         sha = resolve_sha(repo, ref)
-        ops, screens = load_mandatory(repo)
     except LookupError as exc:
         sys.stdout.write(
             "sha: -\nresult: unfinished\nexit: 1\nfirst_failing_check: sha\n"
             f"sha: fail\n  {exc}\n"
         )
         return 1
-    short = floor_checks(ops, screens)
-    if short is not None:
-        code = exit_code(short)
-        sys.stdout.write(format_report("-", short, code))
-        return code
     with tempfile.TemporaryDirectory(prefix="release1-done-") as tmp:
         tree = Path(tmp)
         try:
@@ -1371,17 +1405,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"sha: fail\n  {exc}\n"
             )
             return 1
-        evidence, evidence_error = load_attestation(repo, tree)
-        checks = collect_checks(
-            lambda: evaluate(
-                tree,
-                ops,
-                screens,
-                evidence=evidence,
-                sha=sha,
-                evidence_error=evidence_error,
-            )
-        )
+        checks = collect_checks(lambda: evaluate_commit(repo, tree, sha))
     code = exit_code(checks)
     sys.stdout.write(format_report(sha, checks, code))
     return code

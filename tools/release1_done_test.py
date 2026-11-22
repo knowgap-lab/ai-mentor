@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import io
 import json
+import subprocess
 import sys
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -493,6 +495,60 @@ class Release1DoneTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("unfinished", buf.getvalue())
         self.assertNotIn("all_checks_passed", buf.getvalue())
+
+    def test_inventory_is_loaded_from_exported_commit(self) -> None:
+        sha = "a" * 40
+        buf = io.StringIO()
+        with (
+            patch.object(done, "resolve_sha", return_value=sha),
+            patch.object(done, "extract_commit") as extract,
+            patch.object(done, "load_mandatory", return_value=([], [])) as load,
+            redirect_stdout(buf),
+        ):
+            code = done.main(["candidate"])
+        repo, exported_sha, snapshot = extract.call_args.args
+        self.assertEqual(exported_sha, sha)
+        self.assertNotEqual(repo, snapshot)
+        load.assert_called_once_with(snapshot)
+        self.assertEqual(code, 1)
+        self.assertIn(f"sha: {sha}", buf.getvalue())
+        self.assertIn("first_failing_check: operations", buf.getvalue())
+
+    def test_main_history_uses_remote_tracking_ref(self) -> None:
+        sha, main_sha = "a" * 40, "b" * 40
+        repo = Path("/repo")
+        with (
+            patch.object(done, "resolve_sha", return_value=main_sha) as resolve,
+            patch.object(
+                done.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess([], 0),
+            ) as git,
+        ):
+            self.assertEqual(done.main_history_error(repo, sha), "")
+        resolve.assert_called_once_with(repo, "refs/remotes/origin/main")
+        self.assertEqual(
+            git.call_args.args[0], ["git", "merge-base", "--is-ancestor", sha, main_sha]
+        )
+
+    def test_integration_report_cannot_replace_main_history(self) -> None:
+        sha = "a" * 40
+        with (
+            patch.object(done, "resolve_sha", return_value="b" * 40),
+            patch.object(
+                done.subprocess,
+                "run",
+                return_value=subprocess.CompletedProcess([], 1),
+            ),
+            self._tree() as root,
+        ):
+            history_error = done.main_history_error(root, sha)
+            checks = run(root, sha=sha, history_error=history_error)
+        self.assertEqual(done.exit_code(checks), 1)
+        self.assertEqual(self._status(checks, "integration"), "fail")
+        self.assertIn(
+            "SHA не найден в истории origin/main", self._detail(checks, "integration")
+        )
 
     def test_quick_partial_open_pr_and_bare_acceptance_are_unfinished(self) -> None:
         buf = io.StringIO()
