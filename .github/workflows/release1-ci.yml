@@ -1,0 +1,180 @@
+name: release1-ci
+
+# Имена jobs совпадают с tools/release1_done.py CI_JOBS для attestation.
+# Реальные шаги берутся только из спецификаций выпуска; иначе job падает с GAP.
+on:
+  pull_request:
+  push:
+    branches: [main, feat/release1-demo]
+  merge_group:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tools-check-sh:
+    name: tools/check.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - name: Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: tools/check.sh
+
+  tools-check-code-sh:
+    name: tools/check-code.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - run: tools/check-code.sh
+
+  generation:
+    name: generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — generation
+        run: |
+          echo "GAP: docs/contracts/README.md — «Генерация типов (не настроена)»; скрипта перегенерации с проверкой пустого diff в репозитории нет."
+          exit 1
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+
+  storybook:
+    name: storybook
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — storybook
+        run: |
+          echo "GAP: F1 (briefs/CURSOR-PROJECT-RELEASE1.md, D315–D318) требует Storybook; в web/package.json нет скрипта storybook."
+          exit 1
+
+  size-limit:
+    name: size-limit
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — size-limit
+        run: |
+          echo "GAP: F1 (briefs/CURSOR-PROJECT-RELEASE1.md, D315–D318) требует size-limit; конфигурации и команды в репозитории нет."
+          exit 1
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: browser-actions/setup-chrome@v1
+      - name: Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: npm ci --ignore-scripts
+        working-directory: web
+      - run: npm ci --ignore-scripts
+        working-directory: tools/e2e
+      - run: npm test
+        working-directory: tools/e2e
+
+  contract-live:
+    name: contract-live
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — contract-live
+        run: |
+          echo "GAP: ни один бриф выпуска не задаёт команду CI с именем contract-live; tools/check.sh и scenario/run_test.go не заменяют такой job."
+          exit 1
+
+  docker:
+    name: docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — docker
+        run: |
+          echo "GAP: отдельной проверки CI с именем docker в спецификациях нет (README и tools/dev-*.sh используют Docker внутри e2e и локальных скриптов)."
+          exit 1
+
+  chrome:
+    name: chrome
+    runs-on: ubuntu-latest
+    steps:
+      - name: GAP — chrome
+        run: |
+          echo "GAP: отдельной проверки CI с именем chrome в спецификациях нет (briefs/r1-e1-browser.md и Playwright channel: chrome входят в job e2e)."
+          exit 1
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - name: Python venv
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+      - run: pytest deploy/
