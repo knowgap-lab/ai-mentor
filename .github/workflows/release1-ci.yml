@@ -169,6 +169,8 @@ jobs:
         working-directory: web
       - run: npm ci --ignore-scripts
         working-directory: tools/e2e
+      - name: Prefetch Postgres for e2e (--pull never in tests)
+        run: docker pull postgres:16.15
       - run: npm test
         working-directory: tools/e2e
 
