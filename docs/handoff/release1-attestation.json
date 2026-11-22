@@ -64,8 +64,8 @@
     ],
     "catalog_ci": "pass",
     "postgres_load": "pass",
-    "command": "bash tools/dev-start.sh",
-    "result": "seed loads demo-catalog into Postgres via tools/dev_seed.py (synthetic tg-demo-tutor / tg-demo-student)"
+    "command": "cd content && ../.venv/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; DATABASE_URL=postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable ../.venv/bin/python tools/dev_seed.py",
+    "result": "catalog_ci exit 0, no problems; loader wrote catalog.load environment=staging catalog_version=1 for synthetic demo-catalog (lesson L01.yaml, topic D1.yaml)"
   },
   "lesson": {
     "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
