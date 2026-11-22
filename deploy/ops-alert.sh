@@ -9,7 +9,7 @@
 set -eu
 
 reason=${1:?}
-root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+root=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 case ${reason} in
   disk)

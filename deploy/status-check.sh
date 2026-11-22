@@ -37,6 +37,6 @@ fi
 fails=$((fails + 1))
 printf '%s\n' "${fails}" > "${state}"
 if [ "${fails}" -eq 3 ]; then
-  root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+  root=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
   "${root}/alert-send.sh" "сервис недоступен"
 fi

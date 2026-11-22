@@ -32,7 +32,7 @@ case ${open} in
     ;;
 esac
 
-root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+root=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 if [ "${percent}" -le 80 ]; then
   printf '%s\n' 0 > "${state}"

@@ -15,12 +15,12 @@ import (
 // ErrUnavailable — Gotenberg не задан, не ответил или не вернул PDF.
 var ErrUnavailable = errors.New("pdf unavailable")
 
-const gotenbergEnv = "PDF_GOTENBERG_URL"
+const gotenbergEnv = "GOTENBERG_URL"
 
 var renderClient = &http.Client{Timeout: 60 * time.Second}
 
 // Render отправляет HTML в Gotenberg и возвращает байты PDF.
-// Адрес читается из PDF_GOTENBERG_URL при каждом вызове.
+// Адрес читается из GOTENBERG_URL при каждом вызове.
 func Render(ctx context.Context, html string) ([]byte, error) {
 	base := strings.TrimSpace(os.Getenv(gotenbergEnv))
 	if base == "" {
@@ -39,13 +39,13 @@ func Render(ctx context.Context, html string) ([]byte, error) {
 		return nil, ErrUnavailable
 	}
 	endpoint := strings.TrimRight(base, "/") + "/forms/chromium/convert/html"
-	//nolint:gosec // G704: адрес из PDF_GOTENBERG_URL, не из запроса.
+	//nolint:gosec // G704: адрес из GOTENBERG_URL, не из запроса.
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, &body)
 	if err != nil {
 		return nil, ErrUnavailable
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	res, err := renderClient.Do(req) //nolint:gosec // G704: тот же адрес PDF_GOTENBERG_URL.
+	res, err := renderClient.Do(req) //nolint:gosec // G704: тот же адрес GOTENBERG_URL.
 	if err != nil {
 		return nil, ErrUnavailable
 	}

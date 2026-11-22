@@ -259,9 +259,13 @@ func (s *Service) doIssue(ctx context.Context, user actor, lessonID string) (tut
 	if err != nil {
 		return tutorView{}, err
 	}
+	snapItems, err := issuedItems(ctx, tx, row.Catalog, draft.Items)
+	if err != nil {
+		return tutorView{}, err
+	}
 	snapshot, err := json.Marshal(map[string]any{
 		"lesson_id": lessonID,
-		"items":     listOrEmpty(draft.Items),
+		"items":     snapItems,
 	})
 	if err != nil {
 		return tutorView{}, err
@@ -273,19 +277,19 @@ func (s *Service) doIssue(ctx context.Context, user actor, lessonID string) (tut
 	`, assignmentID, row.StudentID, row.Catalog, deadline.UTC(), string(snapshot)); err != nil {
 		return tutorView{}, err
 	}
-	payloadItems := make([]map[string]any, 0, len(draft.Items))
-	for _, item := range draft.Items {
+	payloadItems := make([]map[string]any, 0, len(snapItems))
+	for _, item := range snapItems {
 		if _, err := tx.Exec(ctx, `
 			INSERT INTO core.assignment_item (assignment_id, item_id, state, max_points)
-			VALUES ($1, $2, 'open', 1)
-		`, assignmentID, item.VariantID); err != nil {
+			VALUES ($1, $2, 'open', $3)
+		`, assignmentID, item.ItemID, item.MaxPoints); err != nil {
 			return tutorView{}, err
 		}
 		payloadItems = append(payloadItems, map[string]any{
-			"item_id":       item.VariantID,
+			"item_id":       item.ItemID,
 			"variant_id":    item.VariantID,
 			"answer_format": item.AnswerFormat,
-			"max_points":    1,
+			"max_points":    item.MaxPoints,
 			"source":        item.Source,
 		})
 	}
@@ -402,6 +406,9 @@ func draftGate(row lessonRow) (int, string) {
 	if row.NoBlocks && row.Blob.Coverage == "all" && row.Blob.Mark == nil {
 		return 0, ""
 	}
+	if row.Blob.Coverage == "all" && row.Blob.Mark == nil && len(row.Blob.Blocks) == 0 && len(row.Blob.Tasks) == 0 && len(row.Blob.Recipe) == 0 {
+		return 0, ""
+	}
 	mark := row.Blob.Mark
 	if mark == nil || !mark.TheorySet || !mark.PracticeSet {
 		return http.StatusConflict, "lesson_not_marked"
@@ -488,18 +495,24 @@ func fillMark(ctx context.Context, tx pgx.Tx, lessonID string, blob lessonBlob) 
 	if blob.Mark != nil {
 		return blob, nil
 	}
-	var theory, stageID *string
+	var theory, stageID, coverage *string
 	var position *int
 	err := tx.QueryRow(ctx, `
-		SELECT last_theory_block, practice_stage_id, practice_position
+		SELECT last_theory_block, practice_stage_id, practice_position, coverage
 		FROM core.lesson_mark
 		WHERE lesson_id = $1
-	`, lessonID).Scan(&theory, &stageID, &position)
+	`, lessonID).Scan(&theory, &stageID, &position, &coverage)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return blob, nil
 	}
 	if err != nil {
 		return lessonBlob{}, err
+	}
+	if coverage != nil && *coverage != "" {
+		blob.Coverage = *coverage
+	}
+	if theory == nil && stageID == nil {
+		return blob, nil
 	}
 	mark := &Mark{}
 	if theory != nil {
@@ -830,4 +843,125 @@ func writeHandlerErr(w http.ResponseWriter, err error) {
 		return
 	}
 	writeCode(w, http.StatusServiceUnavailable, "unavailable")
+}
+
+type issuedItem struct {
+	ItemID        string          `json:"item_id"`
+	VariantID     string          `json:"variant_id"`
+	AnswerFormat  string          `json:"answer_format,omitempty"`
+	Key           json.RawMessage `json:"key,omitempty"`
+	Statement     string          `json:"statement,omitempty"`
+	Source        string          `json:"source,omitempty"`
+	TypeID        string          `json:"type_id,omitempty"`
+	RulesVersion  string          `json:"rules_version,omitempty"`
+	SolutionBlock string          `json:"solution_block,omitempty"`
+	MaxPoints     int             `json:"max_points"`
+}
+
+func issuedItems(ctx context.Context, tx pgx.Tx, version int, items []draftItem) ([]issuedItem, error) {
+	out := make([]issuedItem, 0, len(items))
+	for _, item := range items {
+		next, err := issuedFromCatalog(ctx, tx, version, item)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, next)
+	}
+	return out, nil
+}
+
+func issuedFromCatalog(ctx context.Context, tx pgx.Tx, version int, item draftItem) (issuedItem, error) {
+	next := issuedItem{
+		ItemID:       item.VariantID,
+		VariantID:    item.VariantID,
+		AnswerFormat: item.AnswerFormat,
+		Statement:    item.Statement,
+		Source:       item.Source,
+		TypeID:       item.TypeID,
+		RulesVersion: "1",
+	}
+	raw, ok, err := catalogData(ctx, tx, item.VariantID, version)
+	if err != nil {
+		return issuedItem{}, err
+	}
+	if ok {
+		var doc struct {
+			Key         json.RawMessage `json:"key"`
+			Statement   string          `json:"statement"`
+			Subvariant  string          `json:"subvariant"`
+			TheoryBlock string          `json:"theory_block"`
+		}
+		if err := json.Unmarshal(raw, &doc); err != nil {
+			return issuedItem{}, err
+		}
+		if len(doc.Key) > 0 && string(doc.Key) != "null" {
+			next.Key = doc.Key
+		}
+		if next.Statement == "" {
+			next.Statement = doc.Statement
+		}
+		if doc.TheoryBlock != "" {
+			next.SolutionBlock = doc.TheoryBlock
+		}
+		if next.AnswerFormat == "" && doc.Subvariant != "" {
+			format, err := formatBySubvariant(ctx, tx, version, doc.Subvariant)
+			if err != nil {
+				return issuedItem{}, err
+			}
+			next.AnswerFormat = format
+		}
+	}
+	next.MaxPoints = pointsMax(next.AnswerFormat)
+	return next, nil
+}
+
+func catalogData(ctx context.Context, tx pgx.Tx, id string, version int) ([]byte, bool, error) {
+	if id == "" || version < 1 {
+		return nil, false, nil
+	}
+	var raw []byte
+	err := tx.QueryRow(ctx, `
+		SELECT data
+		FROM catalog.revision
+		WHERE entity_id = $1
+		  AND catalog_version_from <= $2
+		ORDER BY catalog_version_from DESC
+		LIMIT 1
+	`, id, version).Scan(&raw)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, err
+	}
+	return raw, true, nil
+}
+
+func formatBySubvariant(ctx context.Context, tx pgx.Tx, version int, subvariant string) (string, error) {
+	var format string
+	err := tx.QueryRow(ctx, `
+		SELECT COALESCE(data->>'answer_format', '')
+		FROM catalog.revision
+		WHERE catalog_version_from <= $1
+		  AND jsonb_typeof(data->'subvariants') = 'array'
+		  AND data->'subvariants' ? $2
+		ORDER BY catalog_version_from DESC
+		LIMIT 1
+	`, version, subvariant).Scan(&format)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return format, nil
+}
+
+func pointsMax(format string) int {
+	switch format {
+	case "ct.integer", "ct.digits", "ct.match":
+		return 2
+	default:
+		return 1
+	}
 }

@@ -1,0 +1,5 @@
+/* Mantine ставит полям outline: none. Правило темы :focus-visible тогда не доходит. */
+.field:focus:focus-visible {
+  outline: 2px solid var(--am-ink);
+  outline-offset: 2px;
+}

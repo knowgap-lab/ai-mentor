@@ -71,6 +71,10 @@ export function upsertOutbox(item: OutboxItem): void {
   writeOutbox(next);
 }
 
+export function clearOutbox(): void {
+  writeOutbox([]);
+}
+
 export function dropOutbox(assignmentId: string, itemId: string): void {
   writeOutbox(
     readOutbox().filter(

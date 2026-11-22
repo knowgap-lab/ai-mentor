@@ -38,7 +38,7 @@ func (s *Service) addLesson(w http.ResponseWriter, r *http.Request) {
 		writeHandlerErr(w, failErr(err))
 		return
 	}
-	head, err := loadPlan(r.Context(), tx, studentID, body.Subject)
+	head, err := ensurePlan(r.Context(), tx, studentID, body.Subject)
 	if err != nil {
 		writeHandlerErr(w, failErr(err))
 		return

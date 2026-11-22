@@ -4,7 +4,7 @@ import { Link } from "react-router";
 import { List, ListRow, Screen, StatusBadge } from "../ui";
 import { hasCsrfToken, rememberCsrfFromResponse } from "../task/csrf";
 
-// Сервер ставит am-session=1 на страницу, только если есть сеанс.
+// Сервер вставляет meta am-session в HTML, только если есть сеанс.
 // Сама cookie сеанса HttpOnly, скрипт её не видит.
 function hasSession(): boolean {
   if (hasCsrfToken()) {
@@ -13,9 +13,11 @@ function hasSession(): boolean {
   if (typeof document === "undefined") {
     return false;
   }
-  return document.cookie
-    .split(";")
-    .some((part) => part.trim() === "am-session=1");
+  return (
+    document
+      .querySelector('meta[name="am-session"]')
+      ?.getAttribute("content") === "1"
+  );
 }
 
 type Summary = {

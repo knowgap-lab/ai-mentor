@@ -563,6 +563,17 @@ func intsIn(s string) []int {
 	return out
 }
 
+func mentions(w warning, topic string) bool {
+	if strings.Contains(w.Text, topic) {
+		return true
+	}
+	raw, err := json.Marshal(w.Params)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(raw), topic)
+}
+
 func asInt(value any) (int, bool) {
 	switch n := value.(type) {
 	case float64:
@@ -573,17 +584,6 @@ func asInt(value any) (int, bool) {
 		return n, true
 	}
 	return 0, false
-}
-
-func mentions(w warning, topic string) bool {
-	if strings.Contains(w.Text, topic) {
-		return true
-	}
-	raw, err := json.Marshal(w.Params)
-	if err != nil {
-		return false
-	}
-	return strings.Contains(string(raw), topic)
 }
 
 func login(t *testing.T, dsn, telegramID, role string) string {

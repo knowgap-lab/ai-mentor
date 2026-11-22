@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/knowgap-lab/ai-mentor/core/internal/opsobs"
+	"github.com/knowgap-lab/ai-mentor/core/internal/recheck"
 )
 
 func newRouter() http.Handler {
@@ -31,6 +33,9 @@ func main() {
 		slog.Error("server", "err", err.Error())
 		os.Exit(1)
 	}
+	if devStackEnabled() {
+		go driveRechecks(os.Getenv("DATABASE_URL"))
+	}
 	srv := &http.Server{
 		Addr:              listenAddr(),
 		Handler:           handler,
@@ -39,5 +44,17 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil {
 		slog.Error("server", "err", err.Error())
 		os.Exit(1)
+	}
+}
+
+func driveRechecks(dsn string) {
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		err := recheck.Resume(ctx, dsn)
+		cancel()
+		if err != nil {
+			slog.Error("recheck", "err", err.Error())
+		}
+		time.Sleep(200 * time.Millisecond)
 	}
 }
