@@ -3,7 +3,11 @@ import { mergeConfig } from "vite";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(ts|tsx)"],
-  addons: ["@storybook/addon-a11y", "@storybook/addon-docs", "msw-storybook-addon"],
+  addons: [
+    "@storybook/addon-a11y",
+    "@storybook/addon-docs",
+    "msw-storybook-addon",
+  ],
   framework: {
     name: "@storybook/react-vite",
     options: {},
