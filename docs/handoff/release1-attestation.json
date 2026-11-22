@@ -1,0 +1,60 @@
+{
+  "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+  "artifact_sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+  "release_state": "in_progress",
+  "lineage": {
+    "base_sha": "e30546c433416493dfdf818c7ff20bfda829fd61",
+    "base_ref": "cursor/release1-gate-on-demo-eaa4",
+    "branch": "cursor/structured-logs-observability-3f24",
+    "parent_observability_pr": {
+      "number": 20,
+      "ref": "feat/r1-observability",
+      "sha": "329e28fe273b25cd33189b87b9b4622fa711a92a"
+    }
+  },
+  "pull_request": {
+    "state": "open",
+    "number": 61,
+    "url": "https://github.com/knowgap-lab/ai-mentor/pull/61",
+    "head_ref": "cursor/structured-logs-observability-3f24",
+    "head_sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "base_ref": "cursor/release1-gate-on-demo-eaa4",
+    "base_sha": "e30546c433416493dfdf818c7ff20bfda829fd61"
+  },
+  "diagnostic_checks": {
+    "tool": "tools/release1_done.py",
+    "docker": true,
+    "quick": false,
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "recorded_at": "2026-11-22T18:30:00Z",
+    "exit": 1,
+    "result": "unfinished",
+    "first_failing_check": "integration",
+    "sections_passed": [
+      "operations",
+      "screens",
+      "telegram",
+      "pdf",
+      "journal",
+      "install",
+      "observability"
+    ]
+  },
+  "ci": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "partial": true,
+    "checks": [
+      {
+        "name": "tools/check.sh",
+        "conclusion": "success",
+        "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+        "workflow": "docs-check",
+        "run_id": 45055011276,
+        "url": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45055011276"
+      }
+    ]
+  },
+  "findings": [],
+  "open_findings": [],
+  "blockers": []
+}
