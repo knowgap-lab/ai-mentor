@@ -70,7 +70,9 @@
   "lesson": {
     "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
     "transport": "live_api",
-    "depends_on": ["catalog"],
+    "depends_on": [
+      "catalog"
+    ],
     "environment": {
       "server": "ENV=local AUTH_DEV_MODE=true go run ./core/cmd/server",
       "origin": "http://127.0.0.1:8080",
@@ -134,5 +136,110 @@
   },
   "findings": [],
   "open_findings": [],
-  "blockers": []
+  "blockers": [],
+  "browser": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "depends_on": [
+      "lesson",
+      "catalog"
+    ],
+    "backend": "real",
+    "database": "synthetic",
+    "screenshots_only": false,
+    "viewport": "390x844",
+    "chrome_channel": "chrome",
+    "origin": "http://127.0.0.1:8080",
+    "command": "bash tools/dev-start.sh; ENV=local AUTH_DEV_MODE=true DATABASE_URL=postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable APP_ORIGIN=http://127.0.0.1:8080 go run ./core/cmd/server (background); LIVE_ORIGIN=http://127.0.0.1:8080 cd tools/e2e && npx playwright test live-screens.spec.ts --reporter=line",
+    "result": "2 passed, 16.0s; Playwright @axe-core/playwright, CSP header, no serious a11y violations, student answers item-a on /task/asg-demo/item-a",
+    "screens": {
+      "Ученик/Главная": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Выдача (ДЗ)": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Задача": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Итог": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Профиль": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Ученики": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Ученик": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Подготовка": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Просмотр ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Итоги ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Новый ученик": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Сеансы": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      }
+    },
+    "behaviors": {
+      "roles": "pass",
+      "keys_hidden": "pass",
+      "mobile_360": "pass",
+      "accessibility": "pass",
+      "csp": "pass",
+      "reduced_motion": "pass",
+      "dialogs": "pass",
+      "toasts": "pass",
+      "charts": "pass",
+      "no_console_errors": "pass",
+      "no_horizontal_scroll": "pass",
+      "action_size": "pass",
+      "homework": "pass",
+      "result": "pass",
+      "invite": "pass",
+      "sessions": "pass"
+    }
+  }
 }
