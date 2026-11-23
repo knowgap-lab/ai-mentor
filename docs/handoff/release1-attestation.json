@@ -1,91 +1,27 @@
 {
-  "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
-  "artifact_sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+  "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
+  "artifact_sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T14:10:43Z",
+  "recorded_at": "2026-11-23T14:36:15Z",
   "recorded_by": "release-1-demo-launch",
-  "purpose": "Приёмка merge-коммита main e61c1e6 (PR #70); catalog_ci и dev_seed подтверждены локально на коде e61c1e6; lesson — live API rootHandler 127.0.0.1:18080 + Docker Postgres 127.0.0.1:55432; browser/vm/load/reviews — без доказательств.",
+  "purpose": "Приёмка merge-коммита main 7720ffc (PR #71); catalog_ci, dev_seed, live lesson API и Playwright 20/20 на коде 7720ffc; CI/deploy/vm/load/reviews — без записи.",
   "integrated_ref": "main",
   "merged": true,
   "pull_request": {
-    "number": 70,
-    "url": "https://github.com/knowgap-lab/ai-mentor/pull/70",
+    "number": 71,
+    "url": "https://github.com/knowgap-lab/ai-mentor/pull/71",
     "state": "merged",
-    "merge_sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
+    "merge_sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e"
   },
   "inventory": {
-    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+    "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
     "operations_connected": 58,
     "screens_present": 14,
     "command": "python3 tools/release1_inventory.py",
     "result": "58/58 operations, 14/14 screens"
   },
-  "ci": {
-    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
-    "partial": false,
-    "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45190919888",
-    "snapshot_at": "2026-11-23T14:16:01Z",
-    "checks": [
-      {
-        "name": "tools/check.sh",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "tools/check-code.sh",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "generation",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
-        "diff_empty": true
-      },
-      {
-        "name": "build",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "storybook",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "size-limit",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "e2e",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "contract-live",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "docker",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "chrome",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
-        "name": "deploy",
-        "conclusion": "failure",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      }
-    ]
-  },
   "catalog": {
-    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+    "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
     "lesson_files": [
       "content/tests/fixtures/demo-catalog/ct-demo/lessons/L01.yaml"
     ],
@@ -94,11 +30,11 @@
     ],
     "catalog_ci": "pass",
     "postgres_load": "pass",
-    "command": "cd content && PYTHONPATH=. /agent/repos/ai-mentor/.venv314/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c '/agent/repos/ai-mentor/.venv314/bin/python /tmp/ai-mentor-e61c1e6/tools/dev_seed.py'",
+    "command": "cd /tmp/ai-mentor-7720ffc/content && PYTHONPATH=. /agent/repos/ai-mentor/.venv314/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c '/agent/repos/ai-mentor/.venv314/bin/python /tmp/ai-mentor-7720ffc/tools/dev_seed.py'",
     "result": "catalog_ci exit 0; dev_seed exit 0, seed loads 1"
   },
   "lesson": {
-    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+    "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
     "transport": "live_api",
     "depends_on": [
       "catalog"
@@ -121,71 +57,43 @@
         "http_status": 201
       },
       "student_correct": {
-        "command": "POST http://127.0.0.1:18080/assignments/5e8ff4d8a861983a9c31e0afc28db14f/items/ct-demo:D1.T01.S1.V002/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/3457e25e6b33f0698a3b79e4be22bbe0/items/ct-demo:D1.T01.S1.V002/answer",
         "result": "pass",
         "http_status": 200
       },
       "student_incorrect": {
-        "command": "POST http://127.0.0.1:18080/assignments/5e8ff4d8a861983a9c31e0afc28db14f/items/ct-demo:D1.T01.S1.V003/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/3457e25e6b33f0698a3b79e4be22bbe0/items/ct-demo:D1.T01.S1.V003/answer",
         "result": "pass",
         "http_status": 200
       },
       "tutor_sees_score_and_attempts": {
-        "command": "GET http://127.0.0.1:18080/assignments/5e8ff4d8a861983a9c31e0afc28db14f/attempts",
+        "command": "GET http://127.0.0.1:18080/assignments/3457e25e6b33f0698a3b79e4be22bbe0/attempts",
         "result": "pass",
         "http_status": 200
       },
       "foreign_tutor_denied": {
-        "command": "GET http://127.0.0.1:18080/assignments/5e8ff4d8a861983a9c31e0afc28db14f/attempts (tg-demo-other)",
+        "command": "GET http://127.0.0.1:18080/assignments/3457e25e6b33f0698a3b79e4be22bbe0/attempts (tg-demo-other)",
         "result": "pass",
         "http_status": 403
       },
       "repeat_keeps_one_attempt": {
-        "command": "POST http://127.0.0.1:18080/assignments/5e8ff4d8a861983a9c31e0afc28db14f/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
+        "command": "POST http://127.0.0.1:18080/assignments/3457e25e6b33f0698a3b79e4be22bbe0/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
         "result": "pass",
         "attempt_count": 1,
         "http_status": 200
       }
     }
   },
-  "pending_proof": [
-    "browser",
-    "vm",
-    "load",
-    "reviews"
-  ],
-  "blockers": [
-    {
-      "id": "vm-clean-ubuntu",
-      "category": "hypervisor",
-      "status": "waiting",
-      "dependency": "vm.environment"
-    },
-    {
-      "id": "telegram-login-device",
-      "category": "telegram",
-      "status": "waiting",
-      "dependency": "vm.telegram"
-    },
-    {
-      "id": "deploy-vm-acceptance",
-      "category": "cloud_build",
-      "status": "waiting",
-      "dependency": "ci.checks.deploy"
-    }
-  ],
-  "open_findings": [],
-  "findings": [],
   "browser": {
-    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+    "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
     "depends_on": [
       "lesson",
       "catalog"
     ],
     "backend": "real",
     "database": "synthetic",
-    "command": "cd /tmp/ai-mentor-e61c1e6/tools/e2e && sg docker -c 'npx playwright test' (startStack: dev_seed + go run ./cmd/server + web/dist)",
-    "result": "20 passed (49.3s) walk.spec.ts + browser-coverage.spec.ts",
+    "command": "cd /tmp/ai-mentor-7720ffc/tools/e2e && sg docker -c 'npx playwright test' (startStack; viewport 360 asserted in no_horizontal_scroll — задача на 360 px)",
+    "result": "20 passed (21.5s) walk.spec.ts + browser-coverage.spec.ts",
     "screens": {
       "Ученик/Главная": {
         "behavior": "pass",
@@ -245,6 +153,7 @@
       }
     },
     "behaviors": {
+      "mobile_360": "pass",
       "roles": "pass",
       "keys_hidden": "pass",
       "accessibility": "pass",
@@ -261,5 +170,33 @@
       "invite": "pass",
       "sessions": "pass"
     }
-  }
+  },
+  "pending_proof": [
+    "vm",
+    "load",
+    "reviews",
+    "ci"
+  ],
+  "blockers": [
+    {
+      "id": "vm-clean-ubuntu",
+      "category": "hypervisor",
+      "status": "waiting",
+      "dependency": "vm.environment"
+    },
+    {
+      "id": "telegram-login-device",
+      "category": "telegram",
+      "status": "waiting",
+      "dependency": "vm.telegram"
+    },
+    {
+      "id": "deploy-vm-acceptance",
+      "category": "cloud_build",
+      "status": "waiting",
+      "dependency": "ci.checks.deploy"
+    }
+  ],
+  "open_findings": [],
+  "findings": []
 }
