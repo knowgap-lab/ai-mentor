@@ -36,4 +36,4 @@ tools/check.sh        # контракты и все примеры
 ## CI и генерация типов
 
 - **Проверки.** `.github/workflows/docs-check.yml` запускает `tools/check.sh` на каждом PR и на `main`. Зависимости — `tools/requirements.txt`. Работа воспроизведена локально в чистом окружении только из этого файла.
-- **Генерация типов.** `bash tools/generate.sh` перегенерирует артефакты в `gen/`; CI проверяет пустой `git diff` после скрипта (D97, D330). `compute-views.schema.json` пропускается (выпуск 3).
+- **Генерация типов.** `bash tools/generate.sh` перегенерирует артефакты в `gen/`; CI проверяет пустой `git diff` после скрипта (D97, D333). `compute-views.schema.json` пропускается (выпуск 3).
