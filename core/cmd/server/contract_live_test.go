@@ -53,12 +53,21 @@ func TestContractLiveE3(t *testing.T) {
 	if getLesson.Code != http.StatusOK {
 		t.Fatalf("GET урока: %d %s", getLesson.Code, getLesson.Body.Bytes())
 	}
-	var lessonView map[string]any
-	if err := json.Unmarshal(getLesson.Body.Bytes(), &lessonView); err != nil {
+	var detail struct {
+		Lesson struct {
+			ID    string `json:"id"`
+			State string `json:"state"`
+		} `json:"lesson"`
+		Stages []json.RawMessage `json:"stages"`
+	}
+	if err := json.Unmarshal(getLesson.Body.Bytes(), &detail); err != nil {
 		t.Fatalf("GET урока json: %v", err)
 	}
-	if lessonView["id"] != lesson.ID {
-		t.Fatalf("id урока = %v", lessonView["id"])
+	if detail.Lesson.ID != lesson.ID {
+		t.Fatalf("LessonDetail.lesson.id = %q, нужен %q, тело %s", detail.Lesson.ID, lesson.ID, getLesson.Body.Bytes())
+	}
+	if len(detail.Stages) == 0 {
+		t.Fatalf("LessonDetail без stages: %s", getLesson.Body.Bytes())
 	}
 
 	contractLiveSeedAssignment(t, conn, lesson.ID)
