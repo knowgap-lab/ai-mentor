@@ -1,4 +1,3 @@
-import { Notifications } from "@mantine/notifications";
 import { useLayoutEffect } from "react";
 import { Route, Routes } from "react-router";
 import { AssignmentPage } from "./student/AssignmentPage";
@@ -44,9 +43,7 @@ export function App() {
   });
 
   return (
-    <>
-      <Notifications position="top-center" />
-      <Routes>
+    <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/lesson/:lessonId" element={<LessonPage />} />
       <Route
@@ -77,7 +74,6 @@ export function App() {
         <Route path="/design" element={<DesignPage />} />
       ) : null}
       <Route path="*" element={<HomePage />} />
-      </Routes>
-    </>
+    </Routes>
   );
 }

@@ -10,7 +10,6 @@ import {
   type Status,
 } from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
-import { showCompletionToast } from "../ui/completionToast";
 
 type Verdict = "correct" | "partial" | "wrong" | "accepted";
 
@@ -197,7 +196,7 @@ export function AssignmentPage() {
       rememberCsrfFromResponse(response);
       if (response.ok) {
         setSubmitted(true);
-        showCompletionToast("сдано");
+        window.amShowToast("сдано");
         return;
       }
       if (response.status === 409) {
@@ -216,7 +215,7 @@ export function AssignmentPage() {
           rememberCsrfFromResponse(again);
           if (again.ok) {
             setSubmitted(true);
-            showCompletionToast("сдано");
+            window.amShowToast("сдано");
             return;
           }
         }

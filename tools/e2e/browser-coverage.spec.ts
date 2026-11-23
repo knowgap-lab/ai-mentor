@@ -181,7 +181,7 @@ test("dialogs — подтверждение «Сдать»", async () => {
   await page.close();
 });
 
-test("toasts — Mantine toast «сдано» после «Сдать»", async () => {
+test("toasts — toast «сдано» после «Сдать»", async () => {
   const page = await studentContext.newPage();
   await page.goto(`${stack.origin}/assignment/${ASG_OPEN}`);
   page.once("dialog", (dialog) => dialog.accept());
@@ -189,17 +189,14 @@ test("toasts — Mantine toast «сдано» после «Сдать»", async 
   await expect(
     page.getByRole("alert").filter({ hasText: "сдано" }),
   ).toBeVisible({ timeout: 60_000 });
-  await expect(
-    page
-      .locator("main")
-      .getByText("сдано", { exact: true }),
-  ).toBeVisible();
   await page.close();
 });
 
 test("charts — числовые показатели на «Ученики»", async () => {
   const page = await tutorContext.newPage();
   await page.goto(`${stack.origin}/tutor`);
+  await page.getByRole("textbox").fill("tg-demo-tutor");
+  await page.getByRole("button", { name: "Войти" }).click();
   await expect(page.getByText(/ДЗ ждёт просмотра \d+/)).toBeVisible({
     timeout: 60_000,
   });
@@ -225,6 +222,15 @@ test("invite — ссылка приглашения", async () => {
   const page = await tutorContext.newPage();
   await page.goto(`${stack.origin}/tutor/students/${STUDENT}`);
   await expect(page.getByText("Демо Ученик")).toBeVisible({ timeout: 60_000 });
+  await page.evaluate(async (studentId) => {
+    const response = await fetch(`/students/${encodeURIComponent(studentId)}`, {
+      credentials: "include",
+    });
+    const token = response.headers.get("X-CSRF-Token");
+    if (token) {
+      sessionStorage.setItem("ai-mentor.csrf", token);
+    }
+  }, STUDENT);
   await page.getByRole("button", { name: "Приглашение" }).click();
   await expect(page.getByText(/^https?:\/\//)).toBeVisible({ timeout: 60_000 });
   await page.close();

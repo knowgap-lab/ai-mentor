@@ -1,10 +1,6 @@
 import { Button, Stack, Text, TextInput } from "@mantine/core";
-import { type FormEvent, useEffect, useLayoutEffect, useState } from "react";
-import {
-  csrfHeaders,
-  hasCsrfToken,
-  rememberCsrfFromResponse,
-} from "../task/csrf";
+import { type FormEvent, useState } from "react";
+import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { List, ListButton, Screen } from "../ui";
 import { errorSentence } from "./api-error";
 import { minskTime } from "./minsk-time";
@@ -122,30 +118,6 @@ function byNextLesson(left: StudentSummary, right: StudentSummary): number {
   return leftAt < rightAt ? -1 : 1;
 }
 
-// Mantine рисует брейкпоинты тегом style внутри body. В тексте есть
-// цифра ширины экрана, и она смешивается с сырым вводом попытки.
-// Узел React не переносим: копируем правила в head и очищаем текст в body.
-function parkProviderStyles(): void {
-  const parked = new Set(
-    [...document.head.querySelectorAll("style")].map(
-      (node) => node.textContent ?? "",
-    ),
-  );
-  for (const node of document.body.querySelectorAll("style")) {
-    const text = node.textContent ?? "";
-    if (text === "") {
-      continue;
-    }
-    if (!parked.has(text)) {
-      const copy = document.createElement("style");
-      copy.textContent = text;
-      document.head.appendChild(copy);
-      parked.add(text);
-    }
-    node.textContent = "";
-  }
-}
-
 function verdictLabel(verdict: Verdict): string {
   if (verdict === "correct") {
     return "верно";
@@ -157,28 +129,12 @@ function verdictLabel(verdict: Verdict): string {
 }
 
 export function TutorPage() {
-  useLayoutEffect(() => {
-    parkProviderStyles();
-  });
-
   const [telegramId, setTelegramId] = useState("");
   const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
-
-  useEffect(() => {
-    void (async () => {
-      if (!hasCsrfToken()) {
-        const primed = await fetch("/me", { credentials: "include" });
-        rememberCsrfFromResponse(primed);
-      }
-      if (hasCsrfToken()) {
-        await loadStudents();
-      }
-    })();
-  }, []);
 
   async function loadStudents() {
     try {
