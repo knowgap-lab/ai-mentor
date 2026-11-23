@@ -181,11 +181,15 @@ test("dialogs — подтверждение «Сдать»", async () => {
   await page.close();
 });
 
-test("toasts — в release 1 нет toast-компонента", async () => {
-  test.skip(
-    true,
-    "WB-R31 подтверждает действие текстом на экране; toast-стек не подключён",
-  );
+test("toasts — WB-R31 подтверждение «сдано»", async () => {
+  const page = await studentContext.newPage();
+  await page.goto(`${stack.origin}/assignment/${ASG_OPEN}`);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Сдать" }).click();
+  await expect(page.getByText("сдано", { exact: true })).toBeVisible({
+    timeout: 60_000,
+  });
+  await page.close();
 });
 
 test("charts — числовые показатели на «Ученики»", async () => {
