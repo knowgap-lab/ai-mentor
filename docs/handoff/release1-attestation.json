@@ -144,7 +144,6 @@
     }
   },
   "pending_proof": [
-    "browser",
     "vm",
     "load",
     "reviews"
@@ -240,6 +239,7 @@
       }
     },
     "behaviors": {
+      "mobile_360": "pass",
       "roles": "pass",
       "keys_hidden": "pass",
       "accessibility": "pass",
