@@ -9,7 +9,11 @@ import {
   StatusBadge,
   type Status,
 } from "../ui";
-import { csrfHeaders, rememberCsrfFromResponse, submitToast } from "../task/csrf";
+import {
+  csrfHeaders,
+  rememberCsrfFromResponse,
+  submitToast,
+} from "../task/csrf";
 
 type Verdict = "correct" | "partial" | "wrong" | "accepted";
 
@@ -125,13 +129,14 @@ export function AssignmentPage() {
     if (!assignmentId) {
       return;
     }
+    const id = assignmentId;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setFailed(false);
       try {
         const response = await fetch(
-          `/assignments/${encodeURIComponent(assignmentId)}`,
+          `/assignments/${encodeURIComponent(id)}`,
           { credentials: "include" },
         );
         rememberCsrfFromResponse(response);
@@ -139,7 +144,7 @@ export function AssignmentPage() {
           throw new Error("load failed");
         }
         const payload: unknown = await response.json();
-        const next = readAssignment(payload, assignmentId);
+        const next = readAssignment(payload, id);
         if (!next) {
           throw new Error("load failed");
         }
@@ -169,20 +174,19 @@ export function AssignmentPage() {
     );
   }
 
+  const id = assignmentId;
+
   async function postSubmit(key: string, confirm: boolean): Promise<Response> {
-    return fetch(
-      `/assignments/${encodeURIComponent(assignmentId)}/submit`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": key,
-          ...csrfHeaders(),
-        },
-        body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    return fetch(`/assignments/${encodeURIComponent(id)}/submit`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": key,
+        ...csrfHeaders(),
       },
-    );
+      body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    });
   }
 
   async function onSubmit() {
