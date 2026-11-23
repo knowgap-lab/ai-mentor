@@ -27,7 +27,14 @@ const sessionCookieName = "__Host-session"
 // Признак сеанса в HTML, не cookie. Сам сеанс остаётся HttpOnly (AU-R22).
 const sessionMarker = `<meta name="am-session" content="1">`
 
+func validateServerEnv() error {
+	return auth.RejectDevMode(os.Getenv("ENV"), os.Getenv("AUTH_DEV_MODE") == "true")
+}
+
 func rootHandler() (http.Handler, error) {
+	if err := validateServerEnv(); err != nil {
+		return nil, err
+	}
 	if !devStackEnabled() {
 		return withCSP(newRouter()), nil
 	}

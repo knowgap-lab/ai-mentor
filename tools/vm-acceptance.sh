@@ -97,16 +97,17 @@ if [[ "$have_guest" -eq 0 ]]; then
   if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
     echo "missing: VM_HYPERVISOR_ACCESS (ограниченный доступ к гипервизору для одноразовой тестовой VM)"
   fi
-  for step in create second_plan converge reboot gotenberg no_pii; do
+  for step in create second_plan converge second_converge reboot gotenberg no_pii; do
     record_guest_blocked "$step" "no guest secrets or hypervisor access"
   done
 else
-  record_guest_blocked create "terraform guest driver not wired on this runner"
-  record_guest_blocked second_plan "terraform guest driver not wired on this runner"
-  record_guest_blocked converge "ansible on guest not automated here"
-  record_guest_blocked reboot "reboot acceptance not automated here"
-  record_guest_blocked gotenberg "PDF on guest not automated here"
-  record_guest_blocked no_pii "telemetry PII scan on guest not automated here"
+  section "guest: remote acceptance"
+  if bash "$ROOT/tools/vm-acceptance-guest.sh"; then
+    echo "guest:remote: exit=0"
+  else
+    guest_ok=1
+    echo "guest:remote: exit=1"
+  fi
 fi
 
 section "guest summary"
