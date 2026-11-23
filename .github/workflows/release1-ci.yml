@@ -183,10 +183,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: GAP — contract-live (E3)
-        run: |
-          echo "contract-live: TestWalkSkeleton не закрывает E3 §7 — нет живого cmd/server, шага урока через API, schemathesis по docs/contracts/core-api.yaml и матрицы ошибок/ролей. См. docs/handoff/release1-ci-open-checks.yaml."
-          exit 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+      - name: Live API E3 (rootHandler, TestContractLiveE3)
+        run: bash tools/ci/contract-live.sh
 
   docker:
     name: docker

@@ -10,7 +10,7 @@
 
 | Область | Готово | Не готово |
 |---|---|---|
-| release1-ci | generation, build, storybook, e2e, docker, chrome, **size-limit** (D335) | contract-live (E3), deploy (VM) |
+| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
 | Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
 
 ## Что в работе сейчас
@@ -19,7 +19,7 @@ PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после комми
 
 ## Следующий шаг
 
-Именованная команда contract-live (сервер + schemathesis или сценарий E3). VM acceptance для deploy.
+Расширить E3 (schemathesis). VM acceptance для deploy.
 
 ## Блокеры и вопросы
 
