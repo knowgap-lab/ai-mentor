@@ -1,0 +1,39 @@
+{
+  "sha": "dc1e1604836ea8e7130031a4ee0d2151956d956e",
+  "base_branch": "feat/r1-integrate-candidate",
+  "pr": 27,
+  "recorded_at_utc": "2026-11-22T17:25:48Z",
+  "runner": "cursor-cloud-vm",
+  "cursor_environment_json": {
+    "name": "AI Mentor",
+    "install": "bash tools/dev-install.sh",
+    "start": "bash tools/dev-start.sh"
+  },
+  "commands": {
+    "tools/dev-install.sh": {
+      "exit_code": 0
+    },
+    "tools/dev-start.sh": {
+      "exit_code": 0
+    },
+    "tools/dev-check.sh": {
+      "exit_code": 0
+    }
+  },
+  "smoke": {
+    "docker": {
+      "result": "pass",
+      "detail": "docker info exit 0 via sg docker; container ai-mentor-dev running"
+    },
+    "postgres": {
+      "result": "pass",
+      "detail": "psql SELECT 1 on postgres://postgres@127.0.0.1:5432/ai_mentor"
+    },
+    "browser": {
+      "result": "pass",
+      "detail": "Playwright smoke in tools/dev-check.sh: 1 passed (walk.spec.ts)"
+    }
+  },
+  "first_error": null,
+  "next_step": "Trigger code-check on PR #27 head; if green, proceed with integrate-candidate gate toward feat/release1-demo."
+}
