@@ -2,31 +2,30 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-23 (release1-ci, PR #64)
+**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
 **Ветка:** `cursor/release1-ci-jobs-ac9d`
-**Этап:** подключение job release1-ci по D334.
+**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| release1-ci workflow | generation, build, storybook, e2e; docker, chrome, contract-live (D334) | size-limit (нет `web/size-limit.budget.json`), deploy (VM) |
-| Документация | D334, реестр [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml) | синхронизация с release1-progress на docs/r1-repo-handoff |
+| release1-ci | generation, build, storybook, e2e, docker, chrome, **size-limit** (D335) | contract-live (E3), deploy (VM) |
+| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
 
 ## Что в работе сейчас
 
-PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) — дождаться CI на новом коммите.
+PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
 
 ## Следующий шаг
 
-Зафиксировать измеренный bundle в `web/size-limit.budget.json`; подготовить VM acceptance для job `deploy`.
+Именованная команда contract-live (сервер + schemathesis или сценарий E3). VM acceptance для deploy.
 
 ## Блокеры и вопросы
 
-Нет зафиксированного числового лимита bundle (D315). Секреты VM и `tools/vm-acceptance.sh` отсутствуют.
+Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
 
 ## Куда смотреть
 
-- D334 в [docs/decisions/log.md](../decisions/log.md)
-- Открытые job: [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
-- Порядок: briefs/CURSOR-PROJECT-RELEASE1.md §12 (ветка `docs/r1-repo-handoff`)
+- D335 в [docs/decisions/log.md](../decisions/log.md)
+- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)

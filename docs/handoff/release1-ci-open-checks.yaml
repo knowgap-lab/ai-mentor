@@ -2,13 +2,12 @@
 # Синтетические данные только. Обновляйте при закрытии job в .github/workflows/release1-ci.yml.
 
 checks:
-  - job: size-limit
+  - job: contract-live
     status: open
     owner: integration-agent
-    criterion: D315 — bundle проверяется size-limit в CI; нужен воспроизводимый числовой бюджет после измерения production build.
-    next_step: npm run build, зафиксировать maxGzipJsBytes в web/size-limit.budget.json и подключить tools/ci/size-limit-measure.sh.
-    wired_command: tools/ci/size-limit-measure.sh
-    blocked_reason: файл web/size-limit.budget.json отсутствует; число не придумываем.
+    criterion: E3 (CURSOR-PROJECT-RELEASE1.md §7) — живой API с PostgreSQL, сценарий урок→выдача→ответ→результат, схемы, ошибки, роли, внутренний API; schemathesis по core-api.yaml на запущенном сервере (ORCHESTRATOR-RELEASE1-FINISH.md E3).
+    next_step: воспроизводимая команда (сервер cmd/server + сид + schemathesis или эквивалентная матрица); не подменять TestWalkSkeleton.
+    blocked_reason: TestWalkSkeleton — только compose.Handler с заранее внесённой выдачей (briefs/r1-e1.md); нет шага урока через API, нет schemathesis и полной матрицы 401/403.
 
   - job: deploy
     status: open
