@@ -30,9 +30,8 @@ step_create() {
 }
 
 step_second_plan() {
+  # -detailed-exitcode: 0 = no changes, 2 = pending changes (fail), 1 = error
   (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && terraform plan -detailed-exitcode -input=false)
-  local code=$?
-  [[ "$code" -eq 0 || "$code" -eq 2 ]]
 }
 
 ansible_guest_inventory() {
