@@ -38,3 +38,5 @@ jobs:
         working-directory: web
       - run: tools/check-code.sh
       - run: tools/check.sh
+      - name: Тесты приёмщика выпуска 1
+        run: python3 tools/release1_done_test.py
