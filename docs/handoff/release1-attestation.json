@@ -2,9 +2,9 @@
   "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "artifact_sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T12:58:00Z",
+  "recorded_at": "2026-11-23T13:25:00Z",
   "recorded_by": "release-1-demo-launch",
-  "purpose": "Приёмка merge-коммита main e125b6b; CI с GitHub run 45173837915; catalog_ci выполнен локально; postgres_load, lesson, browser — только после реальных команд.",
+  "purpose": "Приёмка merge-коммита main e125b6b; CI с GitHub run 45173837915; catalog_ci и postgres_load подтверждены; lesson — live API на Docker Postgres 127.0.0.1:55432; browser/vm/load/reviews — только после реальных команд.",
   "integrated_ref": "main",
   "merged": true,
   "pull_request": {
@@ -96,8 +96,56 @@
     "command": "cd content && PYTHONPATH=. ../.venv314/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c './.venv314/bin/python tools/dev_seed.py'",
     "result": "catalog_ci exit 0; dev_seed exit 0, seed loads 1"
   },
+  "lesson": {
+    "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
+    "transport": "live_api",
+    "depends_on": ["catalog"],
+    "database_url": "postgres://postgres@127.0.0.1:55432/ai_mentor?sslmode=disable",
+    "api_origin": "http://127.0.0.1:18080",
+    "steps": {
+      "clean_postgres": {
+        "command": "DATABASE_URL='postgres://postgres@127.0.0.1:55432/ai_mentor?sslmode=disable' /agent/repos/ai-mentor/.venv314/bin/python tools/dev_seed.py; psql reset lesson-demo-held drafts and extra assignments",
+        "result": "pass"
+      },
+      "tutor_creates_lesson": {
+        "command": "POST http://127.0.0.1:18080/students/student-demo/lessons starts_at=2027-09-01T16:00:00Z",
+        "result": "pass",
+        "http_status": 201
+      },
+      "tutor_assigns_homework": {
+        "command": "POST http://127.0.0.1:18080/lessons/lesson-demo-held/homework-draft/issue",
+        "result": "pass",
+        "http_status": 201
+      },
+      "student_correct": {
+        "command": "POST http://127.0.0.1:18080/assignments/880ed8fc7f92dc02e6bd4b7f59ba034f/items/ct-demo:D1.T01.S1.V002/answer",
+        "result": "pass",
+        "http_status": 200
+      },
+      "student_incorrect": {
+        "command": "POST http://127.0.0.1:18080/assignments/880ed8fc7f92dc02e6bd4b7f59ba034f/items/ct-demo:D1.T01.S1.V003/answer",
+        "result": "pass",
+        "http_status": 200
+      },
+      "tutor_sees_score_and_attempts": {
+        "command": "GET http://127.0.0.1:18080/assignments/880ed8fc7f92dc02e6bd4b7f59ba034f/attempts",
+        "result": "pass",
+        "http_status": 200
+      },
+      "foreign_tutor_denied": {
+        "command": "GET http://127.0.0.1:18080/assignments/880ed8fc7f92dc02e6bd4b7f59ba034f/attempts (tg-demo-other)",
+        "result": "pass",
+        "http_status": 403
+      },
+      "repeat_keeps_one_attempt": {
+        "command": "POST http://127.0.0.1:18080/assignments/880ed8fc7f92dc02e6bd4b7f59ba034f/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
+        "result": "pass",
+        "http_status": 200,
+        "attempt_count": 1
+      }
+    }
+  },
   "pending_proof": [
-    "lesson",
     "browser",
     "vm",
     "load",
