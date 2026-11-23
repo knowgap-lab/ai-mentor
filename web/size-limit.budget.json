@@ -1,9 +1,7 @@
 {
   "measuredAtSha": "bf427cf0b7fa1b3c42e311f34f7c3da4516401da",
   "command": "npm run build",
-  "artifacts": [
-    "web/dist/assets/*.js"
-  ],
+  "artifacts": ["web/dist/assets/*.js"],
   "unit": "gzip_bytes",
   "maxGzipJsBytes": 252639,
   "measurement": {
