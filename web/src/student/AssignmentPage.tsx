@@ -135,10 +135,9 @@ export function AssignmentPage() {
       setLoading(true);
       setFailed(false);
       try {
-        const response = await fetch(
-          `/assignments/${encodeURIComponent(id)}`,
-          { credentials: "include" },
-        );
+        const response = await fetch(`/assignments/${encodeURIComponent(id)}`, {
+          credentials: "include",
+        });
         rememberCsrfFromResponse(response);
         if (!response.ok) {
           throw new Error("load failed");
