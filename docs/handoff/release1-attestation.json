@@ -32,11 +32,6 @@
         "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
       },
       {
-        "name": "tools/check-code.sh",
-        "conclusion": "success",
-        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
-      },
-      {
         "name": "generation",
         "conclusion": "success",
         "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
