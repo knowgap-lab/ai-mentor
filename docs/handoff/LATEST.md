@@ -2,31 +2,31 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-18 (интеграция сервера, PDF и экранов)
-**Ветка:** `feat/r1-integrate-candidate`
-**Этап:** на серверном кандидате #14–#16 лежат `GOTENBERG_URL` и оба стека экранов.
+**Обновлено:** 2026-11-23 (release1-ci, PR #64)
+**Ветка:** `cursor/release1-ci-jobs-ac9d`
+**Этап:** подключение job release1-ci по D334.
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| Сервер | фикстуры #15 и снятие `prereq_order` #14/#16 | общий CI этой сборки |
-| PDF | клиент и compose читают `GOTENBERG_URL` | повторная конвертация на этом SHA |
-| Экраны | итог, профиль, карточка, урок и подготовка | CI `code-check` |
+| release1-ci workflow | generation, build, storybook, e2e; docker, chrome, contract-live (D334) | size-limit (нет `web/size-limit.budget.json`), deploy (VM) |
+| Документация | D334, реестр [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml) | синхронизация с release1-progress на docs/r1-repo-handoff |
 
 ## Что в работе сейчас
 
-Проверка этой сборки. Журнал прогресса координатора — в локальном `docs/handoff/release1-progress.md` основной рабочей копии.
+PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) — дождаться CI на новом коммите.
 
 ## Следующий шаг
 
-Прогнать целевые Go-тесты и `npm test` на этом SHA.
+Зафиксировать измеренный bundle в `web/size-limit.budget.json`; подготовить VM acceptance для job `deploy`.
 
 ## Блокеры и вопросы
 
-Настоящий Telegram и чистая VM сюда не входят. Новых решений нет.
+Нет зафиксированного числового лимита bundle (D315). Секреты VM и `tools/vm-acceptance.sh` отсутствуют.
 
 ## Куда смотреть
 
-- Правила для агентов: [AGENTS.md](../../AGENTS.md)
-- Имя PDF: D329 в [docs/decisions/log.md](../decisions/log.md)
+- D334 в [docs/decisions/log.md](../decisions/log.md)
+- Открытые job: [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
+- Порядок: briefs/CURSOR-PROJECT-RELEASE1.md §12 (ветка `docs/r1-repo-handoff`)

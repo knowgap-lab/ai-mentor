@@ -141,10 +141,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: web
-      - name: GAP — size-limit
-        run: |
-          echo "GAP: D315 требует size-limit в CI, но в решениях нет числового бюджета байт; конфигурации и команды в репозитории нет."
-          exit 1
+      - name: Bundle size (D315; бюджет — web/size-limit.budget.json)
+        run: bash tools/ci/size-limit-measure.sh
 
   e2e:
     name: e2e
@@ -184,28 +182,30 @@ jobs:
     name: contract-live
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — contract-live
-        run: |
-          echo "GAP: ни один бриф выпуска не задаёт команду CI с именем contract-live; tools/check.sh и scenario/run_test.go не заменяют такой job."
-          exit 1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: core/go.mod
+          cache-dependency-path: core/go.sum
+      - name: Live API walk (briefs/r1-e1.md TestWalkSkeleton)
+        run: (cd core && go test -count=1 -timeout 5m ./internal/e2e/ -run '^TestWalkSkeleton$')
 
   docker:
     name: docker
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — docker
-        run: |
-          echo "GAP: отдельной проверки CI с именем docker в спецификациях нет (README и tools/dev-*.sh используют Docker внутри e2e и локальных скриптов)."
-          exit 1
+      - uses: actions/checkout@v4
+      - name: Postgres 16.15 smoke (tools/e2e/stack.ts, e2e job evidence)
+        run: bash tools/ci/docker-postgres-e2e-evidence.sh
 
   chrome:
     name: chrome
     runs-on: ubuntu-latest
     steps:
-      - name: GAP — chrome
-        run: |
-          echo "GAP: отдельной проверки CI с именем chrome в спецификациях нет (briefs/r1-e1-browser.md и Playwright channel: chrome входят в job e2e)."
-          exit 1
+      - uses: actions/checkout@v4
+      - uses: browser-actions/setup-chrome@v1
+      - name: Chrome channel (Playwright e2e evidence)
+        run: bash tools/ci/chrome-e2e-evidence.sh
 
   deploy:
     name: deploy
