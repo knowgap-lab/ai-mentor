@@ -206,6 +206,7 @@ test("charts — числовые показатели на «Ученики»",
 
 test("no_horizontal_scroll — задача на 360 px", async () => {
   const page = await studentContext.newPage();
+  expect(page.viewportSize()?.width).toBe(360);
   await page.goto(`${stack.origin}/task/${ASG_OPEN}/item-a`);
   await expectNoHorizontalScroll(page);
   await page.close();
