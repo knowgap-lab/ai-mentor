@@ -66,6 +66,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
       - uses: actions/setup-go@v5
         with:
           go-version-file: core/go.mod
@@ -75,6 +80,11 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - name: Python venv (tools/generate.sh → pip install -r tools/requirements.txt)
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -r tools/requirements.txt
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
       - run: npm ci --ignore-scripts
         working-directory: web
       - name: Contract type generation (D97, §7)
