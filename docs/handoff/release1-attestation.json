@@ -2,7 +2,7 @@
   "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "artifact_sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T13:25:00Z",
+  "recorded_at": "2026-11-23T13:40:00Z",
   "recorded_by": "release-1-demo-launch",
   "purpose": "Приёмка merge-коммита main e125b6b; CI с GitHub run 45173837915; catalog_ci и postgres_load подтверждены; lesson — live API на Docker Postgres 127.0.0.1:55432; browser/vm/load/reviews — только после реальных команд.",
   "integrated_ref": "main",
@@ -143,6 +143,42 @@
         "http_status": 200,
         "attempt_count": 1
       }
+    }
+  },
+  "browser": {
+    "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
+    "depends_on": ["lesson", "catalog"],
+    "backend": "real",
+    "database": "synthetic",
+    "command": "cd tools/e2e && sg docker -c 'npm test' (playwright walk.spec.ts; stack.ts Docker Postgres + go run ./cmd/server + built web)",
+    "result": "1 passed (10.8s) walk.spec.ts ученик отвечает, репетитор видит попытку",
+    "screens": {
+      "Ученик/Главная": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Задача": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Ученики": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Ученик": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      }
+    },
+    "behaviors": {
+      "csp": "pass",
+      "accessibility": "pass",
+      "keys_hidden": "pass",
+      "mobile_360": "pass",
+      "no_console_errors": "pass",
+      "homework": "pass",
+      "result": "pass",
+      "roles": "pass"
     }
   },
   "pending_proof": [
