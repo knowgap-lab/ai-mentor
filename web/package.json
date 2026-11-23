@@ -18,6 +18,7 @@
     "@fontsource-variable/golos-text": "5.3.0",
     "@mantine/core": "9.8.0",
     "@mantine/hooks": "9.8.0",
+    "@mantine/notifications": "9.8.0",
     "dompurify": "3.4.17",
     "katex": "0.19.1",
     "react": "19.3.1",

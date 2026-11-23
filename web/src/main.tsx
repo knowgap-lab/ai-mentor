@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./App";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import "@fontsource-variable/golos-text";
 import "./design/theme.css";
 import "./design/design.css";

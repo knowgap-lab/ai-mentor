@@ -181,14 +181,19 @@ test("dialogs — подтверждение «Сдать»", async () => {
   await page.close();
 });
 
-test("toasts — WB-R31 подтверждение «сдано»", async () => {
+test("toasts — Mantine toast «сдано» после «Сдать»", async () => {
   const page = await studentContext.newPage();
   await page.goto(`${stack.origin}/assignment/${ASG_OPEN}`);
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Сдать" }).click();
-  await expect(page.getByText("сдано", { exact: true })).toBeVisible({
-    timeout: 60_000,
-  });
+  await expect(
+    page.getByRole("alert").filter({ hasText: "сдано" }),
+  ).toBeVisible({ timeout: 60_000 });
+  await expect(
+    page
+      .locator("main")
+      .getByText("сдано", { exact: true }),
+  ).toBeVisible();
   await page.close();
 });
 
