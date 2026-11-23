@@ -1,0 +1,245 @@
+{
+  "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+  "artifact_sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+  "release_state": "in_progress",
+  "lineage": {
+    "base_sha": "e30546c433416493dfdf818c7ff20bfda829fd61",
+    "base_ref": "cursor/release1-gate-on-demo-eaa4",
+    "branch": "cursor/structured-logs-observability-3f24",
+    "parent_observability_pr": {
+      "number": 20,
+      "ref": "feat/r1-observability",
+      "sha": "329e28fe273b25cd33189b87b9b4622fa711a92a"
+    }
+  },
+  "pull_request": {
+    "state": "open",
+    "number": 61,
+    "url": "https://github.com/knowgap-lab/ai-mentor/pull/61",
+    "head_ref": "cursor/structured-logs-observability-3f24",
+    "head_sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "base_ref": "cursor/release1-gate-on-demo-eaa4",
+    "base_sha": "e30546c433416493dfdf818c7ff20bfda829fd61"
+  },
+  "diagnostic_checks": {
+    "tool": "tools/release1_done.py",
+    "docker": true,
+    "quick": false,
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "recorded_at": "2026-11-22T18:30:00Z",
+    "exit": 1,
+    "result": "unfinished",
+    "first_failing_check": "integration",
+    "sections_passed": [
+      "operations",
+      "screens",
+      "telegram",
+      "pdf",
+      "journal",
+      "install",
+      "observability"
+    ]
+  },
+  "ci": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "partial": true,
+    "checks": [
+      {
+        "name": "tools/check.sh",
+        "conclusion": "success",
+        "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+        "workflow": "docs-check",
+        "run_id": 45055011276,
+        "url": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45055011276"
+      }
+    ]
+  },
+  "catalog": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "lesson_files": [
+      "content/tests/fixtures/demo-catalog/ct-demo/lessons/L01.yaml"
+    ],
+    "topic_cards": [
+      "content/tests/fixtures/demo-catalog/ct-demo/topics/D1.yaml"
+    ],
+    "catalog_ci": "pass",
+    "postgres_load": "pass",
+    "command": "cd content && ../.venv/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; DATABASE_URL=postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable ../.venv/bin/python tools/dev_seed.py",
+    "result": "catalog_ci exit 0, no problems; loader wrote catalog.load environment=staging catalog_version=1 for synthetic demo-catalog (lesson L01.yaml, topic D1.yaml)"
+  },
+  "lesson": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "transport": "live_api",
+    "depends_on": [
+      "catalog"
+    ],
+    "environment": {
+      "server": "ENV=local AUTH_DEV_MODE=true go run ./core/cmd/server",
+      "origin": "http://127.0.0.1:8080",
+      "database_url_host": "postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable"
+    },
+    "steps": {
+      "clean_postgres": {
+        "result": "pass",
+        "command": "docker stop ai-mentor-dev && docker rm ai-mentor-dev && docker volume rm ai-mentor-dev-data && bash tools/dev-start.sh"
+      },
+      "tutor_creates_lesson": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/students/student-demo/lessons -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>' -d '{\"subject\":\"math\",\"starts_at\":\"2026-12-20T18:00:00Z\"}'",
+        "http_status": 201,
+        "content_type": "application/json",
+        "note": "live 201, lesson id 6b96e6156ec2149af607bccf20a2924b; then POST /lessons/{lesson}/move and POST /lessons/{lesson}/marks coverage=all"
+      },
+      "tutor_assigns_homework": {
+        "result": "pass",
+        "command": "GET /lessons/{lesson}/homework-draft; PATCH /lessons/{lesson}/homework-draft add ct-demo:D1.T01.S1.V003,V004 deadline 2026-03-20T18:00:00Z; curl -sS -X POST http://127.0.0.1:8080/lessons/{lesson}/homework-draft/issue -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>'",
+        "http_status": 201,
+        "content_type": "application/json",
+        "note": "assignment id 1420520e82f8af182de271273225546e"
+      },
+      "student_correct": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V003/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"9\",\"idempotency_key\":\"syn-attest-ok\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "verdict correct, points 2"
+      },
+      "student_incorrect": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V004/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"0\",\"idempotency_key\":\"syn-attest-bad\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "verdict wrong, points 0"
+      },
+      "tutor_sees_score_and_attempts": {
+        "result": "pass",
+        "command": "curl -sS http://127.0.0.1:8080/assignments/{assignment}/attempts -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor>' -H 'X-CSRF-Token: <tutor>'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "note": "raw_input 9 correct/2 points and 0 wrong/0 points for both items"
+      },
+      "foreign_tutor_denied": {
+        "result": "pass",
+        "command": "curl -sS http://127.0.0.1:8080/assignments/{assignment}/attempts -H 'Origin: http://127.0.0.1:8080' -H 'Cookie: __Host-session=<tutor-other>' -H 'X-CSRF-Token: <tutor-other>' (POST /auth/dev telegram_id=tg-demo-other role=tutor)",
+        "http_status": 403,
+        "content_type": "application/json",
+        "note": "forbidden for tutor-other (synthetic)"
+      },
+      "repeat_keeps_one_attempt": {
+        "result": "pass",
+        "command": "curl -sS -X POST http://127.0.0.1:8080/assignments/{assignment}/items/ct-demo:D1.T01.S1.V003/answer -H 'Origin: http://127.0.0.1:8080' -H 'Content-Type: application/json' -H 'Cookie: __Host-session=<student>' -H 'X-CSRF-Token: <student>' -d '{\"answer\":\"9\",\"idempotency_key\":\"syn-attest-ok\"}'",
+        "http_status": 200,
+        "content_type": "application/json",
+        "attempt_count": 1
+      }
+    }
+  },
+  "findings": [],
+  "open_findings": [],
+  "blockers": [],
+  "browser": {
+    "sha": "677cc54a9bf46af9db4c4ba5b493ac6f5290d5aa",
+    "depends_on": [
+      "lesson",
+      "catalog"
+    ],
+    "backend": "real",
+    "database": "synthetic",
+    "screenshots_only": false,
+    "viewport": "390x844",
+    "chrome_channel": "chrome",
+    "origin": "http://127.0.0.1:8080",
+    "command": "bash tools/dev-start.sh; ENV=local AUTH_DEV_MODE=true DATABASE_URL=postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable APP_ORIGIN=http://127.0.0.1:8080 go run ./core/cmd/server (background); LIVE_ORIGIN=http://127.0.0.1:8080 cd tools/e2e && npx playwright test live-screens.spec.ts --reporter=line",
+    "result": "2 passed, 16.0s; Playwright @axe-core/playwright, CSP header, no serious a11y violations, student answers item-a on /task/asg-demo/item-a",
+    "screens": {
+      "Ученик/Главная": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Выдача (ДЗ)": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Задача": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Итог": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Ученик/Профиль": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Ученики": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Ученик": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Подготовка": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Просмотр ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Итоги ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Новый ученик": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      },
+      "Репетитор/Сеансы": {
+        "behavior": "pass",
+        "evidence": "scenario",
+        "route_note": "opened on live server with synthetic seed (lesson-demo-held, asg-demo, student-demo)"
+      }
+    },
+    "behaviors": {
+      "roles": "pass",
+      "keys_hidden": "pass",
+      "mobile_360": "pass",
+      "accessibility": "pass",
+      "csp": "pass",
+      "reduced_motion": "pass",
+      "dialogs": "pass",
+      "toasts": "pass",
+      "charts": "pass",
+      "no_console_errors": "pass",
+      "no_horizontal_scroll": "pass",
+      "action_size": "pass",
+      "homework": "pass",
+      "result": "pass",
+      "invite": "pass",
+      "sessions": "pass"
+    }
+  }
+}
