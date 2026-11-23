@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,6 +23,9 @@ import (
 const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
 const sessionCookieName = "__Host-session"
+
+// Признак сеанса в HTML, не cookie. Сам сеанс остаётся HttpOnly (AU-R22).
+const sessionMarker = `<meta name="am-session" content="1">`
 
 func rootHandler() (http.Handler, error) {
 	if !devStackEnabled() {
@@ -85,7 +90,7 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		_ = authSvc.Close()
 		return nil, fmt.Errorf("answercheck: %w", err)
 	}
-	attemptSvc, err := attempts.Open(ctx, attempts.Config{DSN: dsn})
+	attemptSvc, err := attempts.Open(ctx, attempts.Config{DSN: dsn, AppOrigin: origin})
 	if err != nil {
 		_ = answerSvc.Close()
 		_ = authSvc.Close()
@@ -99,14 +104,14 @@ func devHandler(health http.Handler) (http.Handler, error) {
 		return nil, err
 	}
 	fallback := compose.Handler(dsn, authSvc.Handler(), answerSvc.Handler(), attemptSvc.Handler())
-	api, err := mountLocal(ctx, dsn, origin, fallback)
+	api, err := mountLocal(ctx, dsn, origin, fallback, authSvc.Handler())
 	if err != nil {
 		_ = attemptSvc.Close()
 		_ = answerSvc.Close()
 		_ = authSvc.Close()
 		return nil, err
 	}
-	web := spaHandler{root: root, files: http.FileServer(http.Dir(root))}
+	web := spaHandler{root: root, files: http.FileServer(http.Dir(root)), live: authSvc.SessionLive}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/healthz" {
 			health.ServeHTTP(w, r)
@@ -214,6 +219,7 @@ func findWebDist() (string, error) {
 type spaHandler struct {
 	root  string
 	files http.Handler
+	live  func(context.Context, string) (bool, error)
 }
 
 func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -227,7 +233,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	rel := strings.TrimPrefix(path.Clean("/"+r.URL.Path), "/")
 	if rel == "" || rel == "." {
-		http.ServeFile(w, r, filepath.Join(h.root, "index.html"))
+		h.serveIndex(w, r)
 		return
 	}
 	full := filepath.Join(h.root, filepath.FromSlash(rel))
@@ -245,5 +251,49 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	http.ServeFile(w, r, filepath.Join(h.root, "index.html"))
+	h.serveIndex(w, r)
+}
+
+func (h spaHandler) serveIndex(w http.ResponseWriter, r *http.Request) {
+	raw, err := os.ReadFile(filepath.Join(h.root, "index.html")) //nolint:gosec // G304: путь собран из каталога сборки, не из URL
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	if h.sessionLive(r) {
+		raw = injectSessionMarker(raw)
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "private, no-store")
+	w.Header().Set("Vary", "Cookie")
+	w.Header().Set("Content-Length", strconv.Itoa(len(raw)))
+	w.WriteHeader(http.StatusOK)
+	if r.Method == http.MethodHead {
+		return
+	}
+	_, _ = w.Write(raw)
+}
+
+func (h spaHandler) sessionLive(r *http.Request) bool {
+	token, ok := requestSession(r)
+	if !ok || h.live == nil {
+		return false
+	}
+	alive, err := h.live(r.Context(), token)
+	return err == nil && alive
+}
+
+func injectSessionMarker(raw []byte) []byte {
+	if bytes.Contains(raw, []byte(sessionMarker)) {
+		return raw
+	}
+	head := []byte("<head>")
+	if i := bytes.Index(raw, head); i >= 0 {
+		out := make([]byte, 0, len(raw)+len(sessionMarker))
+		out = append(out, raw[:i+len(head)]...)
+		out = append(out, sessionMarker...)
+		out = append(out, raw[i+len(head):]...)
+		return out
+	}
+	return append([]byte(sessionMarker), raw...)
 }

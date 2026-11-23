@@ -1,7 +1,19 @@
+import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
-import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
-import "../task/task.css";
+import { useParams } from "react-router";
+import {
+  ActionBar,
+  List,
+  ListRow,
+  Screen,
+  StatusBadge,
+  type Status,
+} from "../ui";
+import {
+  csrfHeaders,
+  rememberCsrfFromResponse,
+  submitToast,
+} from "../task/csrf";
 
 type Verdict = "correct" | "partial" | "wrong" | "accepted";
 
@@ -70,27 +82,24 @@ function readAssignment(value: unknown, fallbackId: string): Assignment | null {
   };
 }
 
-function statusLabel(item: ItemRow): string {
+function statusState(item: ItemRow): Status {
   if (item.last_verdict === "correct") {
-    return "верно";
+    return "correct";
   }
   if (item.last_verdict === "wrong") {
-    return "неверно";
+    return "wrong";
   }
   if (item.last_verdict === "partial") {
-    return "частично";
+    return "partial";
   }
   if (item.item_state === "open") {
-    return "не отвечено";
+    return "not_answered";
   }
-  return "закрыто";
+  return "closed";
 }
 
 function idempotencyKey(): string {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-  return `idem-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  return globalThis.crypto.randomUUID();
 }
 
 function readLeft(value: unknown): number | null {
@@ -120,21 +129,21 @@ export function AssignmentPage() {
     if (!assignmentId) {
       return;
     }
+    const id = assignmentId;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setFailed(false);
       try {
-        const response = await fetch(
-          `/assignments/${encodeURIComponent(assignmentId ?? "")}`,
-          { credentials: "include" },
-        );
+        const response = await fetch(`/assignments/${encodeURIComponent(id)}`, {
+          credentials: "include",
+        });
         rememberCsrfFromResponse(response);
         if (!response.ok) {
           throw new Error("load failed");
         }
         const payload: unknown = await response.json();
-        const next = readAssignment(payload, assignmentId ?? "");
+        const next = readAssignment(payload, id);
         if (!next) {
           throw new Error("load failed");
         }
@@ -158,39 +167,34 @@ export function AssignmentPage() {
 
   if (!assignmentId) {
     return (
-      <main>
-        <p>Выдача не найдена</p>
-      </main>
+      <Screen title="Выдача" backTo="/">
+        <Text>Выдача не найдена</Text>
+      </Screen>
     );
   }
 
+  const id = assignmentId;
+
   async function postSubmit(key: string, confirm: boolean): Promise<Response> {
-    return fetch(
-      `/assignments/${encodeURIComponent(assignmentId ?? "")}/submit`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": key,
-          ...csrfHeaders(),
-        },
-        body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    return fetch(`/assignments/${encodeURIComponent(id)}/submit`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": key,
+        ...csrfHeaders(),
       },
-    );
+      body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    });
   }
 
   async function onSubmit() {
     setSubmitError(null);
     const key = idempotencyKey();
     try {
-      const response = await postSubmit(key, false);
+      let response = await postSubmit(key, false);
       rememberCsrfFromResponse(response);
-      if (response.ok) {
-        setSubmitted(true);
-        return;
-      }
-      if (response.status === 409) {
+      if (!response.ok && response.status === 409) {
         const payload: unknown = await response.json();
         if (readCode(payload) === "unanswered_confirmation_required") {
           const left = readLeft(payload);
@@ -198,17 +202,17 @@ export function AssignmentPage() {
             setSubmitError("Нет связи");
             return;
           }
-          const agreed = window.confirm(`осталось ${left}`);
-          if (!agreed) {
+          if (!window.confirm(`осталось ${left}`)) {
             return;
           }
-          const again = await postSubmit(key, true);
-          rememberCsrfFromResponse(again);
-          if (again.ok) {
-            setSubmitted(true);
-            return;
-          }
+          response = await postSubmit(key, true);
+          rememberCsrfFromResponse(response);
         }
+      }
+      if (response.ok) {
+        setSubmitted(true);
+        submitToast();
+        return;
       }
       setSubmitError("Нет связи");
     } catch {
@@ -216,49 +220,46 @@ export function AssignmentPage() {
     }
   }
 
+  const canSubmit = assignment !== null && !submitted;
   return (
-    <main>
-      <h1>Выдача</h1>
-      {assignment?.subject ? <p>{assignment.subject}</p> : null}
-      {loading ? <p>Загрузка</p> : null}
-      {failed ? (
-        <>
-          <p>Нет связи</p>
-          <button
-            type="button"
-            className="touch-target"
-            onClick={() => setReloadKey((value) => value + 1)}
-          >
-            Повторить
-          </button>
-        </>
-      ) : null}
-      {assignment && assignment.items.length === 0 ? <p>Пусто</p> : null}
-      {assignment ? (
-        <ul>
-          {assignment.items.map((item) => (
-            <li key={item.item_id}>
-              <Link
+    <Screen title="Выдача" backTo="/" withActionBar={canSubmit}>
+      <Stack gap="md">
+        {assignment?.subject ? <Text>{assignment.subject}</Text> : null}
+        {loading ? <Text>Загрузка</Text> : null}
+        {failed ? (
+          <Stack gap="sm">
+            <Text>Нет связи</Text>
+            <Button
+              variant="default"
+              onClick={() => setReloadKey((value) => value + 1)}
+            >
+              Повторить
+            </Button>
+          </Stack>
+        ) : null}
+        {assignment && assignment.items.length === 0 ? (
+          <Text>Пусто</Text>
+        ) : null}
+        {assignment && assignment.items.length > 0 ? (
+          <List label="Задачи">
+            {assignment.items.map((item) => (
+              <ListRow
+                key={item.item_id}
                 to={`/task/${encodeURIComponent(assignment.id)}/${encodeURIComponent(item.item_id)}`}
-              >
-                {item.statement}
-              </Link>
-              <span>{statusLabel(item)}</span>
-            </li>
-          ))}
-        </ul>
+                title={item.statement}
+                aside={<StatusBadge state={statusState(item)} />}
+              />
+            ))}
+          </List>
+        ) : null}
+        {submitted ? <Text>сдано</Text> : null}
+        {submitError ? <Text>{submitError}</Text> : null}
+      </Stack>
+      {canSubmit ? (
+        <ActionBar
+          primary={{ label: "Сдать", onClick: () => void onSubmit() }}
+        />
       ) : null}
-      {assignment && !submitted ? (
-        <button
-          type="button"
-          className="touch-target"
-          onClick={() => void onSubmit()}
-        >
-          Сдать
-        </button>
-      ) : null}
-      {submitted ? <p>сдано</p> : null}
-      {submitError ? <p>{submitError}</p> : null}
-    </main>
+    </Screen>
   );
 }

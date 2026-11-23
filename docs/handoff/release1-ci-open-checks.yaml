@@ -1,0 +1,11 @@
+# Реестр проверок release1-ci без готовой команды (briefs/CURSOR-PROJECT-RELEASE1.md §«Проверки без готовой команды»).
+# Синтетические данные только. Обновляйте при закрытии job в .github/workflows/release1-ci.yml.
+
+checks:
+  - job: deploy
+    status: open
+    owner: infra-reviewer
+    criterion: brief §8 / IAC-VM + QA-VM — чистая Ubuntu, развёртывание, перезагрузка.
+    next_step: tools/vm-acceptance.sh и секреты VM_HYPERVISOR_ACCESS, QA_VM_SSH_HOST.
+    wired_command: tools/vm-acceptance.sh
+    blocked_reason: скрипт и гостевая VM недоступны в этом контуре.

@@ -1,0 +1,16 @@
+---
+stack_secret_names:
+  - DATABASE_URL
+  - POSTGRES_PASSWORD
+  - TELEGRAM_BOT_TOKEN
+  - TELEGRAM_WEBHOOK_SECRET
+  - OPS_CHAT_ID
+  - CONTENT_API_TOKEN
+  - CATALOG_PUBLIC_KEY
+stack_secret_files:
+  - database_url
+  - postgres_password
+  - telegram_bot_token
+  - telegram_webhook_secret
+  - content_api_token
+  - catalog_public_key

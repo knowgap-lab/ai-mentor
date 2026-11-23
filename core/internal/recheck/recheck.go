@@ -24,13 +24,13 @@ const (
 
 // State — состояние пакета перепроверки (RC-R6).
 type State struct {
-	CorrectionID  int
-	State         string
-	Total         int
-	Processed     int
-	Changed       int
-	SkippedManual int
-	Cursor        string
+	CorrectionID  int    `json:"correction_id"`
+	State         string `json:"state"`
+	Total         int    `json:"total"`
+	Processed     int    `json:"processed"`
+	Changed       int    `json:"changed"`
+	SkippedManual int    `json:"skipped_manual"`
+	Cursor        string `json:"cursor"`
 }
 
 // Error — отказ приёма. Error возвращает код.
@@ -128,7 +128,7 @@ func Run(ctx context.Context, conn *pgx.Conn, correctionID int) (State, error) {
 		if err != nil {
 			return State{}, err
 		}
-		if state.State == "done" || state.State == "failed" {
+		if state.State == "done" || state.State == "failed" || state.State == "pending" {
 			return state, nil
 		}
 	}
@@ -154,6 +154,16 @@ func runPortion(ctx context.Context, conn *pgx.Conn, correctionID int) (State, e
 		}
 		return stored.state, nil
 	}
+	earlier, err := earlierOpen(ctx, tx, correctionID)
+	if err != nil {
+		return State{}, err
+	}
+	if earlier {
+		if err := tx.Commit(ctx); err != nil {
+			return State{}, err
+		}
+		return stored.state, nil
+	}
 
 	ids, err := nextAttempts(ctx, tx, stored.variants, stored.state.Cursor)
 	if err != nil {
@@ -169,6 +179,11 @@ func runPortion(ctx context.Context, conn *pgx.Conn, correctionID int) (State, e
 	done := len(ids) < portionSize
 	if err := saveBatch(ctx, tx, stored.state, done); err != nil {
 		return State{}, err
+	}
+	if done {
+		if err := finishBatch(ctx, tx, correctionID); err != nil {
+			return State{}, err
+		}
 	}
 	stored, ok, err = loadBatch(ctx, tx, correctionID, false)
 	if err != nil {
@@ -188,7 +203,7 @@ func rescoreAttempt(ctx context.Context, tx pgx.Tx, correctionID int, attemptID 
 	if err != nil {
 		return err
 	}
-	manual, err := manualCurrent(ctx, tx, attemptID, current.reason)
+	manual, err := manualCurrent(ctx, tx, attemptID)
 	if err != nil {
 		return err
 	}
@@ -284,10 +299,7 @@ func loadCurrent(ctx context.Context, tx pgx.Tx, attemptID string) (verdictNow, 
 	return current, nil
 }
 
-func manualCurrent(ctx context.Context, tx pgx.Tx, attemptID, reason string) (bool, error) {
-	if reason == "" {
-		return false, nil
-	}
+func manualCurrent(ctx context.Context, tx pgx.Tx, attemptID string) (bool, error) {
 	var manual bool
 	err := tx.QueryRow(ctx, `
 		SELECT EXISTS (
@@ -323,9 +335,17 @@ func loadKey(ctx context.Context, tx pgx.Tx, variantID string, correctionID int)
 	var data struct {
 		AnswerFormat string          `json:"answer_format"`
 		Key          json.RawMessage `json:"key"`
+		Subvariant   string          `json:"subvariant"`
 	}
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return scoreKey{}, err
+	}
+	if data.AnswerFormat == "" && data.Subvariant != "" {
+		format, err := formatBySubvariant(ctx, tx, correctionID, data.Subvariant)
+		if err != nil {
+			return scoreKey{}, err
+		}
+		data.AnswerFormat = format
 	}
 	if data.AnswerFormat != formatInteger {
 		return scoreKey{}, fmt.Errorf("recheck: format %s", data.AnswerFormat)
@@ -335,6 +355,67 @@ func loadKey(ctx context.Context, tx pgx.Tx, variantID string, correctionID int)
 		return scoreKey{}, err
 	}
 	return scoreKey{format: data.AnswerFormat, value: value}, nil
+}
+
+func formatBySubvariant(ctx context.Context, tx pgx.Tx, correctionID int, subvariant string) (string, error) {
+	var format string
+	err := tx.QueryRow(ctx, `
+		SELECT COALESCE(data->>'answer_format', '')
+		FROM catalog.revision
+		WHERE catalog_version_from <= $1
+		  AND jsonb_typeof(data->'subvariants') = 'array'
+		  AND data->'subvariants' ? $2
+		ORDER BY catalog_version_from DESC
+		LIMIT 1
+	`, correctionID, subvariant).Scan(&format)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return format, nil
+}
+
+// Resume продолжает открытые пакеты (RC-R6, RC-R7).
+// Пустой список — не ошибка. Пакеты идут по возрастанию correction_id.
+func Resume(ctx context.Context, dsn string) error {
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close(ctx) }()
+
+	rows, err := conn.Query(ctx, `
+		SELECT correction_id
+		FROM core.recheck_batch
+		WHERE state IN ('pending', 'running')
+		ORDER BY correction_id
+	`)
+	if err != nil {
+		return err
+	}
+	var ids []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return err
+	}
+	rows.Close()
+
+	for _, id := range ids {
+		if _, err := Run(ctx, conn, id); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func integerKey(raw json.RawMessage) (any, error) {

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { loginStudent, loginTutor, VIEWPORT_MOBILE } from "./helpers";
 import { startStack, type Stack } from "./stack";
 
 const CSP =
@@ -50,20 +51,7 @@ test("ученик отвечает, репетитор видит попытк�
   const home = await page.goto(`${stack.origin}/`);
   expect(home?.headers()["content-security-policy"]).toBe(CSP);
 
-  await page.evaluate(async () => {
-    const response = await fetch("/auth/dev", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        telegram_id: "tg-demo-student",
-        role: "student",
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(`${response.status} ${await response.text()}`);
-    }
-  });
+  await loginStudent(page, stack.origin);
 
   const assignmentReady = page.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -101,17 +89,14 @@ test("ученик отвечает, репетитор видит попытк�
   if (!browser) {
     throw new Error("browser missing");
   }
-  const tutorContext = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-  });
+  const tutorContext = await browser.newContext({ viewport: VIEWPORT_MOBILE });
   const tutor = await tutorContext.newPage();
   const tutorErrors = watch(tutor);
   try {
-    const tutorHome = await tutor.goto(`${stack.origin}/tutor`);
+    await loginTutor(tutor, stack.origin);
+    const tutorHome = await tutor.goto(`${stack.origin}/tutor/students/student-demo`);
     expect(tutorHome?.headers()["content-security-policy"]).toBe(CSP);
-    await tutor.getByRole("textbox").fill("tg-demo-tutor");
-    await tutor.getByRole("button", { name: "Войти" }).click();
-    await tutor.getByRole("button", { name: "student-demo" }).click();
+    await expect(tutor).toHaveURL(/\/tutor\/students\/student-demo$/);
     await expect(tutor.getByText("[3]")).toBeVisible();
     await expect(tutor.getByText("student-other")).toHaveCount(0);
     await expectAccessible(tutor, tutorErrors);

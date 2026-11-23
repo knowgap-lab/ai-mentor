@@ -138,9 +138,15 @@ func writeErr(w http.ResponseWriter, api *Error) {
 	if api == nil {
 		api = errUnavailable()
 	}
+	// json.Marshal — санитайзер HTML-стока (gosec G705). RawMessage сохраняет
+	// байты Body(): это тот же JSON, что отдаёт контракт Error.
+	body, err := json.Marshal(json.RawMessage(api.Body()))
+	if err != nil || len(body) == 0 || string(body) == "null" {
+		body = []byte(`{"code":"unavailable","message":"unavailable"}`)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(api.HTTPStatus)
-	_, _ = w.Write(api.Body())
+	_, _ = w.Write(body)
 }
 
 func writeServiceErr(w http.ResponseWriter, err error) {

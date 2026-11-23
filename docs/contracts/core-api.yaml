@@ -1059,9 +1059,9 @@ components:
         answers:
           type: object
           additionalProperties:
-            type:
-            - string
-            - array
+            oneOf:
+            - type: string
+            - type: array
           description: позиция задачи → ответ; отсутствующая позиция = пропуск (D253)
       additionalProperties: false
       required:

@@ -3,8 +3,9 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$root/tools/dev-toolchain.sh"
 container="ai-mentor-dev"
-image="postgres:16.15"
+image="$(toolchain_value POSTGRES_IMAGE "$root/mise.toml")"
 volume="ai-mentor-dev-data"
 dsn="${DATABASE_URL:-postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable}"
 python="$root/.venv/bin/python"

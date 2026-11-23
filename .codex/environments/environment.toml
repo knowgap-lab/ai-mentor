@@ -1,0 +1,26 @@
+# Локальный Codex Desktop. Установку не повторяет: те же скрипты, что Cloud Agent.
+version = 1
+name = "AI Mentor"
+
+[setup]
+script = '''
+cd "${CODEX_WORKTREE_PATH:-$PWD}"
+bash tools/dev-install.sh
+bash tools/dev-start.sh
+'''
+
+[[actions]]
+name = "База"
+icon = "run"
+command = '''
+cd "${CODEX_WORKTREE_PATH:-$PWD}"
+bash tools/dev-start.sh
+'''
+
+[[actions]]
+name = "Проверки"
+icon = "test"
+command = '''
+cd "${CODEX_WORKTREE_PATH:-$PWD}"
+bash tools/dev-check.sh
+'''

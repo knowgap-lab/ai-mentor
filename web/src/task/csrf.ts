@@ -26,10 +26,30 @@ export function rememberCsrfFromResponse(response: Response): void {
   writeToken(token);
 }
 
+export function forgetCsrf(): void {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Сеанс в памяти вкладки недоступен.
+  }
+}
+
+export function hasCsrfToken(): boolean {
+  return readToken() !== null;
+}
+
 export function csrfHeaders(): Record<string, string> {
   const token = readToken();
   if (!token) {
     return {};
   }
   return { [HEADER]: token };
+}
+
+export function submitToast() {
+  const el = document.createElement("div");
+  el.role = "alert";
+  el.className = "am-t";
+  el.textContent = "сдано";
+  document.body.append(el);
 }

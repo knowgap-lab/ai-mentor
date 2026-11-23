@@ -43,6 +43,10 @@ func apiError(status int, code string) *Error {
 	return &Error{HTTPStatus: status, Code: code, message: code}
 }
 
+func errForbidden() *Error {
+	return apiError(http.StatusForbidden, "forbidden")
+}
+
 func errLoginInvalid() *Error {
 	return apiError(http.StatusUnauthorized, "login_invalid")
 }

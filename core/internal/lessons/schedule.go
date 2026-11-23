@@ -34,6 +34,37 @@ func loadPlan(ctx context.Context, db q, studentID, subject string) (planHead, e
 	return head, nil
 }
 
+// ensurePlan открывает план предмета, если каталог уже загружен, а плана ещё нет.
+// Дата экзамена та же, что пишет импорт плана, когда запрос её не присылает.
+func ensurePlan(ctx context.Context, db q, studentID, subject string) (planHead, error) {
+	head, err := loadPlan(ctx, db, studentID, subject)
+	if err != nil || head.ok {
+		return head, err
+	}
+	var version int
+	err = db.QueryRow(ctx, `
+		SELECT catalog_version
+		FROM catalog.load
+		ORDER BY catalog_version DESC
+		LIMIT 1
+	`).Scan(&version)
+	if errors.Is(err, pgx.ErrNoRows) || version < 1 {
+		return planHead{}, nil
+	}
+	if err != nil {
+		return planHead{}, err
+	}
+	exam := time.Date(2027, 6, 1, 0, 0, 0, 0, time.UTC)
+	if _, err := db.Exec(ctx, `
+		INSERT INTO core.study_plan (student_id, subject, exam_at, catalog_version)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (student_id, subject) DO NOTHING
+	`, studentID, subject, exam, version); err != nil {
+		return planHead{}, err
+	}
+	return loadPlan(ctx, db, studentID, subject)
+}
+
 func loadRule(ctx context.Context, db q, studentID, subject string) (*Schedule, error) {
 	var rule Schedule
 	err := db.QueryRow(ctx, `
@@ -50,7 +81,7 @@ func loadRule(ctx context.Context, db q, studentID, subject string) (*Schedule, 
 	return &rule, nil
 }
 
-func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Schedule, withEvent bool) error {
+func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Schedule, withEvent bool, actorRole, actorID string) error {
 	if _, err := db.Exec(ctx, `
 		INSERT INTO core.schedule_rule (student_id, subject, weekdays, start_time, duration_min)
 		VALUES ($1, $2, $3, $4, $5)
@@ -64,7 +95,7 @@ func saveSchedule(ctx context.Context, db q, studentID, subject string, rule Sch
 	if !withEvent {
 		return nil
 	}
-	return insertEvent(ctx, db, "schedule_rule_set", struct {
+	return insertOwnedEvent(ctx, db, "schedule_rule_set", studentID, actorRole, actorID, struct {
 		Subject     string `json:"subject"`
 		Weekdays    []int  `json:"weekdays"`
 		StartTime   string `json:"start_time"`
@@ -427,7 +458,7 @@ func (s *Service) putSchedule(w http.ResponseWriter, r *http.Request) {
 		writeHandlerErr(w, failErr(err))
 		return
 	}
-	head, err := loadPlan(r.Context(), tx, studentID, subject)
+	head, err := ensurePlan(r.Context(), tx, studentID, subject)
 	if err != nil {
 		writeHandlerErr(w, failErr(err))
 		return
@@ -436,7 +467,7 @@ func (s *Service) putSchedule(w http.ResponseWriter, r *http.Request) {
 		writeCode(w, http.StatusNotFound, "not_found")
 		return
 	}
-	if err := saveSchedule(r.Context(), tx, studentID, subject, rule, true); err != nil {
+	if err := saveSchedule(r.Context(), tx, studentID, subject, rule, true, user.role, user.id); err != nil {
 		writeHandlerErr(w, failErr(err))
 		return
 	}

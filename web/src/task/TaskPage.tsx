@@ -1,6 +1,16 @@
-import { Button, Checkbox, Radio, TextInput } from "@mantine/core";
+import {
+  Button,
+  Checkbox,
+  NativeSelect,
+  Radio,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { messageForResponse } from "../api-error";
+import { ActionBar, ChoiceRow, Screen, TaskSheet } from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
 import {
   dropOutbox,
@@ -9,10 +19,14 @@ import {
   type OutboxItem,
 } from "./outbox";
 import { Statement } from "./Statement";
-import "./task.css";
 
 const INTEGER_HINT = "введите целое число";
+const DIGITS_HINT = "цифры не должны повторяться";
 const MINUS = "−";
+const MATCH_LETTERS = ["А", "Б", "В"] as const;
+const MATCH_DIGITS = ["1", "2", "3", "4", "5"] as const;
+
+type MatchLetter = (typeof MATCH_LETTERS)[number];
 
 type Option = {
   n: number;
@@ -68,6 +82,17 @@ function normalizeInteger(value: string): string | null {
     return null;
   }
   return unsigned;
+}
+
+function repeatedDigit(value: string): boolean {
+  const seen = new Set<string>();
+  for (const digit of value) {
+    if (seen.has(digit)) {
+      return true;
+    }
+    seen.add(digit);
+  }
+  return false;
 }
 
 function integerHint(value: string): string | null {
@@ -132,7 +157,9 @@ function verdictText(result: AnswerResponse): string | null {
 }
 
 type Delivered =
-  { kind: "ok"; body: AnswerResponse } | { kind: "http" } | { kind: "offline" };
+  | { kind: "ok"; body: AnswerResponse }
+  | { kind: "http"; text: string }
+  | { kind: "offline" };
 
 async function deliver(entry: OutboxItem): Promise<Delivered> {
   try {
@@ -153,7 +180,7 @@ async function deliver(entry: OutboxItem): Promise<Delivered> {
     );
     rememberCsrfFromResponse(response);
     if (!response.ok) {
-      return { kind: "http" };
+      return { kind: "http", text: await messageForResponse(response) };
     }
     const body = (await response.json()) as AnswerResponse;
     return { kind: "ok", body };
@@ -185,6 +212,11 @@ export function TaskPage() {
   const [choice, setChoice] = useState<string | null>(null);
   const [choices, setChoices] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
+  const [matchDigits, setMatchDigits] = useState<Record<MatchLetter, string>>({
+    А: "",
+    Б: "",
+    В: "",
+  });
   const [formatHint, setFormatHint] = useState<string | null>(null);
   const [result, setResult] = useState<AnswerResponse | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -265,7 +297,7 @@ export function TaskPage() {
         }
         if (outcome.kind === "http") {
           setUnsent(false);
-          setSendError("Нет связи");
+          setSendError(outcome.text);
           return;
         }
         setUnsent(false);
@@ -289,42 +321,50 @@ export function TaskPage() {
     };
   }, [assignmentId, itemId]);
 
+  const backTo =
+    assignmentId && itemId
+      ? `/assignment/${encodeURIComponent(assignmentId)}`
+      : "/";
+
   if (!assignmentId || !itemId) {
     return (
-      <main>
-        <p>Задача не найдена</p>
-      </main>
+      <Screen title="Задача" backTo="/">
+        <Text>Задача не найдена</Text>
+      </Screen>
     );
   }
 
   if (loadError) {
     return (
-      <main>
-        <p>Нет связи</p>
-        <Button
-          type="button"
-          onClick={() => setReloadKey((value) => value + 1)}
-        >
-          Повторить
-        </Button>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Stack gap="sm">
+          <Text>Нет связи</Text>
+          <Button
+            type="button"
+            variant="default"
+            onClick={() => setReloadKey((value) => value + 1)}
+          >
+            Повторить
+          </Button>
+        </Stack>
+      </Screen>
     );
   }
 
   if (!assignment) {
     return (
-      <main>
-        <p>Загрузка</p>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Text>Загрузка</Text>
+      </Screen>
     );
   }
 
   const item = assignment.items.find((entry) => entry.item_id === itemId);
   if (!item) {
     return (
-      <main>
-        <p>Задача не найдена</p>
-      </main>
+      <Screen title="Задача" backTo={backTo}>
+        <Text>Задача не найдена</Text>
+      </Screen>
     );
   }
 
@@ -336,6 +376,12 @@ export function TaskPage() {
   function updateDraft(next: string) {
     setDraft(next);
     setFormatHint(integerHint(next));
+  }
+
+  function updateDigits(next: string) {
+    const digits = next.replace(/\D/g, "");
+    setDraft(digits);
+    setFormatHint(repeatedDigit(digits) ? DIGITS_HINT : null);
   }
 
   function toggleMinus() {
@@ -363,6 +409,20 @@ export function TaskPage() {
     }
     if (item?.answer_format === "ct.integer") {
       return normalizeInteger(draft);
+    }
+    if (item?.answer_format === "ct.digits") {
+      if (draft === "" || repeatedDigit(draft)) {
+        return null;
+      }
+      return draft;
+    }
+    if (item?.answer_format === "ct.match") {
+      if (MATCH_LETTERS.some((letter) => matchDigits[letter] === "")) {
+        return null;
+      }
+      return MATCH_LETTERS.map(
+        (letter) => `${letter}${matchDigits[letter]}`,
+      ).join("");
     }
     return null;
   }
@@ -393,7 +453,7 @@ export function TaskPage() {
     }
     blocked.current = false;
     if (outcome.kind === "http") {
-      setSendError("Нет связи");
+      setSendError(outcome.text);
       return;
     }
     setResult(outcome.body);
@@ -420,81 +480,132 @@ export function TaskPage() {
   const verdict = result ? verdictText(result) : null;
 
   return (
-    <main>
-      <Statement source={item.statement} />
-      {attemptsLeft !== undefined ? <p>{attemptsLabel(attemptsLeft)}</p> : null}
-      {item.answer_format === "ct.choice1" ? (
-        <Radio.Group
-          label="Вариант"
-          name="choice1"
-          value={choice ?? ""}
-          onChange={setChoice}
-        >
-          {options.map((option) => (
-            <Radio
-              key={option.n}
-              value={String(option.n)}
-              label={`${option.n}. ${option.text}`}
+    <Screen title="Задача" backTo={backTo} withActionBar>
+      <TaskSheet>
+        <Stack gap="md">
+          <Statement source={item.statement} />
+          {attemptsLeft !== undefined ? (
+            <Text>{attemptsLabel(attemptsLeft)}</Text>
+          ) : null}
+          {item.answer_format === "ct.choice1" ? (
+            <Radio.Group
+              label="Вариант"
+              name="choice1"
+              size="md"
+              value={choice ?? ""}
+              onChange={setChoice}
+            >
+              <Stack gap="sm">
+                {options.map((option) => (
+                  <ChoiceRow key={option.n}>
+                    <Radio
+                      value={String(option.n)}
+                      label={`${option.n}. ${option.text}`}
+                    />
+                  </ChoiceRow>
+                ))}
+              </Stack>
+            </Radio.Group>
+          ) : null}
+          {item.answer_format === "ct.choiceN" ? (
+            <Checkbox.Group
+              label="Варианты"
+              size="md"
+              value={choices}
+              onChange={setChoices}
+            >
+              <Stack gap="sm">
+                {options.map((option) => (
+                  <ChoiceRow key={option.n}>
+                    <Checkbox
+                      value={String(option.n)}
+                      label={`${option.n}. ${option.text}`}
+                    />
+                  </ChoiceRow>
+                ))}
+              </Stack>
+            </Checkbox.Group>
+          ) : null}
+          {item.answer_format === "ct.match" ? (
+            <Stack gap="sm">
+              {MATCH_LETTERS.map((letter) => (
+                <NativeSelect
+                  key={letter}
+                  aria-label={letter}
+                  size="md"
+                  value={matchDigits[letter]}
+                  data={[
+                    { value: "", label: " " },
+                    ...MATCH_DIGITS.map((digit) => ({
+                      value: digit,
+                      label: digit,
+                    })),
+                  ]}
+                  onChange={(event) => {
+                    const value = event.currentTarget.value;
+                    setMatchDigits((prev) => ({ ...prev, [letter]: value }));
+                  }}
+                />
+              ))}
+            </Stack>
+          ) : null}
+          {item.answer_format === "ct.digits" ? (
+            <TextInput
+              label="Ответ"
+              inputMode="numeric"
+              autoComplete="off"
+              size="md"
+              value={draft}
+              onChange={(event) => updateDigits(event.currentTarget.value)}
             />
-          ))}
-        </Radio.Group>
-      ) : null}
-      {item.answer_format === "ct.choiceN" ? (
-        <Checkbox.Group label="Варианты" value={choices} onChange={setChoices}>
-          {options.map((option) => (
-            <Checkbox
-              key={option.n}
-              value={String(option.n)}
-              label={`${option.n}. ${option.text}`}
-            />
-          ))}
-        </Checkbox.Group>
-      ) : null}
-      {item.answer_format === "ct.integer" ? (
-        <div>
-          <TextInput
-            label="Ответ"
-            inputMode="numeric"
-            autoComplete="off"
-            value={draft}
-            onChange={(event) => updateDraft(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                onAnswer();
-              }
-            }}
-          />
-          <Button
-            type="button"
-            className="touch-target"
-            variant="default"
-            onClick={toggleMinus}
-          >
-            {MINUS}
-          </Button>
-        </div>
-      ) : null}
-      {formatHint ? <p>{formatHint}</p> : null}
-      <Button
-        type="button"
-        className="touch-target"
-        variant="default"
-        disabled={unsent}
-        onClick={onAnswer}
-      >
-        Ответить
-      </Button>
-      {unsent ? <p>не отправлено</p> : null}
-      {unsent && item.answer_format === "ct.integer" ? <p>ждём связь</p> : null}
-      {verdict ? <p>{verdict}</p> : null}
-      {result?.hint ? <p>{result.hint}</p> : null}
-      {result && showScore(result) ? (
-        <p>{`баллы ${result.points} из ${result.max_points}`}</p>
-      ) : null}
-      {result?.show?.key !== undefined ? <p>{result.show.key}</p> : null}
-      {result?.show?.solution_block ? <p>решение</p> : null}
-      {sendError ? <p>{sendError}</p> : null}
-    </main>
+          ) : null}
+          {item.answer_format === "ct.integer" ? (
+            <Stack gap="sm">
+              <TextInput
+                label="Ответ"
+                inputMode="numeric"
+                autoComplete="off"
+                value={draft}
+                onChange={(event) => updateDraft(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onAnswer();
+                  }
+                }}
+              />
+              <Button type="button" variant="default" onClick={toggleMinus}>
+                {MINUS}
+              </Button>
+            </Stack>
+          ) : null}
+          {formatHint ? <Text>{formatHint}</Text> : null}
+          {unsent ? <Text>не отправлено</Text> : null}
+          {unsent && item.answer_format === "ct.integer" ? (
+            <Text>ждём связь</Text>
+          ) : null}
+          {verdict ? <Text>{verdict}</Text> : null}
+          {result?.hint ? <Text>{result.hint}</Text> : null}
+          {result && showScore(result) ? (
+            <Text className="am-num">{`баллы ${result.points} из ${result.max_points}`}</Text>
+          ) : null}
+          {result?.show?.key !== undefined ? (
+            <Text>{result.show.key}</Text>
+          ) : null}
+          {result?.show?.solution_block ? <Text>решение</Text> : null}
+          {sendError ? <Text>{sendError}</Text> : null}
+        </Stack>
+      </TaskSheet>
+      <ActionBar
+        primary={{
+          label: "Ответить",
+          onClick: onAnswer,
+          disabled:
+            unsent ||
+            (item.answer_format === "ct.match" &&
+              MATCH_LETTERS.some((letter) => matchDigits[letter] === "")),
+        }}
+      />
+    </Screen>
   );
 }

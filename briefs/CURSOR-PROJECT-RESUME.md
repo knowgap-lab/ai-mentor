@@ -15,7 +15,7 @@ SHA — идентификатор конкретного коммита Git. В
 ```text
 Доведи Release 1 проекта knowgap-lab/ai-mentor до полной приёмки. Веди эту цель в проекте, продолжай с опубликованного состояния и используй только включённый лимит.
 
-Возьми инструкции из GitHub. Пока PR #29 открыт, прочитай AGENTS.md, briefs/CURSOR-PROJECT-RESUME.md и briefs/RELEASE1-GOAL.md из ветки docs/r1-repo-handoff. После слияния #29 читай их из main.
+Возьми инструкции из GitHub. Пока PR #29 открыт, прочитай AGENTS.md, briefs/CURSOR-PROJECT-RESUME.md, briefs/RELEASE1-GOAL.md, briefs/CURSOR-PROJECT-RELEASE1.md и docs/handoff/LATEST.md из ветки docs/r1-repo-handoff. После слияния #29 читай их из main.
 
 Сверь все карточки For Review и In Progress с реестром и GitHub. Определи, где ещё нужно ревью или исправление, и продолжи с первого незакрытого критерия из LATEST.md. Первую волну запусти по D332: исполнитель на Composer 2.5 Standard и независимый ревьюер на Grok 4.7 Medium без Fast. Соблюдай D320. Используй прежние результаты, когда совпадают SHA и условия проверки. Если у обязательной проверки ещё нет команды, назначь её реализацию по критерию из брифа. Обычные технические решения принимай по D328.
 
