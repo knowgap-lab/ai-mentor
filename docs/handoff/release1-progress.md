@@ -1,8 +1,13 @@
 # Проверяемый прогресс выпуска 1
 
-Сверено с GitHub 22 ноября 2026 года. Дата отдельных прогонов указана в их записях. Перед началом работы обновите сведения по GitHub, веткам и результатам проверок. [Цель выпуска](../../briefs/RELEASE1-GOAL.md) · [Порядок продолжения](../../briefs/CURSOR-PROJECT-RESUME.md).
+Сверено с GitHub 23 ноября 2026 года. Дата отдельных прогонов указана в их записях. Перед началом работы обновите сведения по GitHub, веткам и результатам проверок. [Цель выпуска](../../briefs/RELEASE1-GOAL.md) · [Порядок продолжения](../../briefs/CURSOR-PROJECT-RESUME.md).
 
 ## Ветки и проверки
+
+- Текущий `main` — `ad16958`. [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) и [#68](https://github.com/knowgap-lab/ai-mentor/pull/68) влиты в демо, вершина `bed29c2`. На этой голове [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) открыт против `main`, обязательный CI зелёный.
+- [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) на `6e383fb`: generation, build, storybook, e2e прошли. Открыты size-limit, deploy, contract-live, docker и chrome. См. [логи CI](https://github.com/knowgap-lab/ai-mentor/actions/runs/45134868150) и [порядок продолжения](../../briefs/CURSOR-PROJECT-RELEASE1.md#проверки-без-готовой-команды).
+
+Сохранённые прогоны на прежних SHA приведены ниже. Их применимость проверяйте перед принятием.
 
 - `main` — `ad16958`. В [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) из `feat/release1-demo` в `main` на `61f6fd5` падали S6 JSON 404, AT-R17, RC-R20 и PL-R5. [Лог](https://github.com/knowgap-lab/ai-mentor/actions/runs/43613206881).
 - В [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) на `d3a5e8e` объединены серверные исправления #14–#16, PDF-ветки и экраны ученика и репетитора. Обе обязательные проверки на базе `feat/release1-demo` прошли. В CI прошли Go, 107 веб-тестов и 252 Python-теста при двух пропусках. [Code check](https://github.com/knowgap-lab/ai-mentor/actions/runs/44322308661) · [Docs check](https://github.com/knowgap-lab/ai-mentor/actions/runs/44322308573).
@@ -34,7 +39,7 @@
 
 | Этап | Что подтверждено | Что закрыть |
 |---|---|---|
-| 1. Интеграция и урок | На #27 `dc1e160` обе обязательные проверки зелёные. На #34 пройден урок через API. На `8c863da` пройдены `dev-start.sh` и `dev-check.sh` в облачном снимке. | Сверить свежий запуск и доказательства ревью D320 для вошедших технических правок. Провести #27 через ветку демо, получить зелёный #6 против свежего `main` и повторить урок на принятом `main` SHA. |
+| 1. Интеграция и урок | На #27 `dc1e160` обе обязательные проверки зелёные. На #34 пройден урок через API. На `8c863da` пройдены `dev-start.sh` и `dev-check.sh` в облачном снимке. | Сверить свежий запуск и доказательства ревью D320 для вошедших технических правок. На #6 `bed29c2` CI зелёный. Подтвердить принятие в `main` и повторить урок на принятом SHA. |
 | 2. Сервер и каталог | #39, #44 и #46 имеют зелёный CI, их результаты присутствуют в кандидате. Отдельно показаны PDF, согласие, перепроверка и тестовый отправитель. | Собрать полную матрицу живых проверок E3 и подтвердить обязательные операции, роли, ошибки и повторяемость на интегрированном SHA. |
 | 3. Интерфейс | В `web/screens.json` кандидата перечислены 14 маршрутов. По отчёту, четыре новых маршрута открывались в браузере, исправлена установка срока. | Пройти весь E2 на живом сервере с БД, включая состояния и права. Зафиксировать доступность, мобильный вид, CSP, reduced motion и решение владельца по визуальному пилоту. |
 | 4. Чистая VM | #35 открыт, CI зелёный, статические проверки Terraform и Ansible пройдены. | Образы одного актуального SHA, установка и повторное применение на чистой Ubuntu VM, перезагрузка, мониторинг, восстановление копии и настоящий Telegram. Статус доступа к образам в реестре внешних действий. |
@@ -60,7 +65,8 @@ ID из доски `mentor` добавлены там, где есть подт�
 | `server-review-2` | MEN-4 | Queued | `server-reviewer-2` | `feat/r1-integrate-candidate` | По отчёту второй вердикт дан на `d3a5e8e`; отдельных доказательств актуального ревью нет | Найти второй независимый отчёт, зафиксировать SHA, результат и ссылку, проверить закрытие замечаний |
 | `e3-first-lesson` | MEN-5 | Queued | `local-qa-agent` | `main` | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34) `8d335c8`, вошёл в кандидата | Повторить пройденный сценарий на принятом `main` SHA после серверной интеграции |
 | `codex-local-env` | MEN-6 | Done | `integration-agent` | `feat/r1-integrate-candidate` | [#52](https://github.com/knowgap-lab/ai-mentor/pull/52) влит в кандидата, merge SHA `dc1e160`, CI зелёный | Указатель Codex Desktop есть на кандидате. Общие скрипты из #51 используются для следующих прогонов |
-| `server-integration` | MEN-7 | Queued | `integration-agent` | `feat/release1-demo` | [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) `dc1e160` · [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) `61f6fd5` | После ревью и сверки дочерних патчей подготовить зелёный PR против свежего `main` |
+| `server-integration` | MEN-7 | For Review | `integration-agent` | `feat/release1-demo` | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) `bed29c2`, обязательный CI зелёный, #27 в демо | Сверить требования к ревью и интеграции в main на текущем SHA, затем повторить урок на принятом коммите |
+| `release-ci` | — | Queued | `integration-agent` | `cursor/release1-ci-jobs-ac9d` | [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) `6e383fb`, пять незакрытых проверок | Продолжить с доказательств Docker и Chrome из E2E. Измерить bundle и подготовить проверки E3 и VM по критериям |
 | `w7-w8-screens` | MEN-8 | For Review | `local-qa-agent` | `feat/r1-integrate-candidate` | `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`, экраны #36 и CSRF #49 | Обе обязательные проверки зелёные. Кнопка срока: PATCH 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск. Приёмка не объявлена |
 | `c1-composer` | MEN-9 | For Review | `catalog-reviewer` | `feat/r1-integrate-candidate` | [#39](https://github.com/knowgap-lab/ai-mentor/pull/39), `e1fb4576120c4490dfa8c22f830816de2dd581a3` | `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15 сданы. Приёмка каталога не объявлена |
 | `iac-vm-draft` | MEN-10 | For Review | `infra-reviewer` | `cursor/iac-vm-one-sha-5bd3` | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) `0e63192`, CI зелёный, манифест образов `d3a5e8e` | Обновить образы на один SHA, подтвердить доступность реестра и прогнать установку на чистой VM. См. `local-demo-access` |
