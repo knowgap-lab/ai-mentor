@@ -2,7 +2,7 @@
   "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "artifact_sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T12:55:00Z",
+  "recorded_at": "2026-11-23T12:58:00Z",
   "recorded_by": "release-1-demo-launch",
   "purpose": "Приёмка merge-коммита main e125b6b; CI с GitHub run 45173837915; catalog_ci выполнен локально; postgres_load, lesson, browser — только после реальных команд.",
   "integrated_ref": "main",
@@ -92,11 +92,11 @@
       "content/tests/fixtures/demo-catalog/ct-demo/topics/D1.yaml"
     ],
     "catalog_ci": "pass",
-    "command": "cd content && PYTHONPATH=. python3 -m catalog_ci check tests/fixtures/demo-catalog --mode main",
-    "result": "exit 0, no problems"
+    "postgres_load": "pass",
+    "command": "cd content && PYTHONPATH=. ../.venv314/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c './.venv314/bin/python tools/dev_seed.py'",
+    "result": "catalog_ci exit 0; dev_seed exit 0, seed loads 1"
   },
   "pending_proof": [
-    "catalog",
     "lesson",
     "browser",
     "vm",
