@@ -22,8 +22,13 @@
 - id: local-demo-access
   status: pending
   owner: local-qa-agent
-  action: Стенд не сдвинулся. PR 35 не менялся. Образы dc1e160 собраны локально. Push в ghcr.io/knowgap-lab отклонён, installation not allowed to Create organization package. Живой VM нет.
-  verification: Согласовать доступный путь публикации или доставки образов одного SHA, обновить манифест PR 35 и подтвердить чистый запуск Ubuntu VM.
+  action: На компьютере доступен KVM/libvirt для чтения. Существующая Ubuntu выключена, её чистота не подтверждена. Подготовить отдельного гостя и безопасный локальный путь исполнения deploy. В текущем main ещё нет tools/vm-acceptance.sh.
+  verification: Подтвердить доступ к одноразовому гостю и гипервизору, собрать образы принятого SHA и сохранить результаты создания, установки, перезагрузки и нагрузки. Существующую VM не изменять.
+- id: final-sha-reviews
+  status: pending
+  owner: integration-agent
+  action: Собрать два независимых заключения по артефакту 7720ffc. В PR 69 сохранены комментарии о доказательствах, раздел reviews в аттестации ещё отсутствует.
+  verification: Два независимых отчёта содержат актуальный SHA, требования, фактический вердикт и закрытие замечаний.
 - id: visual-pilot
   status: pending
   owner: user

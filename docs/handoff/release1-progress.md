@@ -4,6 +4,11 @@
 
 ## Ветки и проверки
 
+- Текущий `main` `7720ffc`, [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) влит как `e125b6b`, проверка ширины [#71](https://github.com/knowgap-lab/ai-mentor/pull/71) вошла как `7720ffc`. Аттестация [#69](https://github.com/knowgap-lab/ai-mentor/pull/69) `2ea10c9` относится к этому SHA. Повтор приёмщика с ней дал 1. Каталог, урок и браузер прошли. Открыты deploy, VM, нагрузка и два ревью.
+- [CI на `7720ffc`](https://github.com/knowgap-lab/ai-mentor/actions/runs/45195641485) успешно выполнил generation, build, storybook, size-limit, e2e, contract-live, docker, chrome и обе проверки tools. Deploy не запустил проверку гостя, см. [лог](https://github.com/knowgap-lab/ai-mentor/actions/runs/45195641485/job/137765229052).
+
+Следующие записи описывают предшествующие SHA.
+
 - Текущий `main` — `ad16958`. [#27](https://github.com/knowgap-lab/ai-mentor/pull/27) и [#68](https://github.com/knowgap-lab/ai-mentor/pull/68) влиты в демо, вершина `bed29c2`. На этой голове [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) открыт против `main`, обязательный CI зелёный.
 - [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) на `6e383fb`: generation, build, storybook, e2e прошли. Открыты size-limit, deploy, contract-live, docker и chrome. См. [логи CI](https://github.com/knowgap-lab/ai-mentor/actions/runs/45134868150) и [порядок продолжения](../../briefs/CURSOR-PROJECT-RELEASE1.md#проверки-без-готовой-команды).
 
@@ -63,10 +68,10 @@ ID из доски `mentor` добавлены там, где есть подт�
 | `a1-cloud-build` | MEN-2 | Queued | `environment-runner` | `feat/r1-integrate-candidate` | снимок на `8c863da`, вершина `dc1e160` | Сверить активацию конфигурации и повторить проверку нового облачного запуска, записав Build ID и фактический SHA |
 | `server-review-1` | MEN-3 | Queued | `server-reviewer-1` | `feat/r1-integrate-candidate` | [Вердикт на исходный #27](https://github.com/knowgap-lab/ai-mentor/pull/27#issuecomment-7011481204), `d3a5e8e` | Сопоставить замечания с #33/#40 и получить отдельный вердикт на актуальный проверяемый SHA |
 | `server-review-2` | MEN-4 | Queued | `server-reviewer-2` | `feat/r1-integrate-candidate` | По отчёту второй вердикт дан на `d3a5e8e`; отдельных доказательств актуального ревью нет | Найти второй независимый отчёт, зафиксировать SHA, результат и ссылку, проверить закрытие замечаний |
-| `e3-first-lesson` | MEN-5 | Queued | `local-qa-agent` | `main` | [#34](https://github.com/knowgap-lab/ai-mentor/pull/34) `8d335c8`, вошёл в кандидата | Повторить пройденный сценарий на принятом `main` SHA после серверной интеграции |
+| `e3-first-lesson` | MEN-5 | Done | `local-qa-agent` | `main` | [#69](https://github.com/knowgap-lab/ai-mentor/pull/69) `2ea10c9`, приёмщик подтвердил сценарий урока на `7720ffc` | Отдельно подтвердить весь выпуск |
 | `codex-local-env` | MEN-6 | Done | `integration-agent` | `feat/r1-integrate-candidate` | [#52](https://github.com/knowgap-lab/ai-mentor/pull/52) влит в кандидата, merge SHA `dc1e160`, CI зелёный | Указатель Codex Desktop есть на кандидате. Общие скрипты из #51 используются для следующих прогонов |
-| `server-integration` | MEN-7 | For Review | `integration-agent` | `feat/release1-demo` | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) `bed29c2`, обязательный CI зелёный, #27 в демо | Сверить требования к ревью и интеграции в main на текущем SHA, затем повторить урок на принятом коммите |
-| `release-ci` | — | Queued | `integration-agent` | `cursor/release1-ci-jobs-ac9d` | [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) `6e383fb`, пять незакрытых проверок | Продолжить с доказательств Docker и Chrome из E2E. Измерить bundle и подготовить проверки E3 и VM по критериям |
+| `server-integration` | MEN-7 | Done | `integration-agent` | `main` | [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) влит как `e125b6b`, принятый урок на `7720ffc` в #69 | Использовать актуальную вершину для остальных проверок |
+| `release-ci` | — | Queued | `integration-agent` | `main` | [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) в истории `main`. На `7720ffc` красный только deploy | Подготовить tools/vm-acceptance.sh и исполнителя с доступом к выделенному гостю |
 | `w7-w8-screens` | MEN-8 | For Review | `local-qa-agent` | `feat/r1-integrate-candidate` | `6f7f54016e89f71fb369efdd2ba6366bdbfd78a9`, экраны #36 и CSRF #49 | Обе обязательные проверки зелёные. Кнопка срока: PATCH 200, deadline `2026-12-01T15:00:00Z`, на экране 18:00 Минск. Приёмка не объявлена |
 | `c1-composer` | MEN-9 | For Review | `catalog-reviewer` | `feat/r1-integrate-candidate` | [#39](https://github.com/knowgap-lab/ai-mentor/pull/39), `e1fb4576120c4490dfa8c22f830816de2dd581a3` | `catalog_ci` и загрузка `ct-math:L01` в Postgres 16.15 сданы. Приёмка каталога не объявлена |
 | `iac-vm-draft` | MEN-10 | For Review | `infra-reviewer` | `cursor/iac-vm-one-sha-5bd3` | [#35](https://github.com/knowgap-lab/ai-mentor/pull/35) `0e63192`, CI зелёный, манифест образов `d3a5e8e` | Обновить образы на один SHA, подтвердить доступность реестра и прогнать установку на чистой VM. См. `local-demo-access` |
