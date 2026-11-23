@@ -22,12 +22,17 @@
   },
   "ci": {
     "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
-    "partial": true,
+    "partial": false,
     "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45190919888",
-    "snapshot_at": "2026-11-23T14:10:43Z",
+    "snapshot_at": "2026-11-23T14:16:01Z",
     "checks": [
       {
         "name": "tools/check.sh",
+        "conclusion": "success",
+        "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
+      },
+      {
+        "name": "tools/check-code.sh",
         "conclusion": "success",
         "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb"
       },
