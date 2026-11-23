@@ -2,31 +2,30 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-18 (интеграция сервера, PDF и экранов)
-**Ветка:** `feat/r1-integrate-candidate`
-**Этап:** на серверном кандидате #14–#16 лежат `GOTENBERG_URL` и оба стека экранов.
+**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
+**Ветка:** `cursor/release1-ci-jobs-ac9d`
+**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| Сервер | фикстуры #15 и снятие `prereq_order` #14/#16 | общий CI этой сборки |
-| PDF | клиент и compose читают `GOTENBERG_URL` | повторная конвертация на этом SHA |
-| Экраны | итог, профиль, карточка, урок и подготовка | CI `code-check` |
+| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
+| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
 
 ## Что в работе сейчас
 
-Проверка этой сборки. Журнал прогресса координатора — в локальном `docs/handoff/release1-progress.md` основной рабочей копии.
+PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
 
 ## Следующий шаг
 
-Прогнать целевые Go-тесты и `npm test` на этом SHA.
+Расширить E3 (schemathesis). VM acceptance для deploy.
 
 ## Блокеры и вопросы
 
-Настоящий Telegram и чистая VM сюда не входят. Новых решений нет.
+Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
 
 ## Куда смотреть
 
-- Правила для агентов: [AGENTS.md](../../AGENTS.md)
-- Имя PDF: D329 в [docs/decisions/log.md](../decisions/log.md)
+- D335 в [docs/decisions/log.md](../decisions/log.md)
+- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)

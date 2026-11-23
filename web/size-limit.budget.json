@@ -1,0 +1,14 @@
+{
+  "measuredAtSha": "bf427cf0b7fa1b3c42e311f34f7c3da4516401da",
+  "command": "npm run build",
+  "artifacts": ["web/dist/assets/*.js"],
+  "unit": "gzip_bytes",
+  "maxGzipJsBytes": 252639,
+  "measurement": {
+    "method": "sum of wc -c on gzip -c for each file matching artifacts after production build",
+    "perFileGzipBytes": {
+      "web/dist/assets/index-qCAPdhjF.js": 252639
+    }
+  },
+  "justification": "D315 requires bundle size in CI. Baseline is the gzip sum of shipped JS chunks on the release1-ci branch at measuredAtSha (synthetic demo data only). The budget equals that measurement so only regressions above the baseline fail; it is not a product cap below current size."
+}
