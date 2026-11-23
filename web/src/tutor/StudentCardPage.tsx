@@ -1,7 +1,7 @@
 import { Button, Stack, Text, Title } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { csrfHeaders } from "../task/csrf";
+import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen } from "../ui";
 import { errorSentence } from "./api-error";
 import { isUnderEighteen, minskTime } from "./minsk-time";
@@ -273,6 +273,7 @@ async function loadCard(studentId: string): Promise<LoadResult> {
         sentence: await errorSentence(studentResponse),
       };
     }
+    rememberCsrfFromResponse(studentResponse);
     const student = readStudent(await studentResponse.json());
     if (!student) {
       return { phase: "error", sentence: null };

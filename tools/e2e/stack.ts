@@ -1,5 +1,6 @@
 import { spawn, execFile, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { existsSync } from "node:fs";
 import { createServer } from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,18 +10,14 @@ const execFileAsync = promisify(execFile);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-const seedSQL = `
+const asgDemoSQL = `
 BEGIN;
-INSERT INTO core.app_user (id, role, owner_tutor_id, status) VALUES
-  ('tutor-demo', 'tutor', NULL, 'active'),
-  ('tutor-other', 'tutor', NULL, 'active'),
-  ('student-demo', 'student', 'tutor-demo', 'active'),
-  ('student-other', 'student', 'tutor-other', 'active');
-INSERT INTO core.user_pii (user_id, telegram_id) VALUES
-  ('tutor-demo', 'tg-demo-tutor'),
-  ('tutor-other', 'tg-demo-other'),
-  ('student-demo', 'tg-demo-student'),
-  ('student-other', 'tg-demo-other-student');
+DELETE FROM core.attempt_verdict WHERE attempt_id IN (
+  SELECT id FROM core.attempts WHERE assignment_id = 'asg-demo'
+);
+DELETE FROM core.attempts WHERE assignment_id = 'asg-demo';
+DELETE FROM core.assignment_item WHERE assignment_id = 'asg-demo';
+DELETE FROM core.assignment WHERE id = 'asg-demo';
 INSERT INTO core.assignment (
   id, student_id, state, kind, catalog_version, place, snapshot
 ) VALUES (
@@ -36,6 +33,17 @@ INSERT INTO core.assignment_item (assignment_id, item_id, state, skipped, max_po
 VALUES
   ('asg-demo', 'item-a', 'open', false, 1),
   ('asg-demo', 'item-b', 'open', false, 2);
+UPDATE core.lesson SET issued = false WHERE id = 'lesson-demo-held';
+INSERT INTO core.journal_event (kind, payload)
+SELECT 'lesson_frozen', '{"lesson_id":"lesson-demo-held","catalog_version":1}'::jsonb
+WHERE NOT EXISTS (
+  SELECT 1 FROM core.journal_event
+  WHERE kind = 'lesson_frozen'
+    AND payload->>'lesson_id' = 'lesson-demo-held'
+);
+UPDATE core.consent
+SET state = 'active', revoked_at = NULL, anonymise_at = NULL
+WHERE student_id = 'student-demo' AND state = 'revoked';
 COMMIT;
 `;
 
@@ -54,7 +62,7 @@ export async function startStack(): Promise<Stack> {
   let server: RunningServer | undefined;
   try {
     await migrate(postgres.dsn);
-    await seed(postgres.name);
+    await seed(postgres.name, postgres.dsn);
     await buildWeb();
     server = await startServer(postgres.dsn);
     return {
@@ -229,7 +237,35 @@ async function migrate(dsn: string): Promise<void> {
   }
 }
 
-async function seed(name: string): Promise<void> {
+function pythonForSeed(): string {
+  for (const rel of [".venv314/bin/python", ".venv/bin/python"]) {
+    const candidate = path.join(root, rel);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return "python3";
+}
+
+async function seed(name: string, dsn: string): Promise<void> {
+  const python = pythonForSeed();
+  try {
+    await run(
+      python,
+      [path.join(root, "tools", "dev_seed.py")],
+      300_000,
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          DATABASE_URL: dsn,
+          PYTHONPATH: path.join(root, "content"),
+        },
+      },
+    );
+  } catch (error) {
+    throw new Error(`dev_seed:\n${errorText(error)}`);
+  }
   await new Promise<void>((resolve, reject) => {
     const child = spawn(
       "docker",
@@ -265,7 +301,7 @@ async function seed(name: string): Promise<void> {
       }
       reject(new Error(`psql:\n${stderr || stdout}`));
     });
-    child.stdin.end(seedSQL);
+    child.stdin.end(asgDemoSQL);
   });
 }
 

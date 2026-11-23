@@ -1,6 +1,10 @@
 import { Button, Stack, Text, TextInput } from "@mantine/core";
-import { type FormEvent, useLayoutEffect, useState } from "react";
-import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import { type FormEvent, useEffect, useLayoutEffect, useState } from "react";
+import {
+  csrfHeaders,
+  hasCsrfToken,
+  rememberCsrfFromResponse,
+} from "../task/csrf";
 import { List, ListButton, Screen } from "../ui";
 import { errorSentence } from "./api-error";
 import { minskTime } from "./minsk-time";
@@ -163,6 +167,18 @@ export function TutorPage() {
   const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+
+  useEffect(() => {
+    void (async () => {
+      if (!hasCsrfToken()) {
+        const primed = await fetch("/me", { credentials: "include" });
+        rememberCsrfFromResponse(primed);
+      }
+      if (hasCsrfToken()) {
+        await loadStudents();
+      }
+    })();
+  }, []);
 
   async function loadStudents() {
     try {
