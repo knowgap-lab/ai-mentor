@@ -164,17 +164,12 @@
       "Репетитор/Ученики": {
         "behavior": "pass",
         "evidence": "scenario"
-      },
-      "Репетитор/Ученик": {
-        "behavior": "pass",
-        "evidence": "scenario"
       }
     },
     "behaviors": {
       "csp": "pass",
       "accessibility": "pass",
       "keys_hidden": "pass",
-      "mobile_360": "pass",
       "no_console_errors": "pass",
       "homework": "pass",
       "result": "pass",
