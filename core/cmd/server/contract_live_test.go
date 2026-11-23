@@ -21,6 +21,8 @@ func TestContractLiveE3(t *testing.T) {
 	applyS1Migrations(t, dsn)
 	conn := contractLiveConnect(t, dsn)
 	contractLiveSeedBase(t, conn)
+	contractLiveSeedLesson(t, conn)
+	contractLiveSeedAssignment(t, conn, lessonCLID)
 
 	handler := contractLiveRoot(t, dsn)
 	origin := "http://127.0.0.1:8080"
@@ -29,27 +31,8 @@ func TestContractLiveE3(t *testing.T) {
 	contractLiveExpectError(t, rec, http.StatusUnauthorized, "unauthorized")
 
 	tutor := contractLiveLogin(t, handler, "tg-cl-tutor", "tutor", tutorCLID, origin)
-	lessonBody, _ := json.Marshal(map[string]string{
-		"subject":   "math",
-		"starts_at": "2026-12-01T15:00:00Z",
-	})
-	addPath := "/students/" + studentCLID + "/lessons"
-	add := contractLiveCall(handler, http.MethodPost, addPath, lessonBody, tutor.token, origin)
-	if add.Code != http.StatusCreated {
-		t.Fatalf("урок: %d %s", add.Code, add.Body.Bytes())
-	}
-	var lesson struct {
-		ID    string `json:"id"`
-		State string `json:"state"`
-	}
-	if err := json.Unmarshal(add.Body.Bytes(), &lesson); err != nil {
-		t.Fatalf("урок json: %v", err)
-	}
-	if lesson.ID == "" || lesson.State == "" {
-		t.Fatalf("урок без id/state: %s", add.Body.Bytes())
-	}
 
-	getLesson := contractLiveCall(handler, http.MethodGet, "/lessons/"+lesson.ID, nil, tutor.token, origin)
+	getLesson := contractLiveCall(handler, http.MethodGet, "/lessons/"+lessonCLID, nil, tutor.token, origin)
 	if getLesson.Code != http.StatusOK {
 		t.Fatalf("GET урока: %d %s", getLesson.Code, getLesson.Body.Bytes())
 	}
@@ -63,14 +46,12 @@ func TestContractLiveE3(t *testing.T) {
 	if err := json.Unmarshal(getLesson.Body.Bytes(), &detail); err != nil {
 		t.Fatalf("GET урока json: %v", err)
 	}
-	if detail.Lesson.ID != lesson.ID {
-		t.Fatalf("LessonDetail.lesson.id = %q, нужен %q, тело %s", detail.Lesson.ID, lesson.ID, getLesson.Body.Bytes())
+	if detail.Lesson.ID != lessonCLID {
+		t.Fatalf("LessonDetail.lesson.id = %q, нужен %q, тело %s", detail.Lesson.ID, lessonCLID, getLesson.Body.Bytes())
 	}
 	if len(detail.Stages) == 0 {
 		t.Fatalf("LessonDetail без stages: %s", getLesson.Body.Bytes())
 	}
-
-	contractLiveSeedAssignment(t, conn, lesson.ID)
 
 	student := contractLiveLogin(t, handler, "tg-cl-student", "student", studentCLID, origin)
 	choicePath := "/assignments/asg-cl-demo/items/item-a/answer"
@@ -121,7 +102,10 @@ const (
 	studentCLID    = "student-cl-demo"
 	otherTutorCLID = "tutor-cl-other"
 	assignmentCLID = "asg-cl-demo"
+	lessonCLID     = "lesson-cl-live"
 )
+
+const lessonCLTemplate = `[{"id":"cl:L01.G1","title":"Теория","kind":"theory","minutes":[0,30],"blocks":["cl:B1"]}]`
 
 func contractLiveRoot(t *testing.T, dsn string) http.Handler {
 	t.Helper()
@@ -140,6 +124,24 @@ func contractLiveConnect(t *testing.T, dsn string) *pgx.Conn {
 		_ = conn.Close(context.Background())
 	})
 	return conn
+}
+
+func contractLiveSeedLesson(t *testing.T, conn *pgx.Conn) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, err := conn.Exec(ctx, `
+		INSERT INTO core.lesson (
+			id, student_id, subject, place_no, title, kind, template_id, state,
+			planned_week, no_blocks, issued, template
+		) VALUES (
+			$1, $2, 'math', 1, 'Синтетический урок', 'new', 'cl:L01', 'planned',
+			'2026-W49', false, false, $3::jsonb
+		)
+	`, lessonCLID, studentCLID, lessonCLTemplate)
+	if err != nil {
+		t.Fatalf("урок: %v", err)
+	}
 }
 
 func contractLiveSeedBase(t *testing.T, conn *pgx.Conn) {
