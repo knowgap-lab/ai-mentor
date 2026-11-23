@@ -2,9 +2,9 @@
   "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "artifact_sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T12:30:00Z",
+  "recorded_at": "2026-11-23T12:55:00Z",
   "recorded_by": "release-1-demo-launch",
-  "purpose": "Зафиксировать состояние приёмки выпуска 1 на merge-коммите PR #6; внешние этапы 2–5 без выдуманных доказательств, только синтетические данные по плану.",
+  "purpose": "Приёмка merge-коммита main e125b6b; CI с GitHub run 45173837915; catalog_ci выполнен локально; postgres_load, lesson, browser — только после реальных команд.",
   "integrated_ref": "main",
   "merged": true,
   "pull_request": {
@@ -21,9 +21,9 @@
   },
   "ci": {
     "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
-    "partial": true,
+    "partial": false,
     "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45173837915",
-    "snapshot_at": "2026-11-23T12:24:30Z",
+    "snapshot_at": "2026-11-23T12:34:30Z",
     "checks": [
       {
         "name": "tools/check.sh",
@@ -32,13 +32,14 @@
       },
       {
         "name": "tools/check-code.sh",
-        "conclusion": "in_progress",
+        "conclusion": "success",
         "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a"
       },
       {
         "name": "generation",
-        "conclusion": "in_progress",
-        "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a"
+        "conclusion": "success",
+        "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
+        "diff_empty": true
       },
       {
         "name": "build",
@@ -57,7 +58,7 @@
       },
       {
         "name": "e2e",
-        "conclusion": "in_progress",
+        "conclusion": "success",
         "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a"
       },
       {
@@ -81,6 +82,18 @@
         "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a"
       }
     ]
+  },
+  "catalog": {
+    "sha": "e125b6bc85f02f13bdc8cffdfb3c094310f95d8a",
+    "lesson_files": [
+      "content/tests/fixtures/demo-catalog/ct-demo/lessons/L01.yaml"
+    ],
+    "topic_cards": [
+      "content/tests/fixtures/demo-catalog/ct-demo/topics/D1.yaml"
+    ],
+    "catalog_ci": "pass",
+    "command": "cd content && PYTHONPATH=. python3 -m catalog_ci check tests/fixtures/demo-catalog --mode main",
+    "result": "exit 0, no problems"
   },
   "pending_proof": [
     "catalog",
