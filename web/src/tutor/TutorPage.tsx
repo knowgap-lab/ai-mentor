@@ -119,13 +119,11 @@ function byNextLesson(left: StudentSummary, right: StudentSummary): number {
 }
 
 function verdictLabel(verdict: Verdict): string {
-  if (verdict === "correct") {
-    return "верно";
-  }
-  if (verdict === "wrong") {
-    return "неверно";
-  }
-  return "частично верно";
+  return verdict === "correct"
+    ? "верно"
+    : verdict === "wrong"
+      ? "неверно"
+      : "частично верно";
 }
 
 export function TutorPage() {
