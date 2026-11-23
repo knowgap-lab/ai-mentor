@@ -1,0 +1,20 @@
+---
+- name: Настроить чистую Ubuntu под выпуск 1
+  hosts: all
+  become: true
+  vars_files:
+    - release.json
+  pre_tasks:
+    - name: Нужна гостевая Ubuntu и один SHA приложения
+      ansible.builtin.assert:
+        that:
+          - ansible_facts["distribution"] == "Ubuntu"
+          - app_sha is match("^[0-9a-f]{40}$")
+        fail_msg: >-
+          Гость должен быть Ubuntu. SHA берётся из infra/ansible/release.json
+          и должен быть одним полным коммитом приложения.
+  roles:
+    - access
+    - engine
+    - stack
+    - retention

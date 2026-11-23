@@ -1,5 +1,9 @@
+import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { type FormEvent, useLayoutEffect, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import { List, ListButton, Screen } from "../ui";
+import { errorSentence } from "./api-error";
+import { minskTime } from "./minsk-time";
 
 type Verdict = "correct" | "partial" | "wrong";
 
@@ -7,6 +11,12 @@ type StudentSummary = {
   id: string;
   display_name: string;
   next_lesson_at?: string;
+  homework_waiting_review: number;
+  homework_submitted: number;
+  homework_overdue: number;
+  open_disputes: number;
+  not_delivered: boolean;
+  warnings: string[];
 };
 
 type AttemptRow = {
@@ -17,6 +27,23 @@ type AttemptRow = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function readCount(value: unknown): number {
+  return typeof value === "number" ? value : 0;
+}
+
+function readWarnings(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const texts: string[] = [];
+  for (const item of value) {
+    if (isRecord(item) && typeof item.text === "string" && item.text !== "") {
+      texts.push(item.text);
+    }
+  }
+  return texts;
 }
 
 function readStudent(value: unknown): StudentSummary | null {
@@ -31,7 +58,28 @@ function readStudent(value: unknown): StudentSummary | null {
     id: value.id,
     display_name: value.display_name,
     next_lesson_at: typeof nextLesson === "string" ? nextLesson : undefined,
+    homework_waiting_review: readCount(value.homework_waiting_review),
+    homework_submitted: readCount(value.homework_submitted),
+    homework_overdue: readCount(value.homework_overdue),
+    open_disputes: readCount(value.open_disputes),
+    not_delivered: value.not_delivered === true,
+    warnings: readWarnings(value.warnings),
   };
+}
+
+function rowSubtitle(student: StudentSummary): string {
+  const time = student.next_lesson_at ? minskTime(student.next_lesson_at) : "";
+  return [
+    time ? `следующий урок ${time}` : "",
+    `ДЗ ждёт просмотра ${student.homework_waiting_review}`,
+    `сдано ${student.homework_submitted}`,
+    `просрочено ${student.homework_overdue}`,
+    `открытые споры ${student.open_disputes}`,
+    student.not_delivered ? "не доставлено" : "",
+    ...student.warnings,
+  ]
+    .filter((part) => part !== "")
+    .join(" ");
 }
 
 function readAttempt(value: unknown): AttemptRow | null {
@@ -110,37 +158,65 @@ export function TutorPage() {
   });
 
   const [telegramId, setTelegramId] = useState("");
-  const [signedIn, setSignedIn] = useState(false);
+  const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
+  const [loginNotice, setLoginNotice] = useState<string | null>(null);
+  const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [attempts, setAttempts] = useState<AttemptRow[]>([]);
 
+  async function loadStudents() {
+    try {
+      const list = await fetch("/students", { credentials: "include" });
+      if (!list.ok) {
+        const sentence = await errorSentence(list);
+        if (list.status === 401) {
+          // Код unauthorized в таблице web.md нет: на форме входа тот же текст, что у login_stale.
+          setLoginNotice(sentence ?? "Войдите ещё раз");
+          setPhase("login");
+          return;
+        }
+        setListNotice(sentence);
+        setPhase("offline");
+        return;
+      }
+      const payload: unknown = await list.json();
+      if (!Array.isArray(payload)) {
+        return;
+      }
+      const next = payload
+        .map((item) => readStudent(item))
+        .filter((item): item is StudentSummary => item !== null)
+        .sort(byNextLesson);
+      setAttempts([]);
+      setStudents(next);
+      setListNotice(null);
+      setPhase("ready");
+    } catch {
+      setListNotice(null);
+      setPhase("offline");
+    }
+  }
+
   async function onLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const response = await fetch("/auth/dev", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ telegram_id: telegramId, role: "tutor" }),
-    });
+    setLoginNotice(null);
+    let response: Response;
+    try {
+      response = await fetch("/auth/dev", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegram_id: telegramId, role: "tutor" }),
+      });
+    } catch {
+      setLoginNotice("Нет связи");
+      return;
+    }
     rememberCsrfFromResponse(response);
     if (!response.ok) {
       return;
     }
-    const list = await fetch("/students", { credentials: "include" });
-    if (!list.ok) {
-      return;
-    }
-    const payload: unknown = await list.json();
-    if (!Array.isArray(payload)) {
-      return;
-    }
-    const next = payload
-      .map((item) => readStudent(item))
-      .filter((item): item is StudentSummary => item !== null)
-      .sort(byNextLesson);
-    setAttempts([]);
-    setStudents(next);
-    setSignedIn(true);
+    await loadStudents();
   }
 
   async function onOpen(student: StudentSummary) {
@@ -189,53 +265,71 @@ export function TutorPage() {
     });
     setAttempts([]);
     setStudents([]);
-    setSignedIn(false);
+    setLoginNotice(null);
+    setListNotice(null);
+    setPhase("login");
   }
 
-  if (!signedIn) {
+  if (phase === "login") {
     return (
-      <main>
+      <Screen title="Войти">
         <form onSubmit={(event) => void onLogin(event)}>
-          <label>
-            telegram_id
-            <input
+          <Stack gap="md">
+            <TextInput
+              label="telegram_id"
               name="telegram_id"
               autoComplete="off"
               value={telegramId}
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
-          </label>
-          <button type="submit">Войти</button>
+            <Button type="submit">Войти</Button>
+            {loginNotice ? <Text>{loginNotice}</Text> : null}
+          </Stack>
         </form>
-      </main>
+      </Screen>
     );
   }
 
   return (
-    <main>
-      <h1>Ученики</h1>
-      <button type="button" onClick={() => void onLogout()}>
-        Выход
-      </button>
-      <ul>
-        {students.map((student) => (
-          <li key={student.id}>
-            <button type="button" onClick={() => void onOpen(student)}>
-              {student.display_name}
-            </button>
-          </li>
-        ))}
-      </ul>
-      {attempts.length > 0 ? (
-        <section>
-          {attempts.map((attempt) => (
-            <p key={attempt.attempt_id}>
-              {attempt.raw_input}
-              {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
-            </p>
-          ))}
-        </section>
-      ) : null}
-    </main>
+    <Screen title="Ученики">
+      <Stack gap="md">
+        <Button type="button" variant="default" onClick={() => void onLogout()}>
+          Выход
+        </Button>
+        {phase === "offline" ? (
+          <Stack gap="sm">
+            <Text>{listNotice ?? "Нет связи"}</Text>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => void loadStudents()}
+            >
+              Повторить
+            </Button>
+          </Stack>
+        ) : (
+          <List label="Ученики">
+            {students.map((student) => (
+              <ListButton
+                key={student.id}
+                title={student.display_name}
+                subtitle={rowSubtitle(student)}
+                onClick={() => void onOpen(student)}
+              />
+            ))}
+          </List>
+        )}
+        {attempts.length > 0 ? (
+          <Stack gap="sm" component="section">
+            {attempts.map((attempt) => (
+              <Text key={attempt.attempt_id}>
+                {attempt.raw_input}
+                {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
+              </Text>
+            ))}
+          </Stack>
+        ) : null}
+      </Stack>
+    </Screen>
   );
 }

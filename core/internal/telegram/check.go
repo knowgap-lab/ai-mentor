@@ -19,7 +19,7 @@ const maxAuthAge = 300
 // Ключ HMAC — SHA-256 от байтов токена бота, не от их hex.
 // Сеть не вызывается, карта data не меняется, профиль никуда не пишется.
 func Check(data map[string]string, botToken string, now time.Time) error {
-	if !signed(data, botToken) {
+	if botToken == "" || !signed(data, botToken) {
 		return errLoginInvalid()
 	}
 	authUnix, err := strconv.ParseInt(data["auth_date"], 10, 64)

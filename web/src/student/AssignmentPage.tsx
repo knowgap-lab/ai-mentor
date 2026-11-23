@@ -1,7 +1,15 @@
+import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
+import {
+  ActionBar,
+  List,
+  ListRow,
+  Screen,
+  StatusBadge,
+  type Status,
+} from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
-import "../task/task.css";
 
 type Verdict = "correct" | "partial" | "wrong" | "accepted";
 
@@ -70,20 +78,20 @@ function readAssignment(value: unknown, fallbackId: string): Assignment | null {
   };
 }
 
-function statusLabel(item: ItemRow): string {
+function statusState(item: ItemRow): Status {
   if (item.last_verdict === "correct") {
-    return "верно";
+    return "correct";
   }
   if (item.last_verdict === "wrong") {
-    return "неверно";
+    return "wrong";
   }
   if (item.last_verdict === "partial") {
-    return "частично";
+    return "partial";
   }
   if (item.item_state === "open") {
-    return "не отвечено";
+    return "not_answered";
   }
-  return "закрыто";
+  return "closed";
 }
 
 function idempotencyKey(): string {
@@ -158,9 +166,9 @@ export function AssignmentPage() {
 
   if (!assignmentId) {
     return (
-      <main>
-        <p>Выдача не найдена</p>
-      </main>
+      <Screen title="Выдача" backTo="/">
+        <Text>Выдача не найдена</Text>
+      </Screen>
     );
   }
 
@@ -216,49 +224,46 @@ export function AssignmentPage() {
     }
   }
 
+  const canSubmit = assignment !== null && !submitted;
   return (
-    <main>
-      <h1>Выдача</h1>
-      {assignment?.subject ? <p>{assignment.subject}</p> : null}
-      {loading ? <p>Загрузка</p> : null}
-      {failed ? (
-        <>
-          <p>Нет связи</p>
-          <button
-            type="button"
-            className="touch-target"
-            onClick={() => setReloadKey((value) => value + 1)}
-          >
-            Повторить
-          </button>
-        </>
-      ) : null}
-      {assignment && assignment.items.length === 0 ? <p>Пусто</p> : null}
-      {assignment ? (
-        <ul>
-          {assignment.items.map((item) => (
-            <li key={item.item_id}>
-              <Link
+    <Screen title="Выдача" backTo="/" withActionBar={canSubmit}>
+      <Stack gap="md">
+        {assignment?.subject ? <Text>{assignment.subject}</Text> : null}
+        {loading ? <Text>Загрузка</Text> : null}
+        {failed ? (
+          <Stack gap="sm">
+            <Text>Нет связи</Text>
+            <Button
+              variant="default"
+              onClick={() => setReloadKey((value) => value + 1)}
+            >
+              Повторить
+            </Button>
+          </Stack>
+        ) : null}
+        {assignment && assignment.items.length === 0 ? (
+          <Text>Пусто</Text>
+        ) : null}
+        {assignment && assignment.items.length > 0 ? (
+          <List label="Задачи">
+            {assignment.items.map((item) => (
+              <ListRow
+                key={item.item_id}
                 to={`/task/${encodeURIComponent(assignment.id)}/${encodeURIComponent(item.item_id)}`}
-              >
-                {item.statement}
-              </Link>
-              <span>{statusLabel(item)}</span>
-            </li>
-          ))}
-        </ul>
+                title={item.statement}
+                aside={<StatusBadge state={statusState(item)} />}
+              />
+            ))}
+          </List>
+        ) : null}
+        {submitted ? <Text>сдано</Text> : null}
+        {submitError ? <Text>{submitError}</Text> : null}
+      </Stack>
+      {canSubmit ? (
+        <ActionBar
+          primary={{ label: "Сдать", onClick: () => void onSubmit() }}
+        />
       ) : null}
-      {assignment && !submitted ? (
-        <button
-          type="button"
-          className="touch-target"
-          onClick={() => void onSubmit()}
-        >
-          Сдать
-        </button>
-      ) : null}
-      {submitted ? <p>сдано</p> : null}
-      {submitError ? <p>{submitError}</p> : null}
-    </main>
+    </Screen>
   );
 }

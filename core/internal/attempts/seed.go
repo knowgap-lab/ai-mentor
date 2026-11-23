@@ -169,10 +169,23 @@ func insertDraft(ctx context.Context, tx pgx.Tx, raw any) error {
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `
+	if _, err = tx.Exec(ctx, `
 		INSERT INTO core.homework_draft (id, lesson_id, items)
 		VALUES ('draft1', $1, $2::jsonb)
-	`, fixtureLessonID, string(payload))
+	`, fixtureLessonID, string(payload)); err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `
+		INSERT INTO core.study_plan (student_id, subject, exam_at, catalog_version)
+		VALUES ($1, 'math', TIMESTAMPTZ '2026-12-01T00:00:00Z', 1)
+	`, fixtureStudentID); err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `
+		INSERT INTO core.lesson (
+			id, student_id, subject, place_no, title, kind, template_id, state, template
+		) VALUES ($1, $2, 'math', 1, 'Черновик', 'new', 'draft-template', 'planned', '[]'::jsonb)
+	`, fixtureLessonID, fixtureStudentID)
 	return err
 }
 

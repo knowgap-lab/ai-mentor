@@ -6,13 +6,29 @@
 
 ## Локальный запуск
 
-Нужны Docker, `psql` и интерпретатор `.venv`. Реальных учеников нет.
+Нужны Ubuntu и Docker: если Docker ещё нет, установщик ставит его сам. Системный `python3` не заменяется. Если установщик только что добавил пользователя в группу `docker`, откройте новую сессию. Права сокета Docker скрипты не меняют.
+
+```bash
+bash tools/dev-install.sh
+bash tools/dev-start.sh
+bash tools/dev-check.sh
+```
+
+`dev-install.sh` читает версии из `mise.toml`, сверяет Go, Node, uv и mise с опубликованными SHA256 и ставит их в `/usr/local`. Тот же файл копируется в `~/.config/mise/config.toml`. Python проекта ставится в `.venv` командой `uv pip sync` по `tools/requirements.lock`: пакета, которого нет в lock, после повтора не остаётся. Chrome закреплён версией deb. Образ Postgres скачивается по дайджесту из `mise.toml`, вместе с Docker ставится `fuse-overlayfs`.
+
+`dev-start.sh` проверяет штатный доступ к Docker и вызывает `tools/dev-up.sh`.
+
+`dev-check.sh` запускает `tools/check-code.sh`, `tools/check.sh` и Playwright smoke из `tools/e2e`. Образ `gotenberg/gotenberg:9.5.0` эти команды не скачивают: тест настоящего PDF без локального образа пропускается.
+
+Cloud Agent вызывает те же скрипты из [`.cursor/environment.json`](.cursor/environment.json). Codex Desktop вызывает их из [`.codex/environments/environment.toml`](.codex/environments/environment.toml).
+
+Реальных учеников нет.
 
 ```bash
 tools/dev-up.sh
 ```
 
-Скрипт поднимает контейнер `ai-mentor-dev` (`postgres:16.15`, база `ai_mentor`, пользователь `postgres`, trust, порт `127.0.0.1:5432`, том `ai-mentor-dev-data`), ждёт готовности, применяет секции Up из `migrations/*.sql` и вызывает `tools/dev_seed.py`. DSN берётся из `DATABASE_URL` или равен `postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable`.
+Скрипт поднимает контейнер `ai-mentor-dev` (образ — дайджест Postgres 16.15 из `mise.toml`, база `ai_mentor`, пользователь `postgres`, trust, порт `127.0.0.1:5432`, том `ai-mentor-dev-data`), ждёт готовности, применяет секции Up из `migrations/*.sql` и вызывает `tools/dev_seed.py`. DSN берётся из `DATABASE_URL` или равен `postgres://postgres@127.0.0.1:5432/ai_mentor?sslmode=disable`.
 
 Сид пишет двух людей со статусом `active` и одну версию демо-каталога в среду `staging`. Повтор не добавляет строки и не меняет уже записанные.
 

@@ -201,9 +201,8 @@ func enforceRate(ctx context.Context, tx pgx.Tx, userID string) error {
 	var oldest *time.Time
 	err := tx.QueryRow(ctx, `
 		SELECT count(*)::int, min(at)
-		FROM core.journal_event
-		WHERE kind = 'answer_request'
-		  AND payload->>'student_id' = $1
+		FROM core.answer_rate
+		WHERE student_id = $1
 		  AND at > now() - interval '1 minute'
 	`, userID).Scan(&n, &oldest)
 	if err != nil {
@@ -255,8 +254,8 @@ func saveIdempotency(ctx context.Context, tx pgx.Tx, userID, key, hash string, b
 
 func insertRateHit(ctx context.Context, tx pgx.Tx, userID string) error {
 	_, err := tx.Exec(ctx, `
-		INSERT INTO core.journal_event (kind, payload)
-		VALUES ('answer_request', jsonb_build_object('student_id', $1::text))
+		INSERT INTO core.answer_rate (student_id)
+		VALUES ($1)
 	`, userID)
 	return err
 }

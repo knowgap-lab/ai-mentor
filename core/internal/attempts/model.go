@@ -8,8 +8,10 @@ import (
 )
 
 // Config — параметры сервиса. В тестах задан только DSN.
+// Пустой AppOrigin заменяется на http://localhost.
 type Config struct {
-	DSN string
+	DSN       string
+	AppOrigin string
 }
 
 // World — идентификаторы, которые Seed подготовил для сценария.
@@ -116,7 +118,7 @@ func sourcePlace(kind string) (string, string) {
 
 func isTestKind(kind string) bool {
 	switch kind {
-	case "checkpoint", "mock", "diagnostics":
+	case "checkpoint", "mock", "diagnostics", "rt":
 		return true
 	default:
 		return false
