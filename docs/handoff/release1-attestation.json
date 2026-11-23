@@ -170,5 +170,91 @@
     }
   ],
   "open_findings": [],
-  "findings": []
+  "findings": [],
+  "browser": {
+    "sha": "e61c1e6b93be2363149d74f1ddcb7b9820b97abb",
+    "depends_on": [
+      "lesson",
+      "catalog"
+    ],
+    "backend": "real",
+    "database": "synthetic",
+    "command": "cd /tmp/ai-mentor-e61c1e6/tools/e2e && sg docker -c 'npx playwright test' (startStack: dev_seed + go run ./cmd/server + web/dist)",
+    "result": "20 passed (49.3s) walk.spec.ts + browser-coverage.spec.ts",
+    "screens": {
+      "Ученик/Главная": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Выдача (ДЗ)": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Задача": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Итог": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Ученик/Профиль": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Ученики": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Ученик": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Урок": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Подготовка": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Просмотр ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Итоги ДЗ": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Новый ученик": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      },
+      "Репетитор/Сеансы": {
+        "behavior": "pass",
+        "evidence": "scenario"
+      }
+    },
+    "behaviors": {
+      "roles": "pass",
+      "keys_hidden": "pass",
+      "accessibility": "pass",
+      "csp": "pass",
+      "reduced_motion": "pass",
+      "dialogs": "pass",
+      "toasts": "pass",
+      "charts": "pass",
+      "no_console_errors": "pass",
+      "no_horizontal_scroll": "pass",
+      "action_size": "pass",
+      "homework": "pass",
+      "result": "pass",
+      "invite": "pass",
+      "sessions": "pass"
+    }
+  }
 }
