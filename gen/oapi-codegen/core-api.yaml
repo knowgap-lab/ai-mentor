@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
+package: coreapi
+generate:
+  chi-server: true
+  strict-server: true
+  models: true
+output-options:
+  resolve-type-name-collisions: true
+output: ../gen/go/coreapi/coreapi.gen.go
