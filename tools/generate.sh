@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate committed contract types under gen/ (D97, D300, D310, D330).
+# Regenerate committed contract types under gen/ (D97, D300, D310, D333).
 # Usage from repo root: bash tools/generate.sh
 set -euo pipefail
 
