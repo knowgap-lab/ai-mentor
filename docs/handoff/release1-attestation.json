@@ -2,7 +2,7 @@
   "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
   "artifact_sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T19:59:08Z",
+  "recorded_at": "2026-11-23T20:00:23Z",
   "recorded_by": "release-1-demo-launch",
   "purpose": "Приёмка merge-коммита main a35f8b0 (PR #72); свежие catalog_ci, dev_seed, живой урок API и Playwright 20/20; CI с реальным deploy failure; vm/load/reviews не записываются.",
   "integrated_ref": "main",
@@ -57,27 +57,27 @@
         "http_status": 201
       },
       "student_correct": {
-        "command": "POST http://127.0.0.1:18080/assignments/33873b0cdd644ba282c0e4ae17f7c318/items/ct-demo:D1.T01.S1.V002/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V002/answer",
         "result": "pass",
         "http_status": 200
       },
       "student_incorrect": {
-        "command": "POST http://127.0.0.1:18080/assignments/33873b0cdd644ba282c0e4ae17f7c318/items/ct-demo:D1.T01.S1.V003/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V003/answer",
         "result": "pass",
         "http_status": 200
       },
       "tutor_sees_score_and_attempts": {
-        "command": "GET http://127.0.0.1:18080/assignments/33873b0cdd644ba282c0e4ae17f7c318/attempts",
+        "command": "GET http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/attempts",
         "result": "pass",
         "http_status": 200
       },
       "foreign_tutor_denied": {
-        "command": "GET http://127.0.0.1:18080/assignments/33873b0cdd644ba282c0e4ae17f7c318/attempts (tg-demo-other)",
+        "command": "GET http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/attempts (tg-demo-other)",
         "result": "pass",
         "http_status": 403
       },
       "repeat_keeps_one_attempt": {
-        "command": "POST http://127.0.0.1:18080/assignments/33873b0cdd644ba282c0e4ae17f7c318/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
+        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
         "result": "pass",
         "attempt_count": 1,
         "http_status": 200
@@ -93,7 +93,7 @@
     "backend": "real",
     "database": "synthetic",
     "command": "cd /tmp/ai-mentor-a35f8b0/tools/e2e && ln -s /agent/repos/ai-mentor/.venv314 ../.venv314 && sg docker -c \"npx playwright test\" (включает no_horizontal_scroll viewport 360 px)",
-    "result": "20 passed (51.6s) walk.spec.ts + browser-coverage.spec.ts",
+    "result": "20 passed (18.1s) walk.spec.ts + browser-coverage.spec.ts",
     "screens": {
       "Ученик/Главная": {
         "behavior": "pass",
@@ -202,7 +202,17 @@
     "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
     "partial": false,
     "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252839895",
-    "snapshot_at": "2026-11-23T19:59:08Z",
+    "snapshot_at": "2026-11-23T19:56:52Z",
+    "supplementary_runs": {
+      "code-check": {
+        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252840133",
+        "conclusion": "success"
+      },
+      "docs-check": {
+        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252839871",
+        "conclusion": "success"
+      }
+    },
     "checks": [
       {
         "name": "tools/check.sh",
@@ -212,7 +222,8 @@
       {
         "name": "tools/check-code.sh",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+        "completed_at": "2026-11-23T19:56:52Z"
       },
       {
         "name": "generation",
@@ -258,7 +269,8 @@
       {
         "name": "deploy",
         "conclusion": "failure",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+        "completed_at": "2026-11-23T19:49:10Z"
       }
     ]
   }
