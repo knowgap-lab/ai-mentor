@@ -1,31 +1,14 @@
 # Текущее состояние
 
-> Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
+**Сверено с GitHub 23 ноября 2026 года. Выпуск 1 остаётся в приёмке.**
 
-**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
-**Ветка:** `cursor/release1-ci-jobs-ac9d`
-**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
+- [#6](https://github.com/knowgap-lab/ai-mentor/pull/6) вошёл в `main` как `e125b6b`. После [#71](https://github.com/knowgap-lab/ai-mentor/pull/71) актуальный артефакт приёмки — `7720ffc36c90c4475ea3f273bfd6b90f066ebb9e` в `main`. Ветка `feat/release1-demo` удалена. `release1-ci` уже в `main`.
+- [#69](https://github.com/knowgap-lab/ai-mentor/pull/69) на `2ea10c9` хранит аттестацию отдельно от дерева `7720ffc`. Локальный повтор усиленного приёмщика с этим JSON вернул 1. Каталог, урок и браузер прошли, в том числе проверка 360 из аттестации. Остались CI/deploy, чистая VM, нагрузка и два независимых ревью.
+- В [логе deploy](https://github.com/knowgap-lab/ai-mentor/actions/runs/45195641485/job/137765229052) отсутствуют `tools/vm-acceptance.sh` и доступ GitHub runner к гипервизору и SSH гостя. На локальной машине обнаружены KVM/libvirt и выключенная существующая Ubuntu. Её чистота не подтверждена. Тестовую VM выделяйте отдельно по D321 и разделу 8 брифа.
+- В `main` сохранены D333–D336. Размер JS проверяется по бюджету D335. Для `contract-live` D336 записывает покрытие живого сценария и отдельно оставшийся полный прогон схемы.
+- **Ближайшие исполнимые задачи** — продолжить #35 и подготовить команду приёмки, описать локальный путь запуска и нагрузочный сценарий. Параллельно собрать два независимых ревью текущего артефакта. Для настоящей VM и Telegram отмечайте конкретный доступ и ответственного. [Приёмка при ожидании VM](../../briefs/CURSOR-PROJECT-RELEASE1.md#приёмка-при-ожидании-vm)
+- После приёмки запланирован отдельный пакет [дизайн-ресурсов и инструментов](../platform/design.md#8-ресурсы-для-следующего-этапа-после-приёмки-выпуска-1).
 
-## Где мы
+Сверяйте [проверяемый прогресс](release1-progress.md), [внешние действия](release1-actions.yaml), [цель выпуска](../../briefs/RELEASE1-GOAL.md) и [правила для агентов](../../AGENTS.md). Оставляйте записи «начал» и «закончил» по [протоколу](README.md).
 
-| Область | Готово | Не готово |
-|---|---|---|
-| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
-| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
-
-## Что в работе сейчас
-
-PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
-
-## Следующий шаг
-
-Расширить E3 (schemathesis). VM acceptance для deploy.
-
-## Блокеры и вопросы
-
-Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
-
-## Куда смотреть
-
-- D335 в [docs/decisions/log.md](../decisions/log.md)
-- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
+До подключения реальных учеников открыты D307 и утверждение [текста согласия](../../legal/consent-1.md). Демо использует только синтетические данные.

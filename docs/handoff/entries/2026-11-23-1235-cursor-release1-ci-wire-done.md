@@ -3,6 +3,8 @@ status: закончил
 agent: cursor
 date: 2026-11-23 12:35
 task: PR #64 — docker, chrome, contract-live, size-limit, реестр открытых job
+refs: ["PR #64", D334]
+touches: [.github/workflows/release1-ci.yml, tools/ci/, docs/handoff/release1-ci-open-checks.yaml]
 ---
 
 ## Сделано

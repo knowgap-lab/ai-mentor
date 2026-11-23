@@ -10,8 +10,8 @@
 | 2. Архитектура | [01-architecture.md](01-architecture.md) | сервисы, схемы данных, потоки, границы доверия |
 | 3. Контракты | [contracts/](contracts/README.md) | OpenAPI и JSON Schema — источник типов для всех языков |
 | 4. Спецификации модулей | [catalog/](catalog/overview.md) · [platform/](platform/overview.md) · [personalization/](personalization/overview.md) | один файл на модуль, по [шаблону](templates/module-spec.md) |
-| 5. Решения | [decisions/log.md](decisions/log.md) | журнал D1–D316 с цепочками отмен |
-| 6. Брифы агентов | `briefs/` (будет) | собираются скриптом из спецификаций и тестов (D155) |
+| 5. Решения | [decisions/log.md](decisions/log.md) | журнал решений с цепочками отмен |
+| 6. Брифы агентов | [бриф выпуска 1](../briefs/CURSOR-PROJECT-RELEASE1.md) | объём, роли и проверка приёмки |
 | 7. Состояние работы | [handoff/](handoff/README.md) | журнал передачи между сессиями агентов, сводка LATEST.md (D217) |
 
 Словарь — [glossary.md](glossary.md). Читать его обязательно: в проекте у многих слов строго одно значение.
@@ -19,6 +19,8 @@
 ## Для агентов и новых участников (D217)
 
 Начинайте с [AGENTS.md](../AGENTS.md) и [handoff/LATEST.md](handoff/LATEST.md): там правила работы и текущее состояние. Перед работой и после неё пишется запись в [handoff/entries/](handoff/entries/) ([протокол](handoff/README.md)).
+
+Рабочие инструкции, настройки окружения, команды проверок и состояние работы хранятся в Git (D331). Для продолжения выпуска откройте [цель](../briefs/RELEASE1-GOAL.md) и [точку продолжения](../briefs/CURSOR-PROJECT-RESUME.md).
 
 ## Процесс (D72)
 
