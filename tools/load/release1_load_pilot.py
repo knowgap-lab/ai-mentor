@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Нагрузочный пилот D326 для выпуска 1. Не записывает pass в аттестацию."""
+
 from __future__ import annotations
 
 import argparse
@@ -27,7 +28,11 @@ def validate_profile(profile: dict) -> list[str]:
     if profile.get("students") != 20 or profile.get("tutors") != 2:
         problems.append("профиль не 20 учеников и 2 репетитора")
     p = profile.get("profile") or {}
-    if p.get("vcpu") != 4 or p.get("ram_gib") != 8 or p.get("observability") is not True:
+    if (
+        p.get("vcpu") != 4
+        or p.get("ram_gib") != 8
+        or p.get("observability") is not True
+    ):
         problems.append("профиль не 4 vCPU / 8 GiB с наблюдаемостью")
     if (profile.get("warmup_seconds") or 0) < 300:
         problems.append("warmup < 300s")
@@ -73,7 +78,9 @@ class PilotSession:
         self.origin = origin.rstrip("/")
         self.app_origin = app_origin.rstrip("/")
         self.jar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(self.jar)
+        )
         self.csrf = ""
         self.user_id = ""
         self.lock = threading.Lock()
@@ -118,7 +125,9 @@ class PilotSession:
         return status, elapsed
 
     def login(self, telegram_id: str, role: str) -> None:
-        body = json.dumps({"telegram_id": telegram_id, "role": role}, ensure_ascii=False).encode()
+        body = json.dumps(
+            {"telegram_id": telegram_id, "role": role}, ensure_ascii=False
+        ).encode()
         url = f"{self.origin}/auth/dev"
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
@@ -126,12 +135,16 @@ class PilotSession:
         with self.opener.open(req, timeout=60) as resp:
             token = resp.headers.get("X-CSRF-Token", "")
             if not token:
-                raise RuntimeError("login: нет X-CSRF-Token (нужен ENV=local и AUTH_DEV_MODE на стенде)")
+                raise RuntimeError(
+                    "login: нет X-CSRF-Token (нужен ENV=local и AUTH_DEV_MODE на стенде)"
+                )
             self.csrf = token
             _ = resp.read()
         self._request("GET", "/me", record=False, bucket="read", samples={"read": []})
 
-    def student_action(self, rng: random.Random, samples: dict[str, list[float]], record: bool) -> None:
+    def student_action(
+        self, rng: random.Random, samples: dict[str, list[float]], record: bool
+    ) -> None:
         roll = rng.random()
         mix = load_profile().get("mix", {})
         read_cut = mix.get("read", 0.6)
@@ -142,7 +155,9 @@ class PilotSession:
         elif roll < write_cut:
             body = json.dumps({}, ensure_ascii=False).encode()
             path = "/auth/logout"
-            self._request("POST", path, body, record=record, bucket="write", samples=samples)
+            self._request(
+                "POST", path, body, record=record, bucket="write", samples=samples
+            )
             self.login("load-student-relogin", "student")
         else:
             body = json.dumps({}, ensure_ascii=False).encode()
@@ -155,9 +170,17 @@ class PilotSession:
                 samples=samples,
             )
 
-    def tutor_action(self, rng: random.Random, samples: dict[str, list[float]], record: bool) -> None:
+    def tutor_action(
+        self, rng: random.Random, samples: dict[str, list[float]], record: bool
+    ) -> None:
         uid = self.user_id or "demo-student"
-        self._request("GET", f"/students/{uid}", record=record, bucket="tutor_review", samples=samples)
+        self._request(
+            "GET",
+            f"/students/{uid}",
+            record=record,
+            bucket="tutor_review",
+            samples=samples,
+        )
         if rng.random() < 0.5:
             self._request("GET", "/me", record=record, bucket="read", samples=samples)
 
@@ -252,7 +275,11 @@ def run_measure(origin: str, profile: dict) -> dict:
         "mode": "measure",
         "result": "within_budget" if within else "over_budget",
         "attestation_pass": False,
-        "duration_seconds": {"warmup": warmup, "measure": measure, "elapsed": int(time.monotonic() - started)},
+        "duration_seconds": {
+            "warmup": warmup,
+            "measure": measure,
+            "elapsed": int(time.monotonic() - started),
+        },
         "samples": {k: len(v) for k, v in samples.items()},
         "p95_ms": {
             "read": read_p95,
@@ -303,7 +330,9 @@ def main() -> int:
     profile = load_profile()
     problems = validate_profile(profile)
     if problems and not args.validate_config:
-        print(json.dumps({"result": "blocked", "problems": problems}, ensure_ascii=False))
+        print(
+            json.dumps({"result": "blocked", "problems": problems}, ensure_ascii=False)
+        )
         return 1
 
     if args.validate_config:
@@ -328,11 +357,21 @@ def main() -> int:
             print(json.dumps(measure_blocked("full measure forbidden in CI")))
             return 2
         if os.environ.get("RELEASE_LOAD_PILOT_CONFIRM") != "1":
-            print(json.dumps(measure_blocked("set RELEASE_LOAD_PILOT_CONFIRM=1 on dedicated VM")))
+            print(
+                json.dumps(
+                    measure_blocked("set RELEASE_LOAD_PILOT_CONFIRM=1 on dedicated VM")
+                )
+            )
             return 2
         virt = os.environ.get("LOAD_PILOT_VIRTUALIZATION", "")
         if virt in FORBIDDEN_VIRT:
-            print(json.dumps(measure_blocked("LOAD_PILOT_VIRTUALIZATION must name real VM (e.g. kvm)")))
+            print(
+                json.dumps(
+                    measure_blocked(
+                        "LOAD_PILOT_VIRTUALIZATION must name real VM (e.g. kvm)"
+                    )
+                )
+            )
             return 2
         if not args.origin:
             print(json.dumps(measure_blocked("LOAD_PILOT_ORIGIN or --origin required")))
