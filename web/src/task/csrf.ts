@@ -45,3 +45,11 @@ export function csrfHeaders(): Record<string, string> {
   }
   return { [HEADER]: token };
 }
+
+export function submitToast() {
+  const el = document.createElement("div");
+  el.role = "alert";
+  el.className = "am-t";
+  el.textContent = "сдано";
+  document.body.append(el);
+}

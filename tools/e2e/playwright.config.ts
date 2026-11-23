@@ -10,7 +10,7 @@ export default defineConfig({
   reporter: "line",
   use: {
     channel: "chrome",
-    viewport: { width: 390, height: 844 },
+    viewport: { width: 360, height: 800 },
     trace: "off",
     video: "off",
     screenshot: "off",

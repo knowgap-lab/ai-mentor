@@ -9,7 +9,11 @@ import {
   StatusBadge,
   type Status,
 } from "../ui";
-import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
+import {
+  csrfHeaders,
+  rememberCsrfFromResponse,
+  submitToast,
+} from "../task/csrf";
 
 type Verdict = "correct" | "partial" | "wrong" | "accepted";
 
@@ -95,10 +99,7 @@ function statusState(item: ItemRow): Status {
 }
 
 function idempotencyKey(): string {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-  return `idem-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  return globalThis.crypto.randomUUID();
 }
 
 function readLeft(value: unknown): number | null {
@@ -128,21 +129,21 @@ export function AssignmentPage() {
     if (!assignmentId) {
       return;
     }
+    const id = assignmentId;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setFailed(false);
       try {
-        const response = await fetch(
-          `/assignments/${encodeURIComponent(assignmentId ?? "")}`,
-          { credentials: "include" },
-        );
+        const response = await fetch(`/assignments/${encodeURIComponent(id)}`, {
+          credentials: "include",
+        });
         rememberCsrfFromResponse(response);
         if (!response.ok) {
           throw new Error("load failed");
         }
         const payload: unknown = await response.json();
-        const next = readAssignment(payload, assignmentId ?? "");
+        const next = readAssignment(payload, id);
         if (!next) {
           throw new Error("load failed");
         }
@@ -172,33 +173,28 @@ export function AssignmentPage() {
     );
   }
 
+  const id = assignmentId;
+
   async function postSubmit(key: string, confirm: boolean): Promise<Response> {
-    return fetch(
-      `/assignments/${encodeURIComponent(assignmentId ?? "")}/submit`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": key,
-          ...csrfHeaders(),
-        },
-        body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    return fetch(`/assignments/${encodeURIComponent(id)}/submit`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key": key,
+        ...csrfHeaders(),
       },
-    );
+      body: JSON.stringify(confirm ? { confirm_unanswered: true } : {}),
+    });
   }
 
   async function onSubmit() {
     setSubmitError(null);
     const key = idempotencyKey();
     try {
-      const response = await postSubmit(key, false);
+      let response = await postSubmit(key, false);
       rememberCsrfFromResponse(response);
-      if (response.ok) {
-        setSubmitted(true);
-        return;
-      }
-      if (response.status === 409) {
+      if (!response.ok && response.status === 409) {
         const payload: unknown = await response.json();
         if (readCode(payload) === "unanswered_confirmation_required") {
           const left = readLeft(payload);
@@ -206,17 +202,17 @@ export function AssignmentPage() {
             setSubmitError("Нет связи");
             return;
           }
-          const agreed = window.confirm(`осталось ${left}`);
-          if (!agreed) {
+          if (!window.confirm(`осталось ${left}`)) {
             return;
           }
-          const again = await postSubmit(key, true);
-          rememberCsrfFromResponse(again);
-          if (again.ok) {
-            setSubmitted(true);
-            return;
-          }
+          response = await postSubmit(key, true);
+          rememberCsrfFromResponse(response);
         }
+      }
+      if (response.ok) {
+        setSubmitted(true);
+        submitToast();
+        return;
       }
       setSubmitError("Нет связи");
     } catch {
