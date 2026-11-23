@@ -77,11 +77,11 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: web
-      - name: Contract type generation (D97, gen/README)
+      - name: Contract type generation (D97, §7)
         run: |
           set -euo pipefail
           if [[ ! -f tools/generate.sh ]]; then
-            echo "Отсутствует tools/generate.sh: контрактная генерация типов из docs/contracts/ (D97, gen/README) не настроена."
+            echo "Нет исполняемой команды генерации: docs/contracts/README.md — «Генерация типов (не настроена)»; D300/D310 называют oapi-codegen и sqlc, но не задают команду с путями и флагами (D97, §7)."
             exit 1
           fi
           bash tools/generate.sh
@@ -131,14 +131,10 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci --ignore-scripts
         working-directory: web
-      - name: Bundle size budgets (D315)
+      - name: GAP — size-limit
         run: |
-          if node -e 'const s=require("./package.json").scripts||{}; process.exit(s["size-limit"]?0:1)'; then
-            npm run size-limit
-          else
-            npx --no-install size-limit
-          fi
-        working-directory: web
+          echo "GAP: D315 требует size-limit в CI, но в решениях нет числового бюджета байт; конфигурации и команды в репозитории нет."
+          exit 1
 
   e2e:
     name: e2e
