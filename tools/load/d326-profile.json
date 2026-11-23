@@ -1,0 +1,33 @@
+{
+  "sha": "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e",
+  "students": 20,
+  "tutors": 2,
+  "profile": {
+    "vcpu": 4,
+    "ram_gib": 8,
+    "observability": true
+  },
+  "warmup_seconds": 300,
+  "measure_seconds": 1200,
+  "browser_repeats": 5,
+  "mix": {
+    "read": 0.6,
+    "answer_or_submit": 0.3,
+    "tutor": 0.1
+  },
+  "think_seconds": {
+    "min": 3,
+    "max": 10
+  },
+  "limits_ms": {
+    "read": 500,
+    "answer": 1000,
+    "submit": 1000,
+    "tutor_review": 500
+  },
+  "seed": "release1-pilot-d326",
+  "viewport": "1280x720",
+  "browser": "chrome",
+  "virtualization_required": "kvm",
+  "pdf_worker_separate": true
+}

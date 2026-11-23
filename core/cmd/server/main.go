@@ -28,6 +28,10 @@ func healthz(w http.ResponseWriter, _ *http.Request) {
 
 func main() {
 	slog.SetDefault(opsobs.New(os.Stdout))
+	if err := validateServerEnv(); err != nil {
+		slog.Error("server", "err", err.Error())
+		os.Exit(1)
+	}
 	handler, err := rootHandler()
 	if err != nil {
 		slog.Error("server", "err", err.Error())

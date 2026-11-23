@@ -6,6 +6,9 @@ checks:
     status: open
     owner: infra-reviewer
     criterion: brief §8 / IAC-VM + QA-VM — чистая Ubuntu, развёртывание, перезагрузка.
-    next_step: tools/vm-acceptance.sh и секреты VM_HYPERVISOR_ACCESS, QA_VM_SSH_HOST.
+    next_step: >-
+      RELEASE_SHA=7720ffc36c90c4475ea3f273bfd6b90f066ebb9e bash tools/vm-acceptance.sh;
+      секреты VM_HYPERVISOR_ACCESS и QA_VM_SSH_HOST на отдельную чистую Ubuntu (не существующую VM).
     wired_command: tools/vm-acceptance.sh
-    blocked_reason: скрипт и гостевая VM недоступны в этом контуре.
+    blocked_reason: >-
+      До скрипта deploy падал без vm-acceptance; гипервизор не проверялся.
