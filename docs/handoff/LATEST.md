@@ -2,30 +2,32 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
-**Ветка:** `cursor/release1-ci-jobs-ac9d`
-**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
+**Обновлено:** 2026-11-24 (review card decisions)
+**Ветка:** `cursor/review-card-decisions` (PR pending)
+**Этап:** сверка For Review с main `a35f8b0`
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
-| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
+| Main demo | release1-ci кроме deploy; code-check/docs-check зелёные | `deploy`, attestation на main, checker exit 0 |
+| For Review | Решения записаны в [review-card-decisions.md](review-card-decisions.md) | Закрытие карточек — за человеком |
+| Observability / journal / PDF на main | Через PR #6 (AM-37, AM-20, AM-19 landed) | Устаревшие открытые PR #20, #8, #7 |
 
 ## Что в работе сейчас
 
-PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
+Документация решений по карточкам; аттестация по-прежнему на [PR #69](https://github.com/knowgap-lab/ai-mentor/pull/69), не на main.
 
 ## Следующий шаг
 
-Расширить E3 (schemathesis). VM acceptance для deploy.
+Cloud smoke на `a35f8b0` (AM-43); VM acceptance и второй review (AM-64, AM-1); закрыть obsolete PR.
 
 ## Блокеры и вопросы
 
-Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
+Секреты VM, чистый Ubuntu guest, `release1_done.py` exit 0 на одном SHA в main.
 
 ## Куда смотреть
 
-- D335 в [docs/decisions/log.md](../decisions/log.md)
-- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
+- [review-card-decisions.md](review-card-decisions.md)
+- Запись [2026-11-24-1055-cursor-review-card-decisions-done.md](entries/2026-11-24-1055-cursor-review-card-decisions-done.md)
+- AM-1 rollup в том же файле
