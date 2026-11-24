@@ -2,30 +2,46 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
-**Ветка:** `cursor/release1-ci-jobs-ac9d`
-**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
+**Обновлено:** 2026-11-24 (точка паузы release1, main a3d9344)
+**Ветка документации:** `cursor/release1-attestation-0c1c` (PR [#69](https://github.com/knowgap-lab/ai-mentor/pull/69))
+**Этап:** приёмка release1 — локальные доказательства записаны; выпуск **не** завершён.
 
-## Где мы
+## Точка паузы
 
-| Область | Готово | Не готово |
-|---|---|---|
-| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
-| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
+**Оцениваемый коммит main:** `a3d93446e4067763d89cc41ea938ceec500d1cd9` (squash PR #75).
+
+**Аттестация на ветке PR #69:** коммит `6388206f3cf881675221ad9504db3c6a67127692`, сводка ревью: [комментарий #7126238344](https://github.com/knowgap-lab/ai-mentor/pull/69#issuecomment-7126238344). Файл `docs/handoff/release1-attestation.json` на этом коммите — без копирования доказательств с `c6d9603` / `a35f8b0`.
+
+## Результаты
+
+| Область | Статус |
+|---|---|
+| catalog, lesson, browser (локально, synthetic) | **pass** |
+| CI [code-check 45354846359](https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846359) | **success** |
+| CI [docs-check 45354846398](https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846398) | **success** |
+| CI [release1-ci 45354846472](https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846472) | упал **только** job `deploy` |
+| vm, load, reviews | **не** записаны как pass |
+
+## Блокер deploy (фактическая ошибка)
+
+В CI job `deploy` отсутствуют секреты репозитория **`QA_VM_SSH_HOST`** и **`VM_HYPERVISOR_ACCESS`**. Скрипт `vm-acceptance` вывел `release_sha=a3d93446e4067763d89cc41ea938ceec500d1cd9`, **exit=1**.
+
+**Владелец секретов:** владелец репозитория (настройки GitHub → Secrets).
+
+**Второй независимый ревьюер** того же коммита main **ещё не зафиксирован** — в журнале нет имени; не выдумывать.
 
 ## Что в работе сейчас
 
-PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
+PR [#69](https://github.com/knowgap-lab/ai-mentor/pull/69) — только handoff и аттестация **вне** оцениваемого дерева; **merge не делать**.
 
-## Следующий шаг
+## Следующая команда (после появления секретов)
 
-Расширить E3 (schemathesis). VM acceptance для deploy.
-
-## Блокеры и вопросы
-
-Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
+```bash
+RELEASE_SHA=a3d93446e4067763d89cc41ea938ceec500d1cd9 bash tools/vm-acceptance.sh
+```
 
 ## Куда смотреть
 
-- D335 в [docs/decisions/log.md](../decisions/log.md)
-- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
+- Запись [2026-11-24-1135-cursor-release1-pause-a3d9344.md](entries/2026-11-24-1135-cursor-release1-pause-a3d9344.md)
+- [release1-attestation.json](release1-attestation.json) на ветке `cursor/release1-attestation-0c1c`
+- `tools/release1_done.py` при проверке того же SHA
