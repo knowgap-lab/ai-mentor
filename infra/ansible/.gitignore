@@ -1,4 +1,5 @@
 *.retry
 inventory/guest.yml
+inventory/acceptance-guest.yml
 *.secret
 secret.env

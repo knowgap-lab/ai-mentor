@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Создание одноразовой чистой Ubuntu на стороне гипервизора (D321, §8).
-# VM_HYPERVISOR_ACCESS — путь к исполняемому сценарию оператора (не содержимое в git).
+# Создание одноразовой чистой Ubuntu (D321, §8). По умолчанию — tools/vm-hypervisor-libvirt-apply.sh (Terraform libvirt).
+# VM_HYPERVISOR_ACCESS — путь к исполняемому сценарию на KVM-хосте (часто копия vm-hypervisor-libvirt-apply.sh из репозитория).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 

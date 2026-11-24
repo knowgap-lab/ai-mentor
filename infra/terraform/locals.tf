@@ -32,5 +32,7 @@ locals {
     reference_vcpus      = var.reference_vcpus
     reference_memory_mib = var.reference_memory_mib
     vm_created           = false
+    hypervisor           = "libvirt-kvm"
+    vm_stack             = "infra/terraform/acceptance-vm"
   }
 }

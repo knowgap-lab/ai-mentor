@@ -20,7 +20,12 @@ output "source_repository" {
 
 output "vm_created" {
   value       = false
-  description = "Эта конфигурация VM не создаёт."
+  description = "Корневой модуль VM не создаёт; см. acceptance-vm."
+}
+
+output "acceptance_vm_stack" {
+  value       = "infra/terraform/acceptance-vm"
+  description = "Отдельный Terraform-стек libvirt для одноразовой чистой Ubuntu."
 }
 
 output "reference_profile" {

@@ -34,9 +34,16 @@ check "third_party_images_match_compose" {
   }
 }
 
-check "hypervisor_not_selected" {
+check "guest_label_is_acceptance_only" {
+  assert {
+    condition     = can(regex("^ai-mentor-accept-", var.guest_label))
+    error_message = "guest_label должен начинаться с ai-mentor-accept-, чтобы не затронуть пользовательскую VM."
+  }
+}
+
+check "vm_stack_when_create_vm" {
   assert {
     condition     = var.create_vm == false
-    error_message = "Гипервизор не выбран (D321). create_vm нельзя применять. Установка Ansible на уже созданную Ubuntu эту проверку не закрывает."
+    error_message = "create_vm в корневом модуле всегда false; создание VM — infra/terraform/acceptance-vm (D340)."
   }
 }

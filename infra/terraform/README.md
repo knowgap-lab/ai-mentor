@@ -1,24 +1,32 @@
 # Terraform выпуска 1
 
-Один файл `release.json` задаёт SHA приложения. Образы `core`, `web` и `content` получают этот SHA тегом. Postgres `16.15` и Gotenberg `9.5.0` взяты из `deploy/compose.prod.yml` и здесь не подменяются.
+Один файл `release.json` задаёт репозитории образов. Образы `core`, `web` и `content` получают SHA коммита под тестом (`-var app_sha` / `TF_VAR_app_sha`, D339). Postgres `16.15` и Gotenberg `9.5.0` взяты из `deploy/compose.prod.yml`.
 
-Конфигурация не создаёт VM. Гипервизор не выбран (D321): `create_vm` по умолчанию `false`, значение `true` план отвергает. Проверка `terraform validate` не означает, что VM создана или что установка на гостевую Ubuntu выполнена.
+Корневой модуль — **контракт** выпуска (образы, ориентир D326). VM **не** создаётся здесь (`create_vm` всегда false).
 
-Ориентир 4 vCPU и 8 ГиБ записан по D326. Это не измеренный гость и не созданная машина.
+Отдельная чистая Ubuntu на KVM/libvirt — стек [acceptance-vm/](acceptance-vm/) (D321, D340). Только имена `ai-mentor-accept-*`.
 
-## Команды
+## Команды (контракт, без гипервизора)
 
 Из этого каталога:
 
 ```bash
+export TF_VAR_app_sha="$(git -C ../.. rev-parse HEAD^{commit})"
 terraform fmt -check -recursive
-terraform init
+terraform init -backend=false -input=false
 terraform validate
 terraform test
-terraform apply -auto-approve -input=false
-terraform plan -detailed-exitcode -input=false
+terraform apply -auto-approve -input=false -var="create_vm=false"
+terraform plan -detailed-exitcode -input=false -var="create_vm=false"
 ```
 
-Повторный `plan` после `apply` того же контракта должен завершиться с кодом 0: изменений нет. `terraform.tfstate` остаётся в этом каталоге и в git не входит.
+## Гостевая VM (машина оператора с libvirt)
 
-`create_vm=true` применять нельзя, пока после осмотра компьютера пользователя не выбран бэкенд виртуализации. Установка Ansible на уже существующую Ubuntu эту проверку не закрывает.
+```bash
+bash ../../tools/vm-hypervisor-libvirt-apply.sh
+cd acceptance-vm && terraform plan -detailed-exitcode -input=false
+```
+
+Второй `plan` по тому же стеку `acceptance-vm` — только exit 0.
+
+`terraform.tfstate` в git не входит.

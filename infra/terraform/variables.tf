@@ -16,12 +16,12 @@ variable "create_vm" {
 
 variable "guest_label" {
   type        = string
-  default     = "existing-ubuntu-guest"
-  description = "Метка уже существующей гостевой Ubuntu. Машину не создаёт."
+  default     = "ai-mentor-accept-guest"
+  description = "Суффикс имени домена libvirt (ai-mentor-accept-<label>). Только эта VM управляется Terraform."
 
   validation {
-    condition     = can(regex("^[a-z0-9-]{1,32}$", var.guest_label))
-    error_message = "guest_label: строчные латинские буквы, цифры и дефис, до 32 символов."
+    condition     = can(regex("^ai-mentor-accept-[a-z0-9-]{1,20}$", var.guest_label))
+    error_message = "guest_label должен быть вида ai-mentor-accept-<суффикс>, только строчные латиница, цифры, дефис."
   }
 }
 

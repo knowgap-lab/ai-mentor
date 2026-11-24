@@ -27,19 +27,41 @@ ssh_guest() {
   ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new "$QA_VM_SSH_HOST" "$@"
 }
 
-terraform_dir() {
-  (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && "$@" -var="app_sha=${RELEASE_SHA}")
+terraform_contract_dir() {
+  (
+    cd "$ROOT/infra/terraform"
+    terraform init -backend=false -input=false >/dev/null
+    "$@" -var="app_sha=${RELEASE_SHA}" -var="create_vm=false"
+  )
+}
+
+terraform_vm_dir() {
+  (
+    cd "$ROOT/infra/terraform/acceptance-vm"
+    terraform init -input=false >/dev/null
+    "$@"
+  )
 }
 
 step_create() {
-  terraform_dir terraform apply -auto-approve -input=false -var="create_vm=false"
+  terraform_contract_dir terraform apply -auto-approve -input=false
   bash "$ROOT/tools/vm-hypervisor-create.sh"
   ssh_guest "uname -a" >/dev/null
   ssh_guest "test -f /etc/os-release && grep -q '^ID=ubuntu' /etc/os-release"
 }
 
 step_second_plan() {
-  terraform_dir terraform plan -detailed-exitcode -input=false -var="create_vm=false"
+  local code=0
+  terraform_vm_dir terraform plan -detailed-exitcode -input=false || code=$?
+  if [[ "$code" -eq 1 ]]; then
+    echo "second_plan: terraform plan failed"
+    return 1
+  fi
+  if [[ "$code" -eq 2 ]]; then
+    echo "second_plan: unexpected changes pending (detailed-exitcode=2)"
+    return 1
+  fi
+  return 0
 }
 
 ansible_guest_inventory() {
