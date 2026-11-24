@@ -2,9 +2,9 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-24 (runtime SHA для deploy/load, D339)
-**Ветка:** `cursor/release1-vm-guest-a35f8-4c59` — PR #73
-**Этап:** SHA под тест = checkout / `GITHUB_SHA`; гость ждёт секреты.
+**Обновлено:** 2026-11-24 (AM-43 Chrome apt pin, main `c6d9603`)
+**Ветка:** `cursor/chrome-apt-pin-am43-4c59` — PR chrome pin
+**Этап:** main после #73; AM-43 smoke задокументирован.
 
 ## Где мы
 
