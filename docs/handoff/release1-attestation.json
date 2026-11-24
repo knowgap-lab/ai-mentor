@@ -1,27 +1,27 @@
 {
-  "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
-  "artifact_sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+  "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
+  "artifact_sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
   "result": "unfinished",
-  "recorded_at": "2026-11-23T20:00:23Z",
+  "recorded_at": "2026-11-24T08:29:06Z",
   "recorded_by": "release-1-demo-launch",
-  "purpose": "Приёмка merge-коммита main a35f8b0 (PR #72); свежие catalog_ci, dev_seed, живой урок API и Playwright 20/20; CI с реальным deploy failure; vm/load/reviews не записываются.",
+  "purpose": "Приёмка merge-коммита main a3d9344 (PR #75); свежие catalog_ci, dev_seed, живой урок API и Playwright 20/20 на дереве a3d9344; mobile_360 — assert viewportSize 360 в browser-coverage; deploy failure (нет VM-секретов); vm/load/reviews не записываются.",
   "integrated_ref": "main",
   "merged": true,
   "pull_request": {
-    "number": 72,
-    "url": "https://github.com/knowgap-lab/ai-mentor/pull/72",
+    "number": 75,
+    "url": "https://github.com/knowgap-lab/ai-mentor/pull/75",
     "state": "merged",
-    "merge_sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+    "merge_sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
   },
   "inventory": {
-    "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+    "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
     "operations_connected": 58,
     "screens_present": 14,
-    "command": "cd /tmp/ai-mentor-a35f8b0 && python3 tools/release1_inventory.py",
+    "command": "cd /tmp/ai-mentor-a3d9344 && python3 tools/release1_inventory.py",
     "result": "58/58 operations, 14/14 screens"
   },
   "catalog": {
-    "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+    "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
     "lesson_files": [
       "content/tests/fixtures/demo-catalog/ct-demo/lessons/L01.yaml"
     ],
@@ -30,11 +30,11 @@
     ],
     "catalog_ci": "pass",
     "postgres_load": "pass",
-    "command": "cd /tmp/ai-mentor-a35f8b0/content && PYTHONPATH=. /agent/repos/ai-mentor/.venv314/bin/python -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c \"/agent/repos/ai-mentor/.venv314/bin/python /tmp/ai-mentor-a35f8b0/tools/dev_seed.py\"",
+    "command": "cd /tmp/ai-mentor-a3d9344/content && PYTHONPATH=. python3 -m catalog_ci check tests/fixtures/demo-catalog --mode main; sg docker -c 'python3 /tmp/ai-mentor-a3d9344/tools/dev_seed.py'",
     "result": "catalog_ci exit 0; dev_seed exit 0, seed loads 1"
   },
   "lesson": {
-    "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+    "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
     "transport": "live_api",
     "depends_on": [
       "catalog"
@@ -43,7 +43,7 @@
     "api_origin": "http://127.0.0.1:18080",
     "steps": {
       "clean_postgres": {
-        "command": "DATABASE_URL='postgres://postgres@127.0.0.1:55432/ai_mentor?sslmode=disable' /agent/repos/ai-mentor/.venv314/bin/python tools/dev_seed.py; psql reset lesson-demo-held drafts and extra assignments",
+        "command": "DATABASE_URL='postgres://postgres@127.0.0.1:55432/ai_mentor?sslmode=disable' /agent/repos/ai-mentor/.venv/bin/python tools/dev_seed.py; psql reset lesson-demo-held drafts and extra assignments",
         "result": "pass"
       },
       "tutor_creates_lesson": {
@@ -57,27 +57,27 @@
         "http_status": 201
       },
       "student_correct": {
-        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V002/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/701b83aa4afbef0530bc83e737a399e9/items/ct-demo:D1.T01.S1.V002/answer",
         "result": "pass",
         "http_status": 200
       },
       "student_incorrect": {
-        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V003/answer",
+        "command": "POST http://127.0.0.1:18080/assignments/701b83aa4afbef0530bc83e737a399e9/items/ct-demo:D1.T01.S1.V003/answer",
         "result": "pass",
         "http_status": 200
       },
       "tutor_sees_score_and_attempts": {
-        "command": "GET http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/attempts",
+        "command": "GET http://127.0.0.1:18080/assignments/701b83aa4afbef0530bc83e737a399e9/attempts",
         "result": "pass",
         "http_status": 200
       },
       "foreign_tutor_denied": {
-        "command": "GET http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/attempts (tg-demo-other)",
+        "command": "GET http://127.0.0.1:18080/assignments/701b83aa4afbef0530bc83e737a399e9/attempts (tg-demo-other)",
         "result": "pass",
         "http_status": 403
       },
       "repeat_keeps_one_attempt": {
-        "command": "POST http://127.0.0.1:18080/assignments/1ceafb317573e19cbe1188cd358ded18/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
+        "command": "POST http://127.0.0.1:18080/assignments/701b83aa4afbef0530bc83e737a399e9/items/ct-demo:D1.T01.S1.V002/answer x2 same idempotency_key live-a; SELECT COUNT(*) core.attempts",
         "result": "pass",
         "attempt_count": 1,
         "http_status": 200
@@ -85,15 +85,15 @@
     }
   },
   "browser": {
-    "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+    "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
     "depends_on": [
       "lesson",
       "catalog"
     ],
     "backend": "real",
     "database": "synthetic",
-    "command": "cd /tmp/ai-mentor-a35f8b0/tools/e2e && ln -s /agent/repos/ai-mentor/.venv314 ../.venv314 && sg docker -c \"npx playwright test\" (включает no_horizontal_scroll viewport 360 px)",
-    "result": "20 passed (18.1s) walk.spec.ts + browser-coverage.spec.ts",
+    "command": "cd /tmp/ai-mentor-a3d9344/tools/e2e && ln -sf /tmp/ai-mentor-a3d9344/.venv ../.venv && sg docker -c 'npx playwright test' (browser-coverage no_horizontal_scroll: expect viewportSize 360)",
+    "result": "20 passed (17.4s) walk.spec.ts + browser-coverage.spec.ts",
     "screens": {
       "Ученик/Главная": {
         "behavior": "pass",
@@ -153,9 +153,9 @@
       }
     },
     "behaviors": {
-      "mobile_360": "pass",
       "roles": "pass",
       "keys_hidden": "pass",
+      "mobile_360": "pass",
       "accessibility": "pass",
       "csp": "pass",
       "reduced_motion": "pass",
@@ -199,17 +199,17 @@
   "open_findings": [],
   "findings": [],
   "ci": {
-    "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+    "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
     "partial": false,
-    "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252839895",
-    "snapshot_at": "2026-11-23T19:56:52Z",
+    "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846472",
+    "snapshot_at": "2026-11-24T08:29:06Z",
     "supplementary_runs": {
       "code-check": {
-        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252840133",
+        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846359",
         "conclusion": "success"
       },
       "docs-check": {
-        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45252839871",
+        "workflow_run": "https://github.com/knowgap-lab/ai-mentor/actions/runs/45354846398",
         "conclusion": "success"
       }
     },
@@ -217,60 +217,58 @@
       {
         "name": "tools/check.sh",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "tools/check-code.sh",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
-        "completed_at": "2026-11-23T19:56:52Z"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "generation",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9",
         "diff_empty": true
       },
       {
         "name": "build",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "storybook",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "size-limit",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "e2e",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "contract-live",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "docker",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "chrome",
         "conclusion": "success",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       },
       {
         "name": "deploy",
         "conclusion": "failure",
-        "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
-        "completed_at": "2026-11-23T19:49:10Z"
+        "sha": "a3d93446e4067763d89cc41ea938ceec500d1cd9"
       }
     ]
   }
