@@ -2,9 +2,9 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-23 (release1-ci size-limit baseline)
-**Ветка:** `cursor/release1-ci-jobs-ac9d`
-**Этап:** PR #64 — docker/chrome wired; size-limit baseline; contract-live открыт.
+**Обновлено:** 2026-11-24 (vm acceptance SHA pin + deploy terraform)
+**Ветка:** `cursor/release1-vm-guest-a35f8-4c59`
+**Этап:** evaluated main `a35f8b0`; приёмка VM — pin SHA, deploy с Terraform; гость ждёт секреты.
 
 ## Где мы
 

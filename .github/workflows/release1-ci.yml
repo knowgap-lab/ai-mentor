@@ -212,8 +212,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
       - name: Ubuntu VM acceptance (brief §8, IAC-VM / QA-VM)
         env:
+          RELEASE_SHA: ${{ github.sha }}
           VM_HYPERVISOR_ACCESS: ${{ secrets.VM_HYPERVISOR_ACCESS }}
           QA_VM_SSH_HOST: ${{ secrets.QA_VM_SSH_HOST }}
         run: |

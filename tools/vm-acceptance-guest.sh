@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Шаги §8 на выделенной гостевой Ubuntu (QA_VM_SSH_HOST). Результат — в stdout, без записи pass в аттестацию.
-set -u
+set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RELEASE_SHA="${RELEASE_SHA:-7720ffc36c90c4475ea3f273bfd6b90f066ebb9e}"
+RELEASE_SHA="${RELEASE_SHA:-$(git -C "$ROOT" rev-parse HEAD^{commit})}"
 GUEST_OVERALL=0
 
 guest_step() {
@@ -24,14 +24,20 @@ ssh_guest() {
   ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new "$QA_VM_SSH_HOST" "$@"
 }
 
+terraform_dir() {
+  (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && "$@")
+}
+
 step_create() {
+  bash "$ROOT/tools/pin_release_sha.sh"
+  terraform_dir terraform apply -auto-approve -input=false -var="create_vm=false"
+  bash "$ROOT/tools/vm-hypervisor-create.sh"
   ssh_guest "uname -a" >/dev/null
   ssh_guest "test -f /etc/os-release && grep -q '^ID=ubuntu' /etc/os-release"
 }
 
 step_second_plan() {
-  # -detailed-exitcode: 0 = no changes, 2 = pending changes (fail), 1 = error
-  (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && terraform plan -detailed-exitcode -input=false)
+  terraform_dir terraform plan -detailed-exitcode -input=false -var="create_vm=false"
 }
 
 ansible_guest_inventory() {
@@ -66,25 +72,49 @@ step_second_converge() {
   inv="$(ansible_guest_inventory)"
   local log
   log="$(mktemp)"
-  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml) | tee "$log"
+  trap 'rm -f "$log"' RETURN
+  set -o pipefail
+  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml) 2>&1 | tee "$log"
   if awk '/PLAY RECAP/,0' "$log" | grep -E 'changed=[1-9][0-9]*' >/dev/null; then
     echo "second converge: unexpected changes in recap"
-    rm -f "$log"
     return 1
   fi
-  rm -f "$log"
 }
 
 step_reboot() {
-  ssh_guest "sudo -n reboot" || ssh_guest "sudo reboot" || true
-  sleep 15
-  for _ in $(seq 1 30); do
-    if ssh_guest "systemctl is-system-running --wait" 2>/dev/null; then
-      return 0
+  local boot_before uptime_before boot_after
+  boot_before="$(ssh_guest 'cat /proc/sys/kernel/random/boot_id')"
+  uptime_before="$(ssh_guest 'cut -d. -f1 /proc/uptime')"
+  if [[ -z "$boot_before" || -z "$uptime_before" ]]; then
+    echo "reboot: cannot read boot_id or uptime before reboot"
+    return 1
+  fi
+  ssh_guest "sudo -n reboot" || ssh_guest "sudo reboot"
+  sleep 20
+  for _ in $(seq 1 40); do
+    if ssh_guest "true" 2>/dev/null; then
+      break
     fi
     sleep 10
   done
-  return 1
+  if ! ssh_guest "true" 2>/dev/null; then
+    echo "reboot: guest did not return after reboot"
+    return 1
+  fi
+  boot_after="$(ssh_guest 'cat /proc/sys/kernel/random/boot_id')"
+  uptime_after="$(ssh_guest 'cut -d. -f1 /proc/uptime')"
+  if [[ -z "$boot_after" || -z "$uptime_after" ]]; then
+    echo "reboot: cannot read boot_id or uptime after reconnect"
+    return 1
+  fi
+  if [[ "$boot_before" == "$boot_after" ]]; then
+    echo "reboot: boot_id unchanged ($boot_before)"
+    return 1
+  fi
+  if [[ "$uptime_after" -ge "$uptime_before" ]]; then
+    echo "reboot: uptime did not drop (before=$uptime_before after=$uptime_after)"
+    return 1
+  fi
 }
 
 step_gotenberg() {
@@ -106,14 +136,18 @@ if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
   echo "guest: fatal: QA_VM_SSH_HOST unset"
   exit 1
 fi
+if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
+  echo "guest: fatal: VM_HYPERVISOR_ACCESS unset"
+  exit 1
+fi
 
-guest_step create step_create || true
-guest_step second_plan step_second_plan || true
-guest_step converge step_converge || true
-guest_step second_converge step_second_converge || true
-guest_step reboot step_reboot || true
-guest_step gotenberg step_gotenberg || true
-guest_step no_pii step_no_pii || true
+guest_step create step_create
+guest_step second_plan step_second_plan
+guest_step converge step_converge
+guest_step second_converge step_second_converge
+guest_step reboot step_reboot
+guest_step gotenberg step_gotenberg
+guest_step no_pii step_no_pii
 
 echo "guest:overall: exit=$GUEST_OVERALL (not an attestation pass)"
 exit "$GUEST_OVERALL"

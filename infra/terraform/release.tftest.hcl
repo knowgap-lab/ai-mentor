@@ -2,7 +2,7 @@ run "pins_one_sha" {
   command = plan
 
   assert {
-    condition     = output.app_sha == "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e"
+    condition     = output.app_sha == jsondecode(file("release.json")).app_sha
     error_message = "SHA в тесте разошёлся с release.json."
   }
 

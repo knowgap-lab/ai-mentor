@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Приёмка Ubuntu VM (briefs/CURSOR-PROJECT-RELEASE1.md §8).
-# Артефакт: RELEASE_SHA (по умолчанию 7720ffc на main).
+# Артефакт: RELEASE_SHA (по умолчанию HEAD^{commit} проверяемого дерева).
 # Без QA_VM_SSH_HOST и VM_HYPERVISOR_ACCESS выполняются только проверки синтаксиса/конфига;
 # шаги create, second_plan, converge, reboot, Gotenberg и no-PII помечаются blocked и дают код 1.
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RELEASE_SHA="${RELEASE_SHA:-7720ffc36c90c4475ea3f273bfd6b90f066ebb9e}"
+RELEASE_SHA="${RELEASE_SHA:-$(git -C "$ROOT" rev-parse HEAD^{commit})}"
+export RELEASE_SHA
+bash "$ROOT/tools/pin_release_sha.sh"
 
 section() {
   echo ""
