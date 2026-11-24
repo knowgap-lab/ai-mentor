@@ -22,11 +22,11 @@ run "pins_one_sha" {
 
   assert {
     condition     = output.vm_created == false
-    error_message = "Конфигурация не должна сообщать, что VM создана."
+    error_message = "Корневой модуль не создаёт VM."
   }
 }
 
-run "create_vm_is_refused" {
+run "create_vm_in_root_is_refused" {
   command = plan
 
   variables {
@@ -34,6 +34,6 @@ run "create_vm_is_refused" {
   }
 
   expect_failures = [
-    check.hypervisor_not_selected,
+    check.vm_stack_when_create_vm,
   ]
 }

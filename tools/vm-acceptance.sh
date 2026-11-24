@@ -60,6 +60,8 @@ record_syntax "terraform-init-validate" bash -c "
 
 record_syntax "terraform-test" bash -c "cd '$ROOT/infra/terraform' && terraform test" || true
 
+record_syntax "terraform-acceptance-vm-fmt" bash -c "cd '$ROOT/infra/terraform/acceptance-vm' && terraform fmt -check -recursive" || true
+
 compose_config() {
   local file="$1"
   if docker compose version >/dev/null 2>&1; then
