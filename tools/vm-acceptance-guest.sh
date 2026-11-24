@@ -53,15 +53,19 @@ step_create() {
 step_second_plan() {
   local code=0
   terraform_vm_dir terraform plan -detailed-exitcode -input=false || code=$?
+  if [[ "$code" -eq 0 ]]; then
+    return 0
+  fi
   if [[ "$code" -eq 1 ]]; then
-    echo "second_plan: terraform plan failed"
+    echo "second_plan: terraform plan failed (exit=1)"
     return 1
   fi
   if [[ "$code" -eq 2 ]]; then
     echo "second_plan: unexpected changes pending (detailed-exitcode=2)"
     return 1
   fi
-  return 0
+  echo "second_plan: terraform plan exit=$code"
+  return "$code"
 }
 
 ansible_guest_inventory() {
