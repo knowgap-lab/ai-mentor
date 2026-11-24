@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Без гостя: второй plan — только detailed-exitcode 0; 1, 2 и любой иной ненулевой код — fail.
+# Без гостя: второй plan — только detailed-exitcode 0; иначе fail с реальным кодом terraform.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_SHA="$(git -C "$ROOT" rev-parse HEAD^{commit})"
@@ -41,25 +41,38 @@ export PATH="$STUB_DIR:$PATH"
 # shellcheck source=/dev/null
 source "$ROOT/tools/vm-acceptance-guest.sh"
 
-assert_second_plan_fails() {
-  local label="$1"
-  if step_second_plan 2>/dev/null; then
-    echo "second_plan_test: expected failure on $label" >&2
+assert_second_plan_exit() {
+  local expected="$1"
+  local label="$2"
+  set +e
+  step_second_plan 2>/dev/null
+  local got=$?
+  set -e
+  if [[ "$expected" -eq 0 ]]; then
+    if [[ "$got" -ne 0 ]]; then
+      echo "second_plan_test: $label expected exit=0, got $got" >&2
+      exit 1
+    fi
+    return 0
+  fi
+  if [[ "$got" -eq 0 ]]; then
+    echo "second_plan_test: $label expected failure, got exit=0" >&2
+    exit 1
+  fi
+  if [[ "$got" -ne "$expected" ]]; then
+    echo "second_plan_test: $label expected exit=$expected, got $got" >&2
     exit 1
   fi
 }
 
 export TF_STUB_PLAN_EXIT=2
-assert_second_plan_fails "exit=2"
+assert_second_plan_exit 2 "terraform detailed-exitcode=2"
 
 export TF_STUB_PLAN_EXIT=0
-if ! step_second_plan 2>/dev/null; then
-  echo "second_plan_test: expected success on exit=0" >&2
-  exit 1
-fi
+assert_second_plan_exit 0 "terraform detailed-exitcode=0"
 
 export TF_STUB_PLAN_EXIT=1
-assert_second_plan_fails "exit=1"
+assert_second_plan_exit 1 "terraform exit=1"
 
 export TF_STUB_PLAN_EXIT=3
 LOG_OUT="$(mktemp)"
@@ -71,10 +84,6 @@ guest_step second_plan step_second_plan >"$LOG_OUT" 2>&1
 guest_status=$?
 step_out="$(cat "$LOG_OUT")"
 set -e
-if [[ "$step_status" -eq 0 ]]; then
-  echo "second_plan_test: step_second_plan must not pass on exit=3" >&2
-  exit 1
-fi
 if [[ "$step_status" -ne 3 ]]; then
   echo "second_plan_test: step_second_plan expected 3, got $step_status" >&2
   exit 1
@@ -93,9 +102,9 @@ if ! echo "$step_out" | grep -q 'guest:second_plan: exit=3'; then
 fi
 
 export TF_STUB_PLAN_EXIT=127
-assert_second_plan_fails "exit=127 (missing command style)"
+assert_second_plan_exit 127 "terraform exit=127 (missing command style)"
 
 export TF_STUB_PLAN_EXIT=crash
-assert_second_plan_fails "terraform error (exit=1)"
+assert_second_plan_exit 1 "terraform error (exit=1)"
 
 echo "second_plan_test: ok"
