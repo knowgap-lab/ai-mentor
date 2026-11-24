@@ -7,8 +7,10 @@ checks:
     owner: infra-reviewer
     criterion: brief §8 / IAC-VM + QA-VM — чистая Ubuntu, развёртывание, перезагрузка.
     next_step: >-
-      RELEASE_SHA=7720ffc36c90c4475ea3f273bfd6b90f066ebb9e bash tools/vm-acceptance.sh;
-      секреты VM_HYPERVISOR_ACCESS и QA_VM_SSH_HOST на отдельную чистую Ubuntu (не существующую VM).
-    wired_command: tools/vm-acceptance.sh
+      RELEASE_SHA=${{ github.sha }} bash tools/vm-acceptance.sh;
+      владелец репозитория: добавить secrets.VM_HYPERVISOR_ACCESS (исполняемый сценарий создания VM)
+      и secrets.QA_VM_SSH_HOST (SSH к одноразовой чистой Ubuntu).
+    wired_command: bash tools/vm-acceptance.sh
     blocked_reason: >-
-      До скрипта deploy падал без vm-acceptance; гипервизор не проверялся.
+      missing: QA_VM_SSH_HOST (SSH к отдельной чистой Ubuntu, не существующей пользовательской VM);
+      missing: VM_HYPERVISOR_ACCESS (ограниченный доступ к гипервизору для одноразовой тестовой VM).

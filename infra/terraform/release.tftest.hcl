@@ -2,8 +2,8 @@ run "pins_one_sha" {
   command = plan
 
   assert {
-    condition     = output.app_sha == "7720ffc36c90c4475ea3f273bfd6b90f066ebb9e"
-    error_message = "SHA в тесте разошёлся с release.json."
+    condition     = can(regex("^[0-9a-f]{40}$", output.app_sha))
+    error_message = "plan должен отдавать app_sha из -var=app_sha / TF_VAR_app_sha."
   }
 
   assert {

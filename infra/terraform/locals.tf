@@ -1,7 +1,8 @@
 locals {
   release = jsondecode(file("${path.module}/release.json"))
 
-  app_sha                  = local.release.app_sha
+  # SHA коммита под тестом: TF_VAR_app_sha / -var=app_sha (см. tools/verify_release_sha.sh).
+  app_sha                  = var.app_sha
   source_repository        = local.release.source_repository
   core_image_repository    = local.release.core_image_repository
   web_image_repository     = local.release.web_image_repository

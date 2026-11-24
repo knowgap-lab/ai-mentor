@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Приёмка Ubuntu VM (briefs/CURSOR-PROJECT-RELEASE1.md §8).
-# Артефакт: RELEASE_SHA (по умолчанию 7720ffc на main).
+# Артефакт: RELEASE_SHA (по умолчанию HEAD^{commit} проверяемого дерева).
 # Без QA_VM_SSH_HOST и VM_HYPERVISOR_ACCESS выполняются только проверки синтаксиса/конфига;
 # шаги create, second_plan, converge, reboot, Gotenberg и no-PII помечаются blocked и дают код 1.
 set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RELEASE_SHA="${RELEASE_SHA:-7720ffc36c90c4475ea3f273bfd6b90f066ebb9e}"
+# shellcheck source=/dev/null
+source "$ROOT/tools/verify_release_sha.sh"
 
 section() {
   echo ""
@@ -41,16 +42,7 @@ record_guest_blocked() {
 
 verify_release_pin() {
   section "config: release.json pins"
-  local tf_sha ans_sha
-  tf_sha="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["app_sha"])' \
-    "$ROOT/infra/terraform/release.json")"
-  ans_sha="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["app_sha"])' \
-    "$ROOT/infra/ansible/release.json")"
-  if [[ "$tf_sha" != "$RELEASE_SHA" || "$ans_sha" != "$RELEASE_SHA" ]]; then
-    echo "config:release.json: expected app_sha=$RELEASE_SHA terraform=$tf_sha ansible=$ans_sha"
-    return 1
-  fi
-  echo "config:release.json: app_sha=$RELEASE_SHA"
+  echo "config:evaluated_sha: app_sha=$RELEASE_SHA (HEAD / GITHUB_SHA)"
 }
 
 record_syntax verify_release_pin || true

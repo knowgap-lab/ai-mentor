@@ -61,3 +61,5 @@ fi
 
 ruff check
 ruff format --check
+
+bash tools/vm-acceptance-guest-second-converge_test.sh
