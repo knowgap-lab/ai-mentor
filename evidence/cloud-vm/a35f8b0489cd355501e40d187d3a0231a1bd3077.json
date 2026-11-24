@@ -1,0 +1,43 @@
+{
+  "sha": "a35f8b0489cd355501e40d187d3a0231a1bd3077",
+  "base_branch": "main",
+  "card": "AM-43",
+  "recorded_at_utc": "2026-11-24T07:53:26Z",
+  "runner": "cursor-cloud-agent-vm",
+  "checkout": "git worktree at a35f8b0 (detached HEAD)",
+  "commands": {
+    "bash tools/dev-install.sh": {
+      "exit_code": 100,
+      "log": "evidence/cloud-vm/logs/a35f8b0489cd355501e40d187d3a0231a1bd3077/dev-install.log"
+    },
+    "bash tools/dev-start.sh": {
+      "exit_code": 1,
+      "log": "evidence/cloud-vm/logs/a35f8b0489cd355501e40d187d3a0231a1bd3077/dev-start.log"
+    },
+    "bash tools/dev-check.sh": {
+      "exit_code": 1,
+      "log": "evidence/cloud-vm/logs/a35f8b0489cd355501e40d187d3a0231a1bd3077/dev-check.log"
+    }
+  },
+  "smoke": {
+    "docker": {
+      "result": "fail",
+      "detail": "Нет штатного доступа к Docker. Добавьте пользователя в группу docker и откройте новую сессию."
+    },
+    "postgres": {
+      "result": "not_run",
+      "detail": "dev-start не поднял стек"
+    },
+    "browser": {
+      "result": "not_run",
+      "detail": "dev-check не дошёл до Playwright"
+    }
+  },
+  "first_error": "E: Version '158.0.8127.36-1' for 'google-chrome-stable' was not found (dev-install.sh)",
+  "missing_dependencies": [
+    "apt package google-chrome-stable version from mise.toml CHROME_VERSION",
+    "membership in group docker (or sg docker) for dev-start/dev-check"
+  ],
+  "am43_decision": "still open",
+  "next_step": "Re-run on Cursor Cloud VM where dev-install succeeds (Chrome deb available, user in docker group); compare with PR #57 pattern at dc1e160."
+}
