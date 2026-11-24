@@ -2,7 +2,7 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-24 (review card decisions)
+**Обновлено:** 2026-11-24 (AM-43 smoke a35f8b0 — fail)
 **Ветка:** `cursor/review-card-decisions` (PR pending)
 **Этап:** сверка For Review с main `a35f8b0`
 
@@ -20,7 +20,7 @@
 
 ## Следующий шаг
 
-Cloud smoke на `a35f8b0` (AM-43); VM acceptance и второй review (AM-64, AM-1); закрыть obsolete PR.
+AM-43: повторить dev smoke на VM с `sg docker` и доступным Chrome deb; VM acceptance и второй review (AM-64, AM-1).
 
 ## Блокеры и вопросы
 

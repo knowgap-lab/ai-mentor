@@ -1,0 +1,34 @@
+docker: unrecognized service
+Журнал dockerd:
+time="2026-11-24T07:51:16.689692142Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.snapshots type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689696662Z" level=info msg="loading plugin" id=io.containerd.streaming.v1.manager type=io.containerd.streaming.v1
+time="2026-11-24T07:51:16.689703326Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.streaming type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689708639Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.tasks type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689713767Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.transfer type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689719122Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.version type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689723381Z" level=info msg="loading plugin" id=io.containerd.monitor.container.v1.restart type=io.containerd.monitor.container.v1
+time="2026-11-24T07:51:16.689748281Z" level=info msg="loading plugin" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+time="2026-11-24T07:51:16.689759623Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+time="2026-11-24T07:51:16.689769520Z" level=info msg="loading plugin" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+time="2026-11-24T07:51:16.689774502Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+time="2026-11-24T07:51:16.689777873Z" level=info msg="loading plugin" id=io.containerd.ttrpc.v1.otelttrpc type=io.containerd.ttrpc.v1
+time="2026-11-24T07:51:16.689785828Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.healthcheck type=io.containerd.grpc.v1
+time="2026-11-24T07:51:16.689922762Z" level=info msg=serving... address=/var/run/docker/containerd/containerd-debug.sock
+time="2026-11-24T07:51:16.689948043Z" level=info msg=serving... address=/var/run/docker/containerd/containerd.sock.ttrpc
+time="2026-11-24T07:51:16.689964503Z" level=info msg=serving... address=/var/run/docker/containerd/containerd.sock
+time="2026-11-24T07:51:16.689973085Z" level=info msg="containerd successfully booted in 0.010776s"
+time="2026-11-24T07:51:16.699353932Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+time="2026-11-24T07:51:16.699476014Z" level=info msg="CDI directory does not exist, skipping: failed to monitor for changes: no such file or directory" dir=/etc/cdi
+time="2026-11-24T07:51:16.699483666Z" level=info msg="CDI directory does not exist, skipping: failed to monitor for changes: no such file or directory" dir=/var/run/cdi
+time="2026-11-24T07:51:16.707123675Z" level=info msg="Creating a containerd client" address=/var/run/docker/containerd/containerd.sock timeout=1m0s
+time="2026-11-24T07:51:16.710104377Z" level=info msg="Loading containers: start."
+time="2026-11-24T07:51:16.710136903Z" level=info msg="[graphdriver] trying configured driver: fuse-overlayfs"
+time="2026-11-24T07:51:16.710938812Z" level=info msg="Restoring containers: start."
+time="2026-11-24T07:51:16.714516463Z" level=info msg="Loading containers: done."
+time="2026-11-24T07:51:16.718753741Z" level=info msg="Docker daemon" commit="29.1.3-0ubuntu3~24.04.2" containerd-snapshotter=false storage-driver=fuse-overlayfs version=29.1.3
+time="2026-11-24T07:51:16.718837703Z" level=info msg="Initializing buildkit"
+time="2026-11-24T07:51:16.737791314Z" level=info msg="Completed buildkit initialization"
+time="2026-11-24T07:51:16.742014673Z" level=info msg="Daemon has completed initialization"
+time="2026-11-24T07:51:16.742096078Z" level=info msg="API listen on /var/run/docker.sock"
+Нет штатного доступа к Docker. Добавьте пользователя в группу docker и откройте новую сессию.
+CHECK_EXIT:1

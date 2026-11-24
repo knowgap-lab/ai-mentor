@@ -10,7 +10,7 @@
 | Card | Decision | SHA | Proof |
 |------|----------|-----|-------|
 | AM-37 | landed via **PR #6** (`e125b6b`); PR [#20](https://github.com/knowgap-lab/ai-mentor/pull/20) obsolete vs main | `a35f8b0` satisfies; `329e28f` stale | [main code-check](https://github.com/knowgap-lab/ai-mentor/actions/runs/45252840133/job/137966757912) |
-| AM-43 | still open | `f833246` evidence only; fails `a35f8b0` | [PR #57 checks](https://github.com/knowgap-lab/ai-mentor/actions/runs/45049545020/job/137291405112) |
+| AM-43 | still open | `a35f8b0` smoke **fail** (install 100, start/check 1); PR #57 still `dc1e160` only | [evidence JSON](../../evidence/cloud-vm/a35f8b0489cd355501e40d187d3a0231a1bd3077.json) |
 | AM-64 | still open | `4b8443a` on PR #69; fails on main | [PR #69 code-check](https://github.com/knowgap-lab/ai-mentor/actions/runs/45254843617/job/137973828108) |
 | AM-59 | still open | `a35f8b0` CI minus deploy; record at `4b8443a` | [deploy fail on main](https://github.com/knowgap-lab/ai-mentor/actions/runs/45252839895/job/137966757266) |
 | AM-55 | obsolete (superseded by PR #69) | `df704a0` / `f211cf3` | [PR #63](https://github.com/knowgap-lab/ai-mentor/pull/63) |
@@ -33,8 +33,9 @@
 ### AM-43 — Check candidate cloud environment
 
 - **merge-base**(`main`, `f833246`): `ad16958`.
-- PR #57 фиксирует smoke для `dc1e160`, не для `a35f8b0`.
-- **Следующая команда:** на чистом Cloud VM с checkout `a35f8b0` — `bash tools/dev-install.sh && bash tools/dev-start.sh && bash tools/dev-check.sh`.
+- PR [#57](https://github.com/knowgap-lab/ai-mentor/pull/57) — только `dc1e160` (все три команды exit 0).
+- Прогон 2026-11-24 на `a35f8b0` (Cursor Cloud Agent VM, detached worktree): `dev-install` **100** (нет deb `google-chrome-stable` `158.0.8127.36-1`), `dev-start` **1**, `dev-check` **1** (нет доступа к Docker без группы `docker`). Журналы: `evidence/cloud-vm/logs/a35f8b0489cd355501e40d187d3a0231a1bd3077/`.
+- **Следующая команда:** `sg docker -c 'bash tools/dev-install.sh && bash tools/dev-start.sh && bash tools/dev-check.sh'` на VM, где apt отдаёт pinned Chrome, либо обновить pin в окружении.
 
 ### AM-64 / AM-59 / AM-55
 
