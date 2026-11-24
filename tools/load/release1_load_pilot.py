@@ -8,6 +8,7 @@ import http.cookiejar
 import json
 import os
 import random
+import subprocess
 import threading
 import time
 import urllib.error
@@ -16,7 +17,18 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 PROFILE_PATH = Path(__file__).with_name("d326-profile.json")
+ROOT = PROFILE_PATH.resolve().parents[1]
 FORBIDDEN_VIRT = frozenset({"cloud_container", "cursor_cloud", "", None})
+
+
+def evaluated_sha() -> str:
+    pinned = os.environ.get("RELEASE_SHA", "").strip()
+    if pinned:
+        return pinned
+    return subprocess.check_output(
+        ["git", "-C", str(ROOT), "rev-parse", "HEAD^{commit}"],
+        text=True,
+    ).strip()
 
 
 def load_profile() -> dict:
@@ -43,6 +55,9 @@ def validate_profile(profile: dict) -> list[str]:
         problems.append("read limit != 500ms")
     if limits.get("answer") != 1000 or limits.get("submit") != 1000:
         problems.append("write limits != 1000ms")
+    profile_sha = profile.get("sha")
+    if profile_sha is not None and profile_sha != evaluated_sha():
+        problems.append("sha в профиле не совпадает с коммитом под тестом")
     return problems
 
 

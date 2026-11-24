@@ -1,3 +1,13 @@
+variable "app_sha" {
+  type        = string
+  description = "SHA проверяемого коммита (RELEASE_SHA / GITHUB_SHA / git rev-parse HEAD)."
+
+  validation {
+    condition     = can(regex("^[0-9a-f]{40}$", var.app_sha))
+    error_message = "app_sha должен быть одним полным SHA коммита."
+  }
+}
+
 variable "create_vm" {
   type        = bool
   default     = false

@@ -1,7 +1,7 @@
 check "app_sha_is_one_commit" {
   assert {
     condition     = can(regex("^[0-9a-f]{40}$", local.app_sha))
-    error_message = "app_sha в release.json должен быть одним полным SHA коммита приложения."
+    error_message = "app_sha (-var / TF_VAR_app_sha) должен быть одним полным SHA коммита под тестом."
   }
 }
 

@@ -2,7 +2,8 @@
 # Шаги §8 на выделенной гостевой Ubuntu (QA_VM_SSH_HOST). Результат — в stdout, без записи pass в аттестацию.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RELEASE_SHA="${RELEASE_SHA:-$(git -C "$ROOT" rev-parse HEAD^{commit})}"
+# RELEASE_SHA задаётся tools/verify_release_sha.sh (родитель) или окружением deploy.
+RELEASE_SHA="${RELEASE_SHA:?RELEASE_SHA unset; run via tools/vm-acceptance.sh}"
 GUEST_OVERALL=0
 
 guest_step() {
@@ -25,11 +26,10 @@ ssh_guest() {
 }
 
 terraform_dir() {
-  (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && "$@")
+  (cd "$ROOT/infra/terraform" && terraform init -backend=false -input=false >/dev/null && "$@" -var="app_sha=${RELEASE_SHA}")
 }
 
 step_create() {
-  bash "$ROOT/tools/pin_release_sha.sh"
   terraform_dir terraform apply -auto-approve -input=false -var="create_vm=false"
   bash "$ROOT/tools/vm-hypervisor-create.sh"
   ssh_guest "uname -a" >/dev/null
@@ -64,7 +64,7 @@ EOF
 step_converge() {
   local inv
   inv="$(ansible_guest_inventory)"
-  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml)
+  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml -e "app_sha=${RELEASE_SHA}")
 }
 
 step_second_converge() {
@@ -74,7 +74,7 @@ step_second_converge() {
   log="$(mktemp)"
   trap 'rm -f "$log"' RETURN
   set -o pipefail
-  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml) 2>&1 | tee "$log"
+  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml -e "app_sha=${RELEASE_SHA}") 2>&1 | tee "$log"
   if awk '/PLAY RECAP/,0' "$log" | grep -E 'changed=[1-9][0-9]*' >/dev/null; then
     echo "second converge: unexpected changes in recap"
     return 1

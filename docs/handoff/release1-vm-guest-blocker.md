@@ -1,11 +1,13 @@
 # Блокер гостевой приёмки §8 (синтетические данные)
 
-Evaluated SHA на main: `a35f8b0489cd355501e40d187d3a0231a1bd3077`.
+SHA под тестом — checkout (`git rev-parse HEAD` / `GITHUB_SHA`), не захардкоженный pin в json.
 
 ## Готовая команда (CI deploy)
 
 ```bash
-RELEASE_SHA=a35f8b0489cd355501e40d187d3a0231a1bd3077 bash tools/vm-acceptance.sh
+bash tools/vm-acceptance.sh
+# или явно:
+RELEASE_SHA="$(git rev-parse HEAD^{commit})" bash tools/vm-acceptance.sh
 ```
 
 В GitHub Actions job `deploy` то же с `RELEASE_SHA=${{ github.sha }}` после `hashicorp/setup-terraform@v3` (1.9.8).
@@ -17,7 +19,7 @@ missing: QA_VM_SSH_HOST (SSH к отдельной чистой Ubuntu, не с�
 missing: VM_HYPERVISOR_ACCESS (ограниченный доступ к гипервизору для одноразовой тестовой VM)
 guest:create: blocked (no guest secrets or hypervisor access)
 ...
-vm-acceptance: release_sha=a35f8b0489cd355501e40d187d3a0231a1bd3077 exit=1
+vm-acceptance: release_sha=<HEAD> exit=1
 ```
 
 ## Что добавить владельцу

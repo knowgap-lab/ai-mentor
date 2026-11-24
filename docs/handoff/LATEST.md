@@ -2,9 +2,9 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-24 (vm acceptance SHA pin + deploy terraform)
-**Ветка:** `cursor/release1-vm-guest-a35f8-4c59`
-**Этап:** evaluated main `a35f8b0`; приёмка VM — pin SHA, deploy с Terraform; гость ждёт секреты.
+**Обновлено:** 2026-11-24 (runtime SHA для deploy/load, D339)
+**Ветка:** `cursor/release1-vm-guest-a35f8-4c59` — PR #73
+**Этап:** SHA под тест = checkout / `GITHUB_SHA`; гость ждёт секреты.
 
 ## Где мы
 
@@ -19,11 +19,11 @@ PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после комми
 
 ## Следующий шаг
 
-Расширить E3 (schemathesis). VM acceptance для deploy.
+Зелёный CI на PR #73; при наличии секретов — гостевая приёмка §8.
 
 ## Блокеры и вопросы
 
-Секреты VM и `tools/vm-acceptance.sh` отсутствуют. Schemathesis не зафиксирован в `tools/requirements.txt`.
+`QA_VM_SSH_HOST`, `VM_HYPERVISOR_ACCESS` для гостя. Schemathesis не зафиксирован в `tools/requirements.txt`.
 
 ## Куда смотреть
 
