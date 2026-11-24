@@ -43,7 +43,7 @@ export ACCEPTANCE_SSH_PUBLIC_KEY="$(cat ~/.ssh/id_ed25519.pub)"
 
 ```bash
 cd /path/to/checkout/ai-mentor
-RELEASE_SHA=a3d93446e4067763d89cc41ea938ceec500d1cd9 \
+RELEASE_SHA="$(git rev-parse HEAD^{commit})" \
   VM_HYPERVISOR_ACCESS="$VM_HYPERVISOR_ACCESS" \
   QA_VM_SSH_HOST="$QA_VM_SSH_HOST" \
   ACCEPTANCE_SSH_PUBLIC_KEY="$(cat ~/.ssh/id_ed25519.pub)" \
