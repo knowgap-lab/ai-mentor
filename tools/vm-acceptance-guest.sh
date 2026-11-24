@@ -9,12 +9,14 @@ GUEST_OVERALL=0
 guest_step() {
   local name="$1"
   shift
+  local code
   echo ""
   echo "=== guest: $name ==="
-  if "$@"; then
+  "$@"
+  code=$?
+  if [[ "$code" -eq 0 ]]; then
     echo "guest:$name: exit=0"
   else
-    local code=$?
     echo "guest:$name: exit=$code"
     GUEST_OVERALL=1
     return "$code"
@@ -72,9 +74,15 @@ step_second_converge() {
   inv="$(ansible_guest_inventory)"
   local log
   log="$(mktemp)"
-  trap 'rm -f "$log"' RETURN
+  # Кавычки в trap — путь зафиксирован до RETURN (иначе set -u и local log уже снят).
+  trap "rm -f '${log}'" RETURN
   set -o pipefail
+  local playbook_status
   (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml -e "app_sha=${RELEASE_SHA}") 2>&1 | tee "$log"
+  playbook_status=$?
+  if [[ "$playbook_status" -ne 0 ]]; then
+    return "$playbook_status"
+  fi
   if awk '/PLAY RECAP/,0' "$log" | grep -E 'changed=[1-9][0-9]*' >/dev/null; then
     echo "second converge: unexpected changes in recap"
     return 1
@@ -132,22 +140,28 @@ sys.exit(1 if bad else 0)
 '
 }
 
-if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
-  echo "guest: fatal: QA_VM_SSH_HOST unset"
-  exit 1
-fi
-if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
-  echo "guest: fatal: VM_HYPERVISOR_ACCESS unset"
-  exit 1
-fi
+run_guest_acceptance() {
+  if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
+    echo "guest: fatal: QA_VM_SSH_HOST unset"
+    exit 1
+  fi
+  if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
+    echo "guest: fatal: VM_HYPERVISOR_ACCESS unset"
+    exit 1
+  fi
 
-guest_step create step_create
-guest_step second_plan step_second_plan
-guest_step converge step_converge
-guest_step second_converge step_second_converge
-guest_step reboot step_reboot
-guest_step gotenberg step_gotenberg
-guest_step no_pii step_no_pii
+  guest_step create step_create
+  guest_step second_plan step_second_plan
+  guest_step converge step_converge
+  guest_step second_converge step_second_converge
+  guest_step reboot step_reboot
+  guest_step gotenberg step_gotenberg
+  guest_step no_pii step_no_pii
 
-echo "guest:overall: exit=$GUEST_OVERALL (not an attestation pass)"
-exit "$GUEST_OVERALL"
+  echo "guest:overall: exit=$GUEST_OVERALL (not an attestation pass)"
+  exit "$GUEST_OVERALL"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  run_guest_acceptance
+fi
