@@ -79,6 +79,7 @@ type harness struct {
 type inviteRow struct {
 	Hash    []byte
 	Student string
+	Tutor   string
 	Expires time.Time
 	Used    *time.Time
 }
@@ -137,15 +138,60 @@ func (h *harness) seedTutor(id, telegramID string) {
 	`, id, telegramID)
 }
 
+func (h *harness) seedTutorUnbound(id string) {
+	h.t.Helper()
+	h.exec(`
+		INSERT INTO core.app_user (id, role, owner_tutor_id, status)
+		VALUES ($1, 'tutor', NULL, 'active')
+	`, id)
+	h.exec(`
+		INSERT INTO core.user_pii (user_id, telegram_id)
+		VALUES ($1, '')
+	`, id)
+}
+
 func (h *harness) create(student string, now time.Time) string {
 	h.t.Helper()
 	token, err := h.svc.Create(context.Background(), student, now)
 	if err != nil || token == "" {
 		h.t.Fatalf("Create: %v", err)
 	}
-	h.requireInvite(token, student, now)
+	h.requireInvite(token, student, "", now)
 	h.guardToken(token)
 	return token
+}
+
+func (h *harness) createTutor(tutor string, now time.Time) string {
+	h.t.Helper()
+	token, err := h.svc.CreateTutor(context.Background(), tutor, now)
+	if err != nil || token == "" {
+		h.t.Fatalf("CreateTutor: %v", err)
+	}
+	h.requireInvite(token, "", tutor, now)
+	h.guardToken(token)
+	return token
+}
+
+func (h *harness) exchangeTutor(tutor, token string, now time.Time, telegramID string) {
+	h.t.Helper()
+	if err := h.svc.ExchangeTutor(context.Background(), token, loginData(telegramID), now); err != nil {
+		h.t.Fatalf("ExchangeTutor: %v", err)
+	}
+	h.boundTutor(tutor, token, telegramID, now)
+}
+
+func (h *harness) boundTutor(tutor, token, telegramID string, now time.Time) {
+	h.t.Helper()
+	if got := h.userTelegram(tutor); got != telegramID {
+		h.t.Fatalf("telegram_id = %s, нужен %s", got, telegramID)
+	}
+	row := h.inviteByToken(token)
+	if row.Used == nil {
+		h.t.Fatal("обмен не поставил used_at")
+	}
+	within(h.t, *row.Used, now, now, 0, slack, "used_at")
+	h.guardToken(token)
+	h.assertLoginSecretsHidden()
 }
 
 func (h *harness) exchange(student, nick, token string, now time.Time, telegramID string) {
@@ -173,11 +219,14 @@ func (h *harness) bound(student, nick, token, telegramID string, now time.Time) 
 	h.assertLoginSecretsHidden()
 }
 
-func (h *harness) requireInvite(token, student string, created time.Time) {
+func (h *harness) requireInvite(token, student, tutor string, created time.Time) {
 	h.t.Helper()
 	row := h.inviteByToken(token)
 	if row.Student != student {
 		h.t.Fatalf("приглашение ученика %s, нужен %s", row.Student, student)
+	}
+	if row.Tutor != tutor {
+		h.t.Fatalf("приглашение репетитора %s, нужен %s", row.Tutor, tutor)
 	}
 	if row.Used != nil {
 		h.t.Fatal("новое приглашение уже использовано")
@@ -194,7 +243,7 @@ func (h *harness) inviteByToken(token string) inviteRow {
 	var rows []inviteRow
 	h.withConn(func(ctx context.Context, conn *pgx.Conn) error {
 		scanned, err := conn.Query(ctx, `
-			SELECT token_hash, student_id, expires_at, used_at
+			SELECT token_hash, student_id, tutor_id, expires_at, used_at
 			FROM core.telegram_invite
 		`)
 		if err != nil {
@@ -203,8 +252,15 @@ func (h *harness) inviteByToken(token string) inviteRow {
 		defer scanned.Close()
 		for scanned.Next() {
 			var row inviteRow
-			if err := scanned.Scan(&row.Hash, &row.Student, &row.Expires, &row.Used); err != nil {
+			var studentID, tutorID *string
+			if err := scanned.Scan(&row.Hash, &studentID, &tutorID, &row.Expires, &row.Used); err != nil {
 				return err
+			}
+			if studentID != nil {
+				row.Student = *studentID
+			}
+			if tutorID != nil {
+				row.Tutor = *tutorID
 			}
 			rows = append(rows, row)
 		}

@@ -46,6 +46,9 @@ const (
 	tgNew      = "tg-free-new"
 
 	tutorID      = "tutor-demo"
+	tutorRegID   = "tutor-demo-reg"
+	tgTutorReg   = "tg-free-reg"
+	tgTutorBound = "424299"
 	studentTutor = "student-demo-tutor"
 	nickTutor    = "demo-nick-tutor"
 	tgTutor      = "900200"
@@ -184,6 +187,25 @@ func TestAU_R16_SecondStudentWithSameTelegramIDIsAlreadyBound(t *testing.T) {
 	h.assertLoginSecretsHidden()
 	if h.sessions() != 0 {
 		t.Fatal("отказ привязки создал сеанс")
+	}
+}
+
+func TestAU_R32_TutorInviteStoresOnlyTelegramID(t *testing.T) {
+	h := newHarness(t)
+	h.seedTutorUnbound(tutorRegID)
+	now := fixedNow()
+	token := h.createTutor(tutorRegID, now)
+	data := loginData(tgTutorBound)
+
+	if err := h.svc.ExchangeTutor(context.Background(), token, data, now); err != nil {
+		t.Fatalf("ExchangeTutor: %v", err)
+	}
+	h.boundTutor(tutorRegID, token, tgTutorBound, now)
+	if h.count(`SELECT count(*) FROM core.user_pii WHERE telegram_id = $1`, tgTutorBound) != 1 {
+		t.Fatal("telegram_id записан не одной строкой репетитора")
+	}
+	if h.userTelegram(tutorRegID) == tgTutorReg {
+		t.Fatal("пустая привязка не заменена")
 	}
 }
 

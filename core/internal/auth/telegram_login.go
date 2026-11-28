@@ -56,7 +56,7 @@ func (s *Service) loginTelegram(w http.ResponseWriter, r *http.Request) {
 	}
 	var result loginResult
 	if invite := fields["invite_token"]; invite != "" {
-		result, err = s.loginWithInvite(r.Context(), fields["id"], invite, time.Now().UTC())
+		result, err = s.loginWithInvite(r, fields["id"], invite, time.Now().UTC())
 	} else {
 		result, err = s.loginKnown(r, fields["id"])
 	}
@@ -120,7 +120,8 @@ func scalarString(raw json.RawMessage) (string, error) {
 	return text, nil
 }
 
-func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string, now time.Time) (loginResult, error) {
+func (s *Service) loginWithInvite(r *http.Request, telegramID, invite string, now time.Time) (loginResult, error) {
+	ctx := r.Context()
 	hash, ok := inviteHash(invite)
 	if !ok {
 		return loginResult{}, errInviteGone()
@@ -131,15 +132,15 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 
-	var studentID string
+	var studentID, tutorID *string
 	var expires time.Time
 	var used *time.Time
 	err = tx.QueryRow(ctx, `
-		SELECT student_id, expires_at, used_at
+		SELECT student_id, tutor_id, expires_at, used_at
 		FROM core.telegram_invite
 		WHERE token_hash = $1
 		FOR UPDATE
-	`, hash).Scan(&studentID, &expires, &used)
+	`, hash).Scan(&studentID, &tutorID, &expires, &used)
 	if errors.Is(err, pgx.ErrNoRows) || used != nil || now.After(expires) {
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 			return loginResult{}, err
@@ -149,15 +150,25 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 	if err != nil {
 		return loginResult{}, err
 	}
+	if tutorID != nil && *tutorID != "" {
+		if err := tx.Rollback(ctx); err != nil {
+			return loginResult{}, err
+		}
+		return s.loginTutorWithInvite(r, *tutorID, hash, telegramID, now)
+	}
+	if studentID == nil || *studentID == "" {
+		return loginResult{}, errInviteGone()
+	}
+	sid := *studentID
 
-	active, err := consentActive(ctx, tx, studentID)
+	active, err := consentActive(ctx, tx, sid)
 	if err != nil {
 		return loginResult{}, err
 	}
 	if !active {
 		return loginResult{}, errConsentMissing()
 	}
-	taken, err := telegramTaken(ctx, tx, telegramID, studentID)
+	taken, err := telegramTaken(ctx, tx, telegramID, sid, "")
 	if err != nil {
 		return loginResult{}, err
 	}
@@ -168,7 +179,7 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 		UPDATE core.student_pii
 		SET telegram_id = $1
 		WHERE student_id = $2
-	`, telegramID, studentID)
+	`, telegramID, sid)
 	if err != nil {
 		return loginResult{}, err
 	}
@@ -179,7 +190,7 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 		INSERT INTO core.user_pii (user_id, telegram_id)
 		VALUES ($1, $2)
 		ON CONFLICT (user_id) DO UPDATE SET telegram_id = EXCLUDED.telegram_id
-	`, studentID, telegramID); err != nil {
+	`, sid, telegramID); err != nil {
 		return loginResult{}, err
 	}
 	tag, err = tx.Exec(ctx, `
@@ -194,12 +205,12 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 	if tag.RowsAffected() != 1 {
 		return loginResult{}, errInviteGone()
 	}
-	token, err := insertSessionTx(ctx, tx, studentID, "student", "active")
+	token, err := insertSessionTx(ctx, tx, sid, "student", "active")
 	if err != nil {
 		return loginResult{}, err
 	}
 	seq, err := insertJournal(ctx, tx, "account_bound", map[string]string{
-		"user_id": studentID,
+		"user_id": sid,
 		"role":    "student",
 	})
 	if err != nil {
@@ -208,7 +219,7 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 	var owner *string
 	if err := tx.QueryRow(ctx, `
 		SELECT owner_tutor_id FROM core.app_user WHERE id = $1
-	`, studentID).Scan(&owner); err != nil {
+	`, sid).Scan(&owner); err != nil {
 		return loginResult{}, err
 	}
 	if owner != nil && *owner != "" {
@@ -223,7 +234,7 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 			RecipientKind: "tutor",
 			RecipientID:   *owner,
 			Template:      "account_bound",
-			Params:        map[string]any{"student_id": studentID},
+			Params:        map[string]any{"student_id": sid},
 		}); err != nil {
 			return loginResult{}, err
 		}
@@ -231,7 +242,67 @@ func (s *Service) loginWithInvite(ctx context.Context, telegramID, invite string
 	if err := tx.Commit(ctx); err != nil {
 		return loginResult{}, err
 	}
-	return loginResult{userID: studentID, role: "student", token: token}, nil
+	return loginResult{userID: sid, role: "student", token: token}, nil
+}
+
+func (s *Service) loginTutorWithInvite(r *http.Request, tutorID string, hash []byte, telegramID string, now time.Time) (loginResult, error) {
+	ctx := r.Context()
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return loginResult{}, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	var role, status string
+	err = tx.QueryRow(ctx, `
+		SELECT role, status
+		FROM core.app_user
+		WHERE id = $1
+		FOR UPDATE
+	`, tutorID).Scan(&role, &status)
+	if errors.Is(err, pgx.ErrNoRows) || role != "tutor" || status != "active" {
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return loginResult{}, err
+		}
+		return loginResult{}, errInviteGone()
+	}
+	if err != nil {
+		return loginResult{}, err
+	}
+	taken, err := telegramTaken(ctx, tx, telegramID, "", tutorID)
+	if err != nil {
+		return loginResult{}, err
+	}
+	if taken {
+		return loginResult{}, errTelegramBound()
+	}
+	tag, err := tx.Exec(ctx, `
+		UPDATE core.user_pii
+		SET telegram_id = $1
+		WHERE user_id = $2
+	`, telegramID, tutorID)
+	if err != nil {
+		return loginResult{}, err
+	}
+	if tag.RowsAffected() != 1 {
+		return loginResult{}, errors.New("tutor pii missing")
+	}
+	tag, err = tx.Exec(ctx, `
+		UPDATE core.telegram_invite
+		SET used_at = $2
+		WHERE token_hash = $1
+		  AND used_at IS NULL
+	`, hash, now)
+	if err != nil {
+		return loginResult{}, err
+	}
+	if tag.RowsAffected() != 1 {
+		return loginResult{}, errInviteGone()
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return loginResult{}, err
+	}
+	return s.loginTutor(r, tutorID)
 }
 
 func (s *Service) loginKnown(r *http.Request, telegramID string) (loginResult, error) {
@@ -474,17 +545,19 @@ func deviceCookie(token string) *http.Cookie {
 	}
 }
 
-func telegramTaken(ctx context.Context, tx pgx.Tx, telegramID, studentID string) (bool, error) {
+func telegramTaken(ctx context.Context, tx pgx.Tx, telegramID, exceptStudent, exceptUser string) (bool, error) {
 	var taken bool
 	err := tx.QueryRow(ctx, `
 		SELECT EXISTS (
 			SELECT 1 FROM core.student_pii
-			WHERE telegram_id = $1 AND telegram_id <> '' AND student_id <> $2
+			WHERE telegram_id = $1 AND telegram_id <> ''
+			  AND ($2 = '' OR student_id <> $2)
 		) OR EXISTS (
 			SELECT 1 FROM core.user_pii
-			WHERE telegram_id = $1 AND telegram_id <> '' AND user_id <> $2
+			WHERE telegram_id = $1 AND telegram_id <> ''
+			  AND ($3 = '' OR user_id <> $3)
 		)
-	`, telegramID, studentID).Scan(&taken)
+	`, telegramID, exceptStudent, exceptUser).Scan(&taken)
 	return taken, err
 }
 
