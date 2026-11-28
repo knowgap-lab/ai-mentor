@@ -1,4 +1,5 @@
 import { Button, Stack, Text, Title } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { List, ListRow, Screen, StatusBadge } from "../ui";
@@ -28,10 +29,6 @@ type Summary = {
   answered: number;
   total: number;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function readSummary(value: unknown): Summary | null {
   if (!isRecord(value)) {

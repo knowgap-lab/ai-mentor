@@ -1,4 +1,5 @@
 import { Button, Stack, Text } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useRef, useState } from "react";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
 import {
@@ -8,10 +9,6 @@ import {
 } from "../task/csrf";
 import { clearOutbox } from "../task/outbox";
 import { Screen } from "../ui";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 export function ProfilePage() {
   const [name, setName] = useState<string | null>(null);

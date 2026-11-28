@@ -1,3 +1,5 @@
+import { isRecord } from "../record";
+
 export type OutboxAnswer = string | number[];
 
 export type OutboxItem = {
@@ -8,10 +10,6 @@ export type OutboxItem = {
 };
 
 const STORAGE_KEY = "ai-mentor.outbox";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function isAnswer(value: unknown): value is OutboxAnswer {
   if (typeof value === "string") {

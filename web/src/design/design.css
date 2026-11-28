@@ -64,6 +64,12 @@ body {
   color: var(--am-text);
 }
 
+.tr h1 {
+  margin: 0 0 var(--mantine-spacing-md);
+  font-size: var(--mantine-h1-font-size);
+  font-weight: 600;
+}
+
 .tr[data-am-scheme="dark"] {
   --am-page: var(--mantine-color-gray-9);
   --am-sheet: var(--mantine-color-gray-8);

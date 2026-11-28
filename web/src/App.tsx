@@ -14,7 +14,6 @@ import { SessionsPage } from "./tutor/SessionsPage";
 import { StudentCardPage } from "./tutor/StudentCardPage";
 import { TutorLessonPage } from "./tutor/TutorLessonPage";
 import { TutorHomePage, TutorPage } from "./tutor/TutorPage";
-import { DesignPage } from "./design/DesignPage";
 
 function parkProviderStyles(): void {
   const parked = new Set(
@@ -72,7 +71,13 @@ export function App() {
       />
       <Route path="/tutor/lessons/:lessonId" element={<TutorLessonPage />} />
       {import.meta.env.DEV ? (
-        <Route path="/design" element={<DesignPage />} />
+        <Route
+          path="/design"
+          lazy={async () => {
+            const { DesignPage } = await import("./design/DesignPage");
+            return { Component: DesignPage };
+          }}
+        />
       ) : null}
       <Route path="*" element={<HomePage />} />
     </Routes>

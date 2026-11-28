@@ -1,5 +1,7 @@
 // Тексты из таблицы «Ошибки» web.md. Код и message API на экран не попадают (WB-R6).
 
+import { isRecord } from "./record";
+
 export const ERROR_TEXT: Record<string, string> = {
   item_closed: "Эта задача уже закрыта",
   assignment_closed: "ДЗ уже сдано",
@@ -28,9 +30,7 @@ export const ERROR_TEXT: Record<string, string> = {
 
 export const OFFLINE_TEXT = "Нет связи";
 
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
+export { isRecord } from "./record";
 
 export async function errorSentence(
   response: Response,

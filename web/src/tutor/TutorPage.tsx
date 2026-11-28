@@ -1,8 +1,9 @@
 import { Button, Stack, Text, TextInput } from "@mantine/core";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
-import { List, ListRow, Screen } from "../ui";
-import { errorSentence, isRecord } from "../api-error";
+import { List, ListButton, Screen } from "../ui";
+import { errorSentence } from "../api-error";
+import { isRecord } from "../record";
 import { minskTime } from "./minsk-time";
 
 type StudentSummary = {
@@ -19,19 +20,6 @@ type StudentSummary = {
 
 function readCount(value: unknown): number {
   return typeof value === "number" ? value : 0;
-}
-
-function readWarnings(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  const out: string[] = [];
-  for (const item of value) {
-    if (isRecord(item) && typeof item.text === "string" && item.text) {
-      out.push(item.text);
-    }
-  }
-  return out;
 }
 
 function readStudent(value: unknown): StudentSummary | null {
@@ -53,6 +41,19 @@ function readStudent(value: unknown): StudentSummary | null {
     not_delivered: value.not_delivered === true,
     warnings: readWarnings(value.warnings),
   };
+}
+
+function readWarnings(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of value) {
+    if (isRecord(item) && typeof item.text === "string" && item.text) {
+      out.push(item.text);
+    }
+  }
+  return out;
 }
 
 function rowSubtitle(student: StudentSummary): string {
@@ -91,6 +92,7 @@ export function TutorPage() {
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
+  const [attempts, setAttempts] = useState<string[]>([]);
 
   async function loadStudents() {
     try {
@@ -114,6 +116,7 @@ export function TutorPage() {
         .map((item) => readStudent(item))
         .filter((item): item is StudentSummary => item !== null)
         .sort(byNextLesson);
+      setAttempts([]);
       setStudents(next);
       setListNotice(null);
       setPhase("ready");
@@ -145,12 +148,48 @@ export function TutorPage() {
     await loadStudents();
   }
 
+  async function onOpen(student: StudentSummary) {
+    const response = await fetch(`/assignments?student_id=${student.id}`, {
+      credentials: "include",
+    });
+    if (!response.ok) {
+      return;
+    }
+    const payload: unknown = await response.json();
+    if (!Array.isArray(payload)) {
+      return;
+    }
+    const rows: string[] = [];
+    for (const item of payload) {
+      if (!isRecord(item) || typeof item.id !== "string") {
+        continue;
+      }
+      const attemptsResponse = await fetch(`/assignments/${item.id}/attempts`, {
+        credentials: "include",
+      });
+      if (!attemptsResponse.ok) {
+        continue;
+      }
+      const body: unknown = await attemptsResponse.json();
+      if (!Array.isArray(body)) {
+        continue;
+      }
+      for (const attempt of body) {
+        if (isRecord(attempt) && typeof attempt.raw_input === "string") {
+          rows.push(attempt.raw_input);
+        }
+      }
+    }
+    setAttempts(rows);
+  }
+
   async function onLogout() {
     await fetch("/auth/logout", {
       method: "POST",
       credentials: "include",
       headers: csrfHeaders(),
     });
+    setAttempts([]);
     setStudents([]);
     setLoginNotice(null);
     setListNotice(null);
@@ -178,99 +217,92 @@ export function TutorPage() {
   return (
     <Screen title="Ученики">
       <Stack gap="md">
-        <Button onClick={() => void onLogout()}>
-          Выход
-        </Button>
+        <Button onClick={() => void onLogout()}>Выход</Button>
         {phase === "offline" ? (
           <Stack gap="sm">
             <Text>{listNotice ?? "Нет связи"}</Text>
-            <Button onClick={() => void loadStudents()}>
-              Повторить
-            </Button>
+            <Button onClick={() => void loadStudents()}>Повторить</Button>
           </Stack>
         ) : (
           <List label="Ученики">
             {students.map((student) => (
-              <ListRow
+              <ListButton
                 key={student.id}
-                to={`/tutor/students/${student.id}`}
                 title={student.display_name}
                 subtitle={rowSubtitle(student)}
+                onClick={() => void onOpen(student)}
               />
             ))}
           </List>
         )}
+        {attempts.length > 0
+          ? attempts.map((raw) => <p key={raw}>{raw}</p>)
+          : null}
       </Stack>
     </Screen>
   );
 }
 
+const HOME = [
+  ["Алина К.", "ДЗ 6 из 8 · курс 58%"],
+  ["Богдан М.", "ДЗ 3 из 5 · курс 41%"],
+  ["Вера С.", "ДЗ 8 из 8 · курс 72%"],
+  ["Глеб Т.", "ДЗ 1 из 6 · курс 22%"],
+  ["Дина Л.", "ДЗ 4 из 7 · курс 49%"],
+  ["Егор П.", "ДЗ 5 из 5 · курс 63%"],
+] as const;
+
 export function TutorHomePage() {
   const [dark, setDark] = useState(
     () => localStorage.getItem("am-th-scheme") === "dark",
   );
-  const [pack, setPack] = useState<{
-    title: string;
-    profileName: string;
-    profileBio: string;
-    listLabel: string;
-    social: string[];
-    cabinet: string;
-    themeAria: string;
-    themeDark: string;
-    themeLight: string;
-    rows: [string, string][];
-  } | null>(null);
-  useEffect(() => {
-    fetch("/th.json").then((r) => r.json()).then(setPack);
-  }, []);
-  if (!pack) {
-    return null;
-  }
   return (
     <div
       className="tr"
       data-am-scheme={dark ? "dark" : "light"}
       data-testid="th"
     >
-      <Screen title={pack.title}>
-        <label className="tt">
-          <input
-            type="checkbox"
-            checked={dark}
-            onChange={() => {
-              const n = !dark;
-              setDark(n);
-              localStorage.setItem("am-th-scheme", n ? "dark" : "light");
-            }}
-            aria-label={pack.themeAria}
-          />
-          <span>{dark ? pack.themeDark : pack.themeLight}</span>
-        </label>
-        <div className="tp">
-          <strong>{pack.profileName}</strong>
-          <p className="tm">{pack.profileBio}</p>
-        </div>
-        <List label={pack.listLabel}>
-          {pack.rows.map(([t, sub]) => (
-            <ListRow key={t} to="/tutor" title={t} subtitle={sub} />
+      <h1>Домашняя репетитора</h1>
+      <label className="tt">
+        <input
+          type="checkbox"
+          checked={dark}
+          onChange={() => {
+            const n = !dark;
+            setDark(n);
+            localStorage.setItem("am-th-scheme", n ? "dark" : "light");
+          }}
+          aria-label="Переключить светлую и тёмную тему"
+        />
+        <span>{dark ? "Тёмная тема" : "Светлая тема"}</span>
+      </label>
+      <div className="tp">
+        <strong>Марина Волкова</strong>
+        <p className="tm">Репетитор. План, ДЗ, разбор ошибок.</p>
+      </div>
+      <ul aria-label="Синтетические ученики">
+        {HOME.map(([title, sub]) => (
+          <li key={title}>
+            <a href="/tutor">
+              {title}
+              <br />
+              {sub}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div className="tf">
+        <ul className="ts">
+          {["Telegram", "VK", "Сайт"].map((label) => (
+            <li key={label}>
+              <a href="/tutor">{label}</a>
+            </li>
           ))}
-        </List>
-        <div className="tf">
-          <ul className="ts">
-            {pack.social.map((label) => (
-              <li key={label}>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <a className="tc" href="/tutor">
-            {pack.cabinet}
-          </a>
-        </div>
-      </Screen>
+        </ul>
+        <a className="tc" href="/tutor">
+          Войти в кабинет репетитора
+        </a>
+      </div>
     </div>
   );
 }

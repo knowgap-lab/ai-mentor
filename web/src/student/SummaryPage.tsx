@@ -1,4 +1,5 @@
 import { Button, NativeSelect, Stack, Text, Textarea } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { messageForResponse, OFFLINE_TEXT } from "../api-error";
@@ -20,10 +21,6 @@ type SummaryItem = {
   showKey: string | null;
   hasSolution: boolean;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function readVerdict(value: unknown): Verdict | null {
   if (value === "correct" || value === "partial" || value === "wrong") {
