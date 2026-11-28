@@ -94,7 +94,7 @@ if [[ "$have_guest" -eq 0 ]]; then
   if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
     echo "missing: VM_HYPERVISOR_ACCESS (ограниченный доступ к гипервизору для одноразовой тестовой VM)"
   fi
-  for step in create second_plan converge second_converge reboot observability verify gotenberg no_pii; do
+  for step in create second_plan converge second_converge reboot reboot_post observability verify gotenberg no_pii; do
     record_guest_blocked "$step" "no guest secrets or hypervisor access"
   done
   section_vm_evidence

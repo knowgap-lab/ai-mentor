@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Проверки на гостевой Ubuntu; печатает vm:* и exit 0 только если обязательные проверки прошли.
-set -u
+set -eo pipefail
 
 INSTALL_ROOT="${INSTALL_ROOT:-/opt/ai-mentor}"
 STATE_ROOT="${STATE_ROOT:-/etc/ai-mentor}"
@@ -28,6 +28,10 @@ dc_prod() {
 }
 
 check_reboot_services() {
+  if [[ "${ACCEPTANCE_AFTER_REBOOT:-}" != "1" ]]; then
+    vm_field reboot.services fail
+    return 1
+  fi
   if ! have_stack_secrets; then
     vm_field reboot.services fail
     return 1
@@ -47,6 +51,10 @@ check_reboot_services() {
 }
 
 check_reboot_readiness() {
+  if [[ "${ACCEPTANCE_AFTER_REBOOT:-}" != "1" ]]; then
+    vm_field reboot.readiness fail
+    return 1
+  fi
   if ! have_stack_secrets; then
     vm_field reboot.readiness fail
     return 1
@@ -84,6 +92,10 @@ SQL
 }
 
 check_reboot_data() {
+  if [[ "${ACCEPTANCE_AFTER_REBOOT:-}" != "1" ]]; then
+    vm_field reboot.data not_persisted
+    return 1
+  fi
   if ! have_stack_secrets; then
     vm_field reboot.data not_persisted
     return 1
@@ -114,6 +126,22 @@ check_background_job() {
   return 1
 }
 
+gotenberg_pdf_once() {
+  local cid="$1"
+  local out="$2"
+  if ! docker exec "$cid" curl -sf -F 'files=@/tmp/acceptance.html' \
+    http://127.0.0.1:3000/forms/chromium/convert/html >"$out"; then
+    return 1
+  fi
+  if [[ ! -s "$out" ]]; then
+    return 1
+  fi
+  if ! head -c 5 "$out" | grep -q '%PDF-'; then
+    return 1
+  fi
+  return 0
+}
+
 check_pdf_gotenberg() {
   local cid
   cid="$(dc_prod ps -q gotenberg 2>/dev/null | head -1)"
@@ -130,24 +158,24 @@ check_pdf_gotenberg() {
   vm_field pdf.gotenberg real
   local work sha1 sha2
   work="$(mktemp -d)"
+  trap 'rm -rf "$work"' RETURN
   printf '%s\n' '<html><body><p>acceptance</p></body></html>' >"$work/in.html"
   docker cp "$work/in.html" "$cid:/tmp/acceptance.html"
   if ! docker exec "$cid" sh -c 'command -v curl >/dev/null'; then
     vm_field pdf.bytes_stable false
     return 1
   fi
-  sha1="$(
-    docker exec "$cid" curl -sf -F 'files=@/tmp/acceptance.html' \
-      http://127.0.0.1:3000/forms/chromium/convert/html 2>/dev/null \
-      | sha256sum | awk '{print $1}'
-  )"
-  sha2="$(
-    docker exec "$cid" curl -sf -F 'files=@/tmp/acceptance.html' \
-      http://127.0.0.1:3000/forms/chromium/convert/html 2>/dev/null \
-      | sha256sum | awk '{print $1}'
-  )"
-  rm -rf "$work"
-  if [[ -n "$sha1" && -n "$sha2" && "$sha1" == "$sha2" ]]; then
+  if ! gotenberg_pdf_once "$cid" "$work/one.pdf"; then
+    vm_field pdf.bytes_stable false
+    return 1
+  fi
+  if ! gotenberg_pdf_once "$cid" "$work/two.pdf"; then
+    vm_field pdf.bytes_stable false
+    return 1
+  fi
+  sha1="$(sha256sum "$work/one.pdf" | awk '{print $1}')"
+  sha2="$(sha256sum "$work/two.pdf" | awk '{print $1}')"
+  if [[ -n "$sha1" && "$sha1" == "$sha2" ]]; then
     vm_field pdf.bytes_stable true
     return 0
   fi
@@ -166,20 +194,16 @@ check_observability_stack() {
     vm_field telemetry.alert_rule fail
     return 1
   fi
-  if curl -sf http://127.0.0.1:3100/ready >/dev/null; then
+  if bash deploy/acceptance-otel-probe.sh; then
     vm_field telemetry.logs pass
-  else
-    vm_field telemetry.logs fail
-    ok=0
-  fi
-  if curl -sf http://127.0.0.1:3200/ready >/dev/null 2>&1 || \
-    curl -sf http://127.0.0.1:3200/status/ready >/dev/null 2>&1; then
     vm_field telemetry.traces pass
   else
+    vm_field telemetry.logs fail
     vm_field telemetry.traces fail
     ok=0
   fi
-  if curl -sf http://127.0.0.1:9090/-/ready >/dev/null; then
+  if curl -sf http://127.0.0.1:9090/-/ready >/dev/null && \
+    curl -sf 'http://127.0.0.1:9090/api/v1/query?query=up' | grep -q otel; then
     vm_field telemetry.prometheus pass
   else
     vm_field telemetry.prometheus fail
@@ -238,12 +262,17 @@ emit_telegram_waiting() {
   vm_field telegram.notification waiting
 }
 
-run_acceptance_verify() {
+run_reboot_checks_only() {
   emit_telegram_waiting
-  check_telemetry_pii || OVERALL=1
   check_reboot_services || OVERALL=1
   check_reboot_readiness || OVERALL=1
   check_reboot_data || OVERALL=1
+  return "$OVERALL"
+}
+
+run_acceptance_verify() {
+  emit_telegram_waiting
+  check_telemetry_pii || OVERALL=1
   check_background_job || OVERALL=1
   check_pdf_gotenberg || OVERALL=1
   check_observability_stack || OVERALL=1
@@ -258,6 +287,11 @@ if [[ "${ACCEPTANCE_WRITE_REBOOT_MARKER:-}" == "1" ]]; then
   fi
   echo "acceptance: reboot marker failed" >&2
   exit 1
+fi
+
+if [[ "${ACCEPTANCE_REBOOT_CHECKS_ONLY:-}" == "1" ]]; then
+  run_reboot_checks_only
+  exit $?
 fi
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

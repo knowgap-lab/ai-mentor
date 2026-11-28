@@ -30,17 +30,6 @@ emit_vm_static_waiting() {
   vm_field telegram.notification waiting
 }
 
-emit_vm_recorded_when_guest_done() {
-  if [[ "${VM_ACCEPTANCE_GUEST_DONE:-0}" != 1 ]]; then
-    return 0
-  fi
-  vm_field recorded.commands true
-  vm_field recorded.versions true
-  vm_field recorded.resources true
-  vm_field recorded.timings true
-  vm_field recorded.results true
-}
-
 section_vm_evidence() {
   echo ""
   echo "=== vm: evidence fields (check_vm paths) ==="

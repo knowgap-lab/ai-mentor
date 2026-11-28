@@ -262,6 +262,10 @@ step_observability() {
   ssh_guest "cd /opt/ai-mentor/src && bash deploy/acceptance-observability-up.sh"
 }
 
+step_reboot_post_verify() {
+  ssh_guest "cd /opt/ai-mentor/src && ACCEPTANCE_AFTER_REBOOT=1 ACCEPTANCE_REBOOT_CHECKS_ONLY=1 bash deploy/acceptance-guest-verify.sh"
+}
+
 step_verify() {
   ssh_guest "cd /opt/ai-mentor/src && bash deploy/acceptance-guest-verify.sh"
 }
@@ -282,19 +286,20 @@ sys.exit(1 if bad else 0)
 }
 
 print_vm_evidence_summary() {
+  local -a seeded=()
+  if [[ -f "$VM_FIELDS_FILE" ]]; then
+    mapfile -t seeded <"$VM_FIELDS_FILE"
+  fi
   section_vm_evidence
   vm_field sha "$RELEASE_SHA"
   vm_field environment clean_ubuntu_vm
-  if [[ "$GUEST_OVERALL" -eq 0 ]]; then
-    export VM_ACCEPTANCE_GUEST_DONE=1
-    emit_vm_recorded_when_guest_done
-  fi
-  while IFS= read -r line || [[ -n "$line" ]]; do
+  local line key value
+  for line in "${seeded[@]}"; do
     [[ -n "$line" ]] || continue
-    local key="${line%%=*}"
-    local value="${line#*=}"
-    vm_field "$key" "$value"
-  done <"$VM_FIELDS_FILE"
+    key="${line%%=*}"
+    value="${line#*=}"
+    echo "vm:${key}=${value}"
+  done
 }
 
 run_guest_acceptance() {
@@ -314,7 +319,13 @@ run_guest_acceptance() {
   guest_step_vm second_plan step_second_plan || true
   guest_step_vm converge step_converge || true
   guest_step_vm second_converge step_second_converge || true
-  guest_step reboot step_reboot || true
+  if guest_step reboot step_reboot; then
+    guest_step reboot_post step_reboot_post_verify || true
+  else
+    vm_field reboot.services fail
+    vm_field reboot.readiness fail
+    vm_field reboot.data not_persisted
+  fi
   guest_step observability step_observability || true
   guest_step verify step_verify || true
   guest_step gotenberg step_gotenberg || true

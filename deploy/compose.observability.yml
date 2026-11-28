@@ -50,6 +50,8 @@ services:
       - ./observability/tempo.yaml:/etc/tempo/config.yaml:ro
     ports:
       - "127.0.0.1:3200:3200"
+    expose:
+      - "4317"
     networks:
       - observability
 
