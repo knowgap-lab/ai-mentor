@@ -1,0 +1,19 @@
+id: ct-math:M07
+title: 'Корни: квадратный и n-й степени, степень с рациональным показателем'
+section: Выражения и преобразования
+foundation_level: база
+topic_hours: 6
+ct_positions:
+- В1
+- А1
+prerequisite_elements:
+- ct-math:M06.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M07-korni-kvadratnyy-stepeni.md
+elements:
+- id: ct-math:M07.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M07-korni-kvadratnyy-stepeni.md

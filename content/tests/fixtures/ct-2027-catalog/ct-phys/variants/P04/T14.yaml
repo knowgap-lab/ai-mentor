@@ -1,0 +1,50 @@
+type: ct-phys:P04.T14
+variants:
+- id: ct-phys:P04.T14.S1.V001
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V002
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V003
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V004
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V005
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V006
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V007
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T14.S1.V008
+  subvariant: ct-phys:P04.T14.S1
+  statement: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах'
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01

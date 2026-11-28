@@ -1,0 +1,50 @@
+type: ct-math:M02.T07
+variants:
+- id: ct-math:M02.T07.S1.V001
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V002
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V003
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V004
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V005
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V006
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V007
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T07.S1.V008
+  subvariant: ct-math:M02.T07.S1
+  statement: 5/12 + 7/18
+  key: 36
+  minutes: 1
+  theory_block: ct-math:M02.B01

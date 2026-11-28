@@ -1,0 +1,18 @@
+id: ct-math
+title: Правила ответа синтетического пакета
+subject: math
+spec_version: '1'
+positions:
+- A7
+- B3
+answer_formats:
+- id: ct.integer
+  title: целое число
+  applies_to: часть В
+  input: целое число
+  max_points: 2
+- id: ct.choice1
+  title: один верный
+  applies_to: часть А
+  input: номер опции 1–5
+  max_points: 1

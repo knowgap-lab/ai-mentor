@@ -1,0 +1,50 @@
+type: ct-phys:P02.T08
+variants:
+- id: ct-phys:P02.T08.S1.V001
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V002
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V003
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V004
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V005
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V006
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V007
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T08.S1.V008
+  subvariant: ct-phys:P02.T08.S1
+  statement: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с²
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01

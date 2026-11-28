@@ -1,0 +1,133 @@
+id: ct-math:M02
+title: 'Обыкновенные дроби: смысл и четыре действия'
+section: Числа и вычисления
+foundation_level: фундамент
+topic_hours: 7.5
+prerequisite_elements:
+- ct-math:M01.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M02-obyknovennye-drobi-smysl.md
+elements:
+- id: ct-math:M02.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M02-obyknovennye-drobi-smysl.md
+types:
+- id: ct-math:M02.T01
+  title: Дробь по рисунку
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 1
+  subvariants:
+  - id: ct-math:M02.T01.S1
+    given: Прямоугольник 4 × 5 клеток, закрашено 15. Какая часть закрашена? / Дробь по рисунку
+- id: ct-math:M02.T02
+  title: Сократить дробь
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 2
+  subvariants:
+  - id: ct-math:M02.T02.S1
+    given: Сократите 96/144 / Сократить дробь
+- id: ct-math:M02.T05
+  title: Смешанное ↔ неправильная
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 5
+  subvariants:
+  - id: ct-math:M02.T05.S1
+    given: 5 3/8 и 47/6 / Смешанное ↔ неправильная
+- id: ct-math:M02.T06
+  title: Сравнить две дроби
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 6
+  subvariants:
+  - id: ct-math:M02.T06.S1
+    given: Сравните 7/9 и 5/6 / Сравнить две дроби
+- id: ct-math:M02.T07
+  title: Сложение с разными знаменателями
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 7
+  subvariants:
+  - id: ct-math:M02.T07.S1
+    given: 5/12 + 7/18 / Сложение с разными знаменателями
+- id: ct-math:M02.T08
+  title: Вычитание смешанных с заёмом
+  kind: skill
+  primary_element: ct-math:M02.E1
+  prerequisites:
+  - ct-math:M01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.5
+  citations:
+  - doc: topic-card
+    ref: M02 §Банк 8
+  subvariants:
+  - id: ct-math:M02.T08.S1
+    given: 6 1/4 − 3 5/6 / Вычитание смешанных с заёмом
+ct_positions:
+- А1

@@ -1,0 +1,20 @@
+id: ct-math:M09
+title: 'Буквенные выражения: подстановка, подобные слагаемые, одночлены'
+section: Выражения и преобразования
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions:
+- А3
+- А6
+prerequisite_elements:
+- ct-math:M04.E1
+- ct-math:M06.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M09-bukvennye-vyrazheniya-podstanovka.md
+elements:
+- id: ct-math:M09.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M09-bukvennye-vyrazheniya-podstanovka.md

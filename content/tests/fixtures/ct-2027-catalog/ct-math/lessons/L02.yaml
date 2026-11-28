@@ -1,0 +1,160 @@
+id: ct-math:L02
+topics:
+- ct-math:M02
+review:
+- ct-math:M01
+duration_min: 60
+stages:
+- id: ct-math:L02.G1
+  minutes:
+  - 0
+  - 8
+  title: Разминка-вспоминание
+  kind: warmup
+  blocks: []
+  practice:
+  - type: ct-math:M01.T05
+    subvariant: ct-math:M01.T05.S1
+    role: solve_alone
+    theory_block: ct-math:M01.B01
+  - type: ct-math:M01.T06
+    subvariant: ct-math:M01.T06.S1
+    role: solve_alone
+    theory_block: ct-math:M01.B01
+  - type: ct-math:M01.T11
+    subvariant: ct-math:M01.T11.S1
+    role: solve_alone
+    theory_block: ct-math:M01.B01
+  - type: ct-math:M01.T12
+    subvariant: ct-math:M01.T12.S1
+    role: solve_alone
+    theory_block: ct-math:M01.B01
+- id: ct-math:L02.G2
+  minutes:
+  - 8
+  - 13
+  title: Разбор ДЗ
+  kind: homework_review
+  blocks:
+  - ct-math:M01.B05
+  - ct-math:M01.B06
+  practice: []
+- id: ct-math:L02.G3
+  minutes:
+  - 13
+  - 30
+  title: Новая теория
+  kind: theory
+  blocks:
+  - ct-math:M02.B01
+  - ct-math:M02.B02
+  - ct-math:M02.B03
+  - ct-math:M02.B04
+  practice: []
+- id: ct-math:L02.G4
+  minutes:
+  - 30
+  - 52
+  title: Практика
+  kind: practice
+  blocks: []
+  practice:
+  - type: ct-math:M02.T01
+    subvariant: ct-math:M02.T01.S1
+    role: solve_together
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T02
+    subvariant: ct-math:M02.T02.S1
+    role: solve_together
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T02
+    subvariant: ct-math:M02.T02.S1
+    role: solve_together
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T05
+    subvariant: ct-math:M02.T05.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T06
+    subvariant: ct-math:M02.T06.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T07
+    subvariant: ct-math:M02.T07.S1
+    role: solve_together
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T07
+    subvariant: ct-math:M02.T07.S1
+    role: solve_together
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T08
+    subvariant: ct-math:M02.T08.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+- id: ct-math:L02.G5
+  minutes:
+  - 52
+  - 58
+  title: Выходной мини-тест
+  kind: exit_test
+  blocks: []
+  practice:
+  - type: ct-math:M02.T02
+    subvariant: ct-math:M02.T02.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T06
+    subvariant: ct-math:M02.T06.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+  - type: ct-math:M02.T07
+    subvariant: ct-math:M02.T07.S1
+    role: solve_alone
+    theory_block: ct-math:M02.B01
+- id: ct-math:L02.G6
+  minutes:
+  - 58
+  - 60
+  title: ДЗ
+  kind: homework_handout
+  blocks: []
+  practice: []
+homework:
+  budget_hours: 6
+  items:
+  - source: new_topic
+    series:
+    - type: ct-math:M02.T01
+      count: 2
+    - type: ct-math:M02.T02
+      count: 2
+    - type: ct-math:M02.T05
+      count: 2
+  - source: new_topic
+    series:
+    - type: ct-math:M02.T07
+      count: 10
+  - source: review
+    series:
+    - type: ct-math:M01.T05
+      count: 1
+    - type: ct-math:M01.T06
+      count: 1
+    - type: ct-math:M01.T09
+      count: 1
+    - type: ct-math:M01.T11
+      count: 1
+    - type: ct-math:M01.T12
+      count: 1
+  - source: new_topic
+    series:
+    - type: ct-math:M02.T08
+      count: 5
+  - source: review
+    series:
+    - type: ct-math:M01.T12
+      count: 2
+  - source: new_topic
+    series:
+    - type: ct-math:M02.T07
+      count: 4

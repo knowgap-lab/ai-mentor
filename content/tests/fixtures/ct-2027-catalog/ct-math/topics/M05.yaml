@@ -1,0 +1,18 @@
+id: ct-math:M05
+title: Проценты, отношения и пропорции
+section: Числа и вычисления
+foundation_level: фундамент
+topic_hours: 5
+ct_positions:
+- В8
+prerequisite_elements:
+- ct-math:M03.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M05-protsenty-otnosheniya-proportsii.md
+elements:
+- id: ct-math:M05.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M05-protsenty-otnosheniya-proportsii.md

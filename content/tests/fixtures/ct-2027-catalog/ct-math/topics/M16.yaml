@@ -1,0 +1,18 @@
+id: ct-math:M16
+title: Линейные уравнения и уравнения с дробями
+section: Уравнения и неравенства
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions: []
+prerequisite_elements:
+- ct-math:M09.E1
+- ct-math:M02.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M16-lineynye-uravneniya-uravneniya.md
+elements:
+- id: ct-math:M16.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M16-lineynye-uravneniya-uravneniya.md

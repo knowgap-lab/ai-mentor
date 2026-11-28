@@ -1,0 +1,194 @@
+id: ct-phys:L02
+topics:
+- ct-phys:P02
+- ct-phys:P04
+review:
+- ct-phys:P01
+duration_min: 60
+stages:
+- id: ct-phys:L02.G1
+  minutes:
+  - 0
+  - 8
+  title: Разминка-вспоминание
+  kind: warmup
+  blocks: []
+  practice:
+  - type: ct-phys:P01.T01
+    subvariant: ct-phys:P01.T01.S1
+    role: solve_alone
+    theory_block: ct-phys:P01.B01
+  - type: ct-phys:P01.T03
+    subvariant: ct-phys:P01.T03.S1
+    role: solve_alone
+    theory_block: ct-phys:P01.B01
+  - type: ct-phys:P01.T06
+    subvariant: ct-phys:P01.T06.S1
+    role: solve_alone
+    theory_block: ct-phys:P01.B01
+  - type: ct-phys:P01.T09
+    subvariant: ct-phys:P01.T09.S1
+    role: solve_alone
+    theory_block: ct-phys:P01.B01
+- id: ct-phys:L02.G2
+  minutes:
+  - 8
+  - 13
+  title: Разбор ДЗ
+  kind: homework_review
+  blocks: []
+  practice: []
+- id: ct-phys:L02.G3
+  minutes:
+  - 13
+  - 21
+  title: Новая теория · P02
+  kind: theory
+  blocks:
+  - ct-phys:P02.B01
+  - ct-phys:P02.B02
+  - ct-phys:P02.B03
+  practice: []
+- id: ct-phys:L02.G4
+  minutes:
+  - 21
+  - 32
+  title: Практика · P02
+  kind: practice
+  blocks: []
+  practice:
+  - type: ct-phys:P02.T01
+    subvariant: ct-phys:P02.T01.S1
+    role: solve_together
+    theory_block: ct-phys:P02.B01
+  - type: ct-phys:P02.T02
+    subvariant: ct-phys:P02.T02.S1
+    role: solve_together
+    theory_block: ct-phys:P02.B01
+  - type: ct-phys:P02.T03
+    subvariant: ct-phys:P02.T03.S1
+    role: solve_alone
+    theory_block: ct-phys:P02.B01
+  - type: ct-phys:P02.T05
+    subvariant: ct-phys:P02.T05.S1
+    role: solve_alone
+    theory_block: ct-phys:P02.B01
+  - type: ct-phys:P04.T01
+    subvariant: ct-phys:P04.T01.S1
+    role: solve_together
+    theory_block: ct-phys:P04.B01
+  - type: ct-phys:P04.T02
+    subvariant: ct-phys:P04.T02.S1
+    role: solve_together
+    theory_block: ct-phys:P04.B01
+  - type: ct-phys:P04.T04
+    subvariant: ct-phys:P04.T04.S1
+    role: solve_alone
+    theory_block: ct-phys:P04.B01
+  - type: ct-phys:P04.T06
+    subvariant: ct-phys:P04.T06.S1
+    role: solve_alone
+    theory_block: ct-phys:P04.B01
+- id: ct-phys:L02.G5
+  minutes:
+  - 32
+  - 40
+  title: Новая теория · P04
+  kind: theory
+  blocks:
+  - ct-phys:P04.B01
+  - ct-phys:P04.B02
+  - ct-phys:P04.B03
+  - ct-phys:P04.B04
+  practice: []
+- id: ct-phys:L02.G6
+  minutes:
+  - 40
+  - 52
+  title: Практика · P04
+  kind: practice
+  blocks: []
+  practice: []
+- id: ct-phys:L02.G7
+  minutes:
+  - 52
+  - 58
+  title: Выходной мини-тест
+  kind: exit_test
+  blocks: []
+  practice:
+  - type: ct-phys:P02.T04
+    subvariant: ct-phys:P02.T04.S1
+    role: solve_alone
+    theory_block: ct-phys:P02.B01
+  - type: ct-phys:P04.T02
+    subvariant: ct-phys:P04.T02.S1
+    role: solve_alone
+    theory_block: ct-phys:P04.B01
+  - type: ct-phys:P04.T06
+    subvariant: ct-phys:P04.T06.S1
+    role: solve_alone
+    theory_block: ct-phys:P04.B01
+- id: ct-phys:L02.G8
+  minutes:
+  - 58
+  - 60
+  title: ДЗ
+  kind: homework_handout
+  blocks: []
+  practice: []
+homework:
+  budget_hours: 6
+  items:
+  - source: new_topic
+    series:
+    - type: ct-phys:P02.T01
+      count: 2
+    - type: ct-phys:P02.T02
+      count: 2
+    - type: ct-phys:P02.T03
+      count: 2
+    - type: ct-phys:P02.T04
+      count: 2
+    - type: ct-phys:P02.T05
+      count: 2
+    - type: ct-phys:P02.T06
+      count: 2
+    - type: ct-phys:P02.T07
+      count: 2
+    - type: ct-phys:P02.T08
+      count: 2
+    - type: ct-phys:P02.T10
+      count: 2
+    - type: ct-phys:P02.T11
+      count: 2
+    - type: ct-phys:P02.T12
+      count: 2
+    - type: ct-phys:P04.T01
+      count: 4
+    - type: ct-phys:P04.T02
+      count: 4
+    - type: ct-phys:P04.T03
+      count: 4
+    - type: ct-phys:P04.T04
+      count: 4
+    - type: ct-phys:P04.T06
+      count: 4
+    - type: ct-phys:P04.T07
+      count: 4
+    - type: ct-phys:P04.T08
+      count: 4
+  - source: ct_format
+    series:
+    - type: ct-phys:P01.T13
+      count: 3
+    - type: ct-phys:P01.T14
+      count: 3
+    - type: ct-phys:P02.T14
+      count: 3
+    - type: ct-phys:P02.T15
+      count: 3
+    - type: ct-phys:P04.T13
+      count: 3
+    - type: ct-phys:P04.T14
+      count: 3

@@ -1,0 +1,18 @@
+id: ct-math:M30
+title: Линейная функция и обратная пропорциональность
+section: Функции, графики, прогрессии
+foundation_level: база
+topic_hours: 2.5
+ct_positions: []
+prerequisite_elements:
+- ct-math:M29.E1
+- ct-math:M16.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M30-lineynaya-funktsiya-obratnaya.md
+elements:
+- id: ct-math:M30.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M30-lineynaya-funktsiya-obratnaya.md

@@ -1,0 +1,20 @@
+id: ct-math:M33
+title: 'Показательная и логарифмическая функции: свойства и графики'
+section: Функции, графики, прогрессии
+foundation_level: ядро
+topic_hours: 3.5
+ct_positions:
+- А10
+prerequisite_elements:
+- ct-math:M31.E1
+- ct-math:M12.E1
+- ct-math:M22.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M33-pokazatelnaya-logarifmicheskaya-funktsii.md
+elements:
+- id: ct-math:M33.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M33-pokazatelnaya-logarifmicheskaya-funktsii.md

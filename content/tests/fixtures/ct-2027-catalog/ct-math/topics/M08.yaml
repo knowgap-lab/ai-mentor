@@ -1,0 +1,19 @@
+id: ct-math:M08
+title: 'Арифметические текстовые задачи: части, остаток, единицы измерения'
+section: Текстовые задачи
+foundation_level: фундамент
+topic_hours: 2.5
+ct_positions:
+- А7
+- В3
+prerequisite_elements:
+- ct-math:M02.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M08-arifmeticheskie-tekstovye-zadachi.md
+elements:
+- id: ct-math:M08.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M08-arifmeticheskie-tekstovye-zadachi.md

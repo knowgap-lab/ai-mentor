@@ -1,0 +1,19 @@
+id: ct-math:M24
+title: Логарифмические уравнения
+section: Уравнения и неравенства
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- В11
+prerequisite_elements:
+- ct-math:M12.E1
+- ct-math:M19.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M24-logarifmicheskie-uravneniya.md
+elements:
+- id: ct-math:M24.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M24-logarifmicheskie-uravneniya.md

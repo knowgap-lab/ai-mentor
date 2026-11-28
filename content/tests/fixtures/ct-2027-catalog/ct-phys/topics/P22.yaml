@@ -1,0 +1,18 @@
+id: ct-phys:P22
+title: Тепловые двигатели и их КПД
+section: МКТ и термодинамика
+foundation_level: ядро
+topic_hours: 2.5
+ct_positions:
+- В10
+prerequisite_elements:
+- ct-phys:P20.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P22-teplovye-dvigateli-kpd.md
+elements:
+- id: ct-phys:P22.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P22-teplovye-dvigateli-kpd.md

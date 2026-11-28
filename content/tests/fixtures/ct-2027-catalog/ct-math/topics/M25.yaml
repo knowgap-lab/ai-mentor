@@ -1,0 +1,19 @@
+id: ct-math:M25
+title: Логарифмические неравенства
+section: Уравнения и неравенства
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- В14
+prerequisite_elements:
+- ct-math:M24.E1
+- ct-math:M21.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M25-logarifmicheskie-neravenstva.md
+elements:
+- id: ct-math:M25.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M25-logarifmicheskie-neravenstva.md

@@ -1,0 +1,18 @@
+id: ct-math:M43
+title: 'Прямые и плоскости в пространстве: взаимное расположение'
+section: Стереометрия
+foundation_level: база
+topic_hours: 2.5
+ct_positions:
+- В2
+prerequisite_elements:
+- ct-math:M42.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M43-pryamye-ploskosti-prostranstve.md
+elements:
+- id: ct-math:M43.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M43-pryamye-ploskosti-prostranstve.md

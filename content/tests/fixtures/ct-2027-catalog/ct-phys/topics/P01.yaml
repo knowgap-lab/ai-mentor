@@ -1,0 +1,127 @@
+id: ct-phys:P01
+title: 'Физические величины и единицы СИ: приставки, перевод единиц, стандартный вид числа'
+section: Математика для физики
+foundation_level: фундамент
+topic_hours: 3.5
+prerequisite_elements: []
+citations:
+- doc: topic-card
+  ref: physics/topics/P01-fizicheskie-velichiny-edinitsy.md
+elements:
+- id: ct-phys:P01.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P01-fizicheskie-velichiny-edinitsy.md
+types:
+- id: ct-phys:P01.T01
+  title: Дольная приставка → основная единица
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 1
+  subvariants:
+  - id: ct-phys:P01.T01.S1
+    given: Переведите 250 мм в метры / Дольная приставка → основная единица
+- id: ct-phys:P01.T03
+  title: Кратная приставка → основная единица
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 3
+  subvariants:
+  - id: ct-phys:P01.T03.S1
+    given: Переведите 12 кВт в ватты / Кратная приставка → основная единица
+- id: ct-phys:P01.T06
+  title: Стандартный вид большого числа
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 6
+  subvariants:
+  - id: ct-phys:P01.T06.S1
+    given: Запишите 6 400 000 м в стандартном виде / Стандартный вид большого числа
+- id: ct-phys:P01.T09
+  title: Выбор верной единицы СИ величины
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 9
+  subvariants:
+  - id: ct-phys:P01.T09.S1
+    given: В каких единицах измеряется работа? / Выбор верной единицы СИ величины
+- id: ct-phys:P01.T13
+  title: 'Формат В: ответ целым числом в указанных единицах'
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 13
+  subvariants:
+  - id: ct-phys:P01.T13.S1
+    given: 'Диаметр d = 0,04 мм. Выразите в микрометрах / Формат В: ответ целым числом в указанных единицах'
+- id: ct-phys:P01.T14
+  title: Формат А с вариантами, ловушка на показатель степени
+  kind: skill
+  primary_element: ct-phys:P01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P01 §Банк 14
+  subvariants:
+  - id: ct-phys:P01.T14.S1
+    given: Мощность 60 мВт в ваттах в стандартном виде / Формат А с вариантами, ловушка на показатель степени
+ct_positions:
+- А4
+- А6

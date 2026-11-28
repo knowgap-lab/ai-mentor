@@ -1,0 +1,191 @@
+id: ct-phys:P04
+title: 'Графики в физике: чтение, наклон, площадь под графиком'
+section: Математика для физики
+foundation_level: фундамент
+topic_hours: 2.5
+prerequisite_elements:
+- ct-phys:P02.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P04-grafiki-fizike-chtenie.md
+elements:
+- id: ct-phys:P04.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P04-grafiki-fizike-chtenie.md
+types:
+- id: ct-phys:P04.T01
+  title: Снятие координаты по цене деления
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 1
+  subvariants:
+  - id: ct-phys:P04.T01.S1
+    given: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях / Снятие координаты по цене деления'
+- id: ct-phys:P04.T02
+  title: Наклон по двум точкам (скорость)
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 2
+  subvariants:
+  - id: ct-phys:P04.T02.S1
+    given: Точки (0 с; 0 м) и (5 с; 25 м) / Наклон по двум точкам (скорость)
+- id: ct-phys:P04.T03
+  title: Знак наклона — направление
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 3
+  subvariants:
+  - id: ct-phys:P04.T03.S1
+    given: График s(t) идёт от (0; 15) до (6; 0). Что происходит? / Знак наклона — направление
+- id: ct-phys:P04.T04
+  title: Горизонтальный участок
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 4
+  subvariants:
+  - id: ct-phys:P04.T04.S1
+    given: График v(t) горизонтален на уровне 0 от 2 до 5 с / Горизонтальный участок
+- id: ct-phys:P04.T06
+  title: Путь — площадь прямоугольника
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 6
+  subvariants:
+  - id: ct-phys:P04.T06.S1
+    given: v = 6 м/с постоянно в течение 8 с / Путь — площадь прямоугольника
+- id: ct-phys:P04.T07
+  title: Путь — сумма прямоугольников
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 7
+  subvariants:
+  - id: ct-phys:P04.T07.S1
+    given: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с / Путь — сумма прямоугольников
+- id: ct-phys:P04.T08
+  title: Путь — площадь трапеции
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 8
+  subvariants:
+  - id: ct-phys:P04.T08.S1
+    given: v растёт равномерно от 0 до 12 м/с за 6 с / Путь — площадь трапеции
+- id: ct-phys:P04.T13
+  title: Формат А, 5 вариантов
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 3
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 13
+  subvariants:
+  - id: ct-phys:P04.T13.S1
+    given: Как в Примере 5 / Формат А, 5 вариантов
+- id: ct-phys:P04.T14
+  title: Формат В, ответ — целое число
+  kind: skill
+  primary_element: ct-phys:P04.E1
+  prerequisites:
+  - ct-phys:P02.E1
+  answer_format: ct.integer
+  difficulty: 3
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P04 §Банк 14
+  subvariants:
+  - id: ct-phys:P04.T14.S1
+    given: 'Путь за первые 5 с: v = 4 м/с (3 с), затем v = 2 м/с (2 с). Ответ в метрах / Формат В, ответ — целое число'
+ct_positions:
+- А2
+- В1

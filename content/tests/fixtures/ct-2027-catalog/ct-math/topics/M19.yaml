@@ -1,0 +1,19 @@
+id: ct-math:M19
+title: Квадратные уравнения, теорема Виета, квадратный трёхчлен
+section: Уравнения и неравенства
+foundation_level: база
+topic_hours: 6
+ct_positions: []
+prerequisite_elements:
+- ct-math:M10.E1
+- ct-math:M07.E1
+- ct-math:M16.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M19-kvadratnye-uravneniya-teorema.md
+elements:
+- id: ct-math:M19.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M19-kvadratnye-uravneniya-teorema.md

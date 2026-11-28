@@ -1,0 +1,18 @@
+id: ct-math:M32
+title: Чётность, нечётность и периодичность функций
+section: Функции, графики, прогрессии
+foundation_level: ядро
+topic_hours: 3.5
+ct_positions:
+- В9
+prerequisite_elements:
+- ct-math:M29.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M32-chetnost-nechetnost-periodichnost.md
+elements:
+- id: ct-math:M32.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M32-chetnost-nechetnost-periodichnost.md

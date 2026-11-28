@@ -1,0 +1,18 @@
+id: ct-math:M39
+title: 'Окружность: углы, касательная, вписанные и описанные окружности'
+section: Планиметрия
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- В10
+prerequisite_elements:
+- ct-math:M38.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M39-okruzhnost-ugly-kasatelnaya.md
+elements:
+- id: ct-math:M39.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M39-okruzhnost-ugly-kasatelnaya.md

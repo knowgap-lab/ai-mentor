@@ -1,0 +1,19 @@
+id: ct-math:M17
+title: Линейные неравенства и их системы, числовые промежутки
+section: Уравнения и неравенства
+foundation_level: база
+topic_hours: 3.5
+ct_positions:
+- А5
+prerequisite_elements:
+- ct-math:M16.E1
+- ct-math:M04.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M17-lineynye-neravenstva-sistemy.md
+elements:
+- id: ct-math:M17.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M17-lineynye-neravenstva-sistemy.md

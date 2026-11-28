@@ -1,0 +1,17 @@
+id: ct-math:M15
+title: Тригонометрические формулы сложения и двойного угла
+section: Тригонометрия
+foundation_level: ядро
+topic_hours: 3.25
+ct_positions: []
+prerequisite_elements:
+- ct-math:M13.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M15-trigonometricheskie-formuly-slozheniya.md
+elements:
+- id: ct-math:M15.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M15-trigonometricheskie-formuly-slozheniya.md

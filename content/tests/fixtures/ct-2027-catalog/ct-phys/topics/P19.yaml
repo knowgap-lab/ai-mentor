@@ -1,0 +1,21 @@
+id: ct-phys:P19
+title: Уравнение состояния идеального газа и изопроцессы
+section: МКТ и термодинамика
+foundation_level: база
+topic_hours: 5
+ct_positions:
+- А5
+- В8
+- В9
+- В10
+prerequisite_elements:
+- ct-phys:P18.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P19-uravnenie-sostoyaniya-idealnogo.md
+elements:
+- id: ct-phys:P19.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P19-uravnenie-sostoyaniya-idealnogo.md

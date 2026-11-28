@@ -1,0 +1,18 @@
+id: ct-phys:P26
+title: 'Конденсаторы: ёмкость и энергия'
+section: Электродинамика
+foundation_level: ядро
+topic_hours: 2.5
+ct_positions:
+- В14
+prerequisite_elements:
+- ct-phys:P25.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P26-kondensatory-emkost-energiya.md
+elements:
+- id: ct-phys:P26.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P26-kondensatory-emkost-energiya.md

@@ -1,0 +1,50 @@
+type: ct-phys:P04.T01
+variants:
+- id: ct-phys:P04.T01.S1.V001
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V002
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V003
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V004
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V005
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V006
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V007
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T01.S1.V008
+  subvariant: ct-phys:P04.T01.S1
+  statement: 'Ось t: 0–12 с, 6 делений; ось s: 0–30 м, 5 делений. Точка на 4-м и 3-м делениях'
+  key: 18
+  minutes: 1
+  theory_block: ct-phys:P04.B01

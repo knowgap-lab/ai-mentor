@@ -1,0 +1,5 @@
+id: ct-math
+title: Математика
+subject: math
+spec_version: '1'
+answer_rules: answer-rules.yaml

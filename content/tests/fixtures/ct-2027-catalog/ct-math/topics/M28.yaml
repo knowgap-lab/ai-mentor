@@ -1,0 +1,20 @@
+id: ct-math:M28
+title: 'Текстовые задачи на составление уравнений: движение, работа, проценты, смеси'
+section: Текстовые задачи
+foundation_level: база
+topic_hours: 6
+ct_positions:
+- В8
+- В12
+prerequisite_elements:
+- ct-math:M18.E1
+- ct-math:M05.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M28-tekstovye-zadachi-sostavlenie.md
+elements:
+- id: ct-math:M28.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M28-tekstovye-zadachi-sostavlenie.md

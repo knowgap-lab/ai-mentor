@@ -1,0 +1,19 @@
+id: ct-math:M12
+title: 'Логарифмы: определение, свойства, вычисление'
+section: Выражения и преобразования
+foundation_level: ядро
+topic_hours: 6
+ct_positions:
+- А1
+- В4
+prerequisite_elements:
+- ct-math:M07.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M12-logarifmy-opredelenie-svoystva.md
+elements:
+- id: ct-math:M12.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M12-logarifmy-opredelenie-svoystva.md

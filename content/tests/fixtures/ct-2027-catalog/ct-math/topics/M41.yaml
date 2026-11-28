@@ -1,0 +1,19 @@
+id: ct-math:M41
+title: 'Тела вращения: цилиндр, конус, шар — площади и объёмы'
+section: Стереометрия
+foundation_level: база
+topic_hours: 3.5
+ct_positions:
+- А2
+- А9
+prerequisite_elements:
+- ct-math:M38.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M41-tela-vrascheniya-tsilindr.md
+elements:
+- id: ct-math:M41.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M41-tela-vrascheniya-tsilindr.md

@@ -1,0 +1,19 @@
+id: ct-math:M34
+title: Арифметическая и геометрическая прогрессии
+section: Функции, графики, прогрессии
+foundation_level: база
+topic_hours: 5
+ct_positions:
+- В7
+prerequisite_elements:
+- ct-math:M16.E1
+- ct-math:M06.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M34-arifmeticheskaya-geometricheskaya-progressii.md
+elements:
+- id: ct-math:M34.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M34-arifmeticheskaya-geometricheskaya-progressii.md

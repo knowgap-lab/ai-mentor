@@ -1,0 +1,19 @@
+id: ct-math:M26
+title: Иррациональные уравнения
+section: Уравнения и неравенства
+foundation_level: продвинутое
+topic_hours: 3.25
+ct_positions:
+- В15
+prerequisite_elements:
+- ct-math:M19.E1
+- ct-math:M07.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M26-irratsionalnye-uravneniya.md
+elements:
+- id: ct-math:M26.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M26-irratsionalnye-uravneniya.md

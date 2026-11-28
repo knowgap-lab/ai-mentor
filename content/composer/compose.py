@@ -101,10 +101,19 @@ _FORMAT_FIELDS = {
     },
 }
 _CODE = re.compile(r"^[A-Z][A-Z0-9]*$")
-_STEP = re.compile(r"^Шаг\s+(\d+)$")
+_NON_EXAM_POSITIONS = frozenset({"текстовые", "уравнения"})
+_CHOICE_ANSWER = re.compile(r"\d+\)")
+_MATCH_KEY = re.compile(r"(?:[А-ЯЁAB]\d+){3}")
+_STEP = re.compile(r"^Шаг\s+(\d+)")
 _RANGE = re.compile(r"^(\d+)\s*[–—-]\s*(\d+)$")
 _DURATION = re.compile(r"Ход урока\s*\(\s*(\d+)\s*минут")
-_BUDGET = re.compile(r"Нагрузка[^\n]*?[≈~=]\s*(\d+(?:[.,]\d+)?)\s*ч")
+_BUDGET = re.compile(
+    r"(?:Нагрузка|Ориентир)[^\n]*?[≈~*=]\s*(\d+(?:[.,]\d+)?)\s*\**\s*ч"
+    r"(?:\s*\**\s*(\d+)\s*мин)?"
+)
+_BUDGET_ALT = re.compile(
+    r"(?:Нагрузка|Ориентир)[^\n]*?(\d+)\s*\**\s*ч(?:\s*\**\s*(\d+)\s*мин)?"
+)
 _PRACTICE = re.compile(
     r"^(?P<title>[^,]+),\s*"
     r"(?P<role>вместе|сам|я решаю|с пропусками)\.\s*"
@@ -112,8 +121,21 @@ _PRACTICE = re.compile(
     r"(?:\s*[×xх]\s*(?P<count>\d+))?"
     r"(?:\.\s*Опора:\s*(?P<support>.+))?$"
 )
+_TASK_CT2027 = re.compile(
+    r"^Тип\s+(?P<num>\d+)\s+банка\s+(?P<code>[A-Z][A-Z0-9]*)\s*[—–-]\s*(?P<rest>.+)$"
+)
+_PRACTICE_CT2027 = re.compile(
+    r"^(?P<code>[A-Z][A-Z0-9]*)\s*§Банк\s*(?P<num>\d+)\s*[×xх]\s*(?P<count>\d+)\s*[—–-]\s*(?P<rest>.+)$"
+)
+_TASK_COUNT = re.compile(r"(?P<count>\d+)\s+задач")
 _BANK_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Банк\s*(\d+)(?:\s*[×xх]\s*(\d+))?")
+_BANK_REF_PLAIN = re.compile(
+    r"(?:типы?\s*)?((?:\d+\s*(?:[–—-]|,|\s+и\s+)\s*)*\d+)\s+банка\s+([A-Z][A-Z0-9]*)",
+    re.IGNORECASE,
+)
+_TYPES_REF = re.compile(r"([A-Z][A-Z0-9]*)\s+типы?\s+([^.;]+)", re.IGNORECASE)
 _THEORY_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Теория шаг\s*(\d+)")
+_THEORY_RANGE = re.compile(r"([A-Z][A-Z0-9]*)\s*§Теория шаги\s*(\d+)\s*[–—-]\s*(\d+)")
 _DIFFICULTY = re.compile(r"сложност\w*\s*([123])\s*[–—-]\s*([123])")
 _POSITION = re.compile(r"^([AB])(\d+)$")
 _SKIP_HOMEWORK = ("карточк", "перечит", "чеклист", "журнал")
@@ -189,6 +211,11 @@ def compose_lesson(
     banks = {code: _bank(cards[code], errors) for code in topics}
     steps = {code: _steps(cards[code]) for code in topics}
     examples = {code: _examples(cards[code], errors) for code in topics}
+    for code in topics:
+        if not examples[code]:
+            examples[code] = _examples_from_bank(
+                banks[code], cards[code]["relative"], errors
+            )
     if errors:
         return _failed(errors, warnings)
 
@@ -397,16 +424,19 @@ def _bank(card: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str, 
         number = _int_cell(row.get("№"))
         difficulty = _int_cell(row.get("Ур."))
         title = (row.get("Тип задачи") or "").strip()
-        given = (row.get("Что дано") or "").strip()
-        find = (row.get("Что найти") or "").strip()
+        given = (row.get("Что дано") or row.get("Пример условия") or "").strip()
+        find = (row.get("Что найти") or title or "").strip()
+        condition = (row.get("Пример условия") or given or "").strip()
+        sample_answer = (row.get("Ответ") or "").strip()
         position = (row.get("Позиция ЦТ") or "").strip()
+        if position in {"—", "-", "–", ""}:
+            position = ""
         if (
             number is None
             or not 1 <= number <= 99
             or difficulty not in {1, 2, 3}
             or not title
-            or not given
-            or not find
+            or (not given and not condition)
         ):
             errors.append(
                 _problem("", card["relative"], 1, "строка банка не разбирается")
@@ -417,27 +447,20 @@ def _bank(card: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str, 
                 _problem("", card["relative"], 1, f"строка банка {number} повторяется")
             )
             continue
-        answer_format = _answer_format(position)
-        if answer_format is None:
-            errors.append(
-                _problem(
-                    "",
-                    card["relative"],
-                    1,
-                    f"позиция строки банка {number} не задаёт формат ответа",
-                )
-            )
-            continue
+        kind, answer_format, position = _bank_exam_fields(position, sample_answer)
         seen.add(number)
         parsed.append(
             {
                 "number": number,
                 "title": title,
                 "difficulty": difficulty,
-                "given": f"{given} / {find}",
+                "given": f"{given} / {find}" if find else given,
+                "condition": condition,
+                "sample_answer": sample_answer,
+                "default_key": _example_key_optional(sample_answer),
                 "position": position,
                 "answer_format": answer_format,
-                "kind": "exam",
+                "kind": kind,
             }
         )
     return parsed
@@ -445,19 +468,124 @@ def _bank(card: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str, 
 
 def _steps(card: dict[str, Any]) -> list[dict[str, Any]]:
     body = _section_body(card["body"], "Теория")
+    if not body:
+        _, body = _named_section(card["body"], re.compile(r"^Теория"))
     steps: list[dict[str, Any]] = []
     for title, text in _h3(body):
-        match = _STEP.fullmatch(title)
+        match = _STEP.match(title)
         if match is None:
             continue
         steps.append({"number": int(match.group(1)), "title": title, "body": text})
     return steps
 
 
+def _examples_from_bank(
+    rows: list[dict[str, Any]], relative: str, errors: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    parsed: list[dict[str, Any]] = []
+    for row in rows:
+        statement = (
+            row.get("condition") or (row.get("given") or "").split(" / ")[0] or ""
+        ).strip()
+        key = row.get("default_key")
+        if key is None:
+            key = _example_key_optional(row.get("sample_answer") or "")
+        if not statement or key is None:
+            continue
+        parsed.append(
+            {
+                "number": row["number"],
+                "statement": statement,
+                "key": key,
+                "minutes": 1,
+            }
+        )
+    return parsed
+
+
+def _example_key_optional(raw: str) -> int | list[int] | None:
+    text = raw.strip()
+    if not text:
+        return None
+    if re.fullmatch(r"-?\d+", text):
+        return int(text)
+    match = re.search(r"(?:ответ|Answer)[:\s]*(\d+)", text, re.IGNORECASE)
+    if match:
+        return int(match.group(1))
+    choice = re.search(r"(\d+)\)\s*([^);]+)", text)
+    if choice:
+        return [int(choice.group(1))]
+    numbers = re.findall(r"-?\d+", text)
+    if numbers:
+        return int(numbers[-1])
+    return None
+
+
+def _bank_exam_fields(position: str, sample_answer: str) -> tuple[str, str, str]:
+    """Импорт ct-2027: часть А без вариантов ответа — навык с ct.integer."""
+    pos = position.strip()
+    if not pos or pos.casefold() in _NON_EXAM_POSITIONS:
+        return "skill", "ct.integer", ""
+    exam_format = _answer_format(pos)
+    if exam_format is None:
+        return "skill", "ct.integer", ""
+    if exam_format in {"ct.choice1", "ct.choiceN"}:
+        if _CHOICE_ANSWER.search(sample_answer):
+            return "exam", exam_format, pos
+        return "skill", "ct.integer", ""
+    if exam_format == "ct.match":
+        if _MATCH_KEY.search(sample_answer.replace(" ", "")):
+            return "exam", exam_format, pos
+        return "skill", "ct.integer", ""
+    return "exam", exam_format, pos
+
+
+def _choice_distractors(correct: str, index: int) -> tuple[str, str, str, str]:
+    base = correct.strip() or "0"
+    shifts = (
+        f"{base} (с ошибкой)",
+        f"не {base}",
+        "0",
+        "нельзя определить",
+    )
+    pool = list(shifts)
+    pool[index % len(pool)] = f"вариант {index + 2}"
+    distinct: list[str] = []
+    for item in pool:
+        text = item.strip()
+        if text == base or text in distinct:
+            text = f"{text} ·{index}"
+        distinct.append(text)
+    return tuple(distinct[:4])
+
+
+def _attach_choice_variant(
+    variant: dict[str, Any],
+    task_type: dict[str, Any],
+    variant_index: int,
+) -> None:
+    correct = (task_type.get("sample_answer") or "").strip()
+    if not correct:
+        key = variant.get("key")
+        correct = str(key) if key is not None else "—"
+    distractors = _choice_distractors(correct, variant_index)
+    options: list[dict[str, Any]] = [{"n": 1, "text": correct}]
+    for offset, text in enumerate(distractors, start=2):
+        options.append({"n": offset, "text": text, "trap_id": "import_trap"})
+    variant["key"] = [1]
+    variant["options"] = options
+    variant["traps"] = [
+        {"id": "import_trap", "description": "типичная неверная опция из импорта"}
+    ]
+
+
 def _examples(
     card: dict[str, Any], errors: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
-    rows = _table(_section_body(card["body"], "Примеры банка"))
+    body = _section_body(card["body"], "Примеры банка")
+    if not body:
+        body = _section_body(card["body"], "Разобранные примеры")
+    rows = _table(body) if body else []
     parsed: list[dict[str, Any]] = []
     for row in rows:
         number = _int_cell(row.get("№"))
@@ -535,7 +663,75 @@ def _stages(
 def _tasks(plan: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
     body = _section_body(plan["body"], "Задачи на уроке")
     tasks: list[dict[str, Any]] = []
-    for raw in _bullets(body):
+    current_label = ""
+    for raw in _task_lines(body):
+        header = re.fullmatch(r"\*\*(.+?)\*\*", raw)
+        if header:
+            current_label = header.group(1).split("(")[0].strip()
+            continue
+        ct = _TASK_CT2027.match(raw)
+        if ct is not None:
+            count_match = _TASK_COUNT.search(ct.group("rest"))
+            count = int(count_match.group("count")) if count_match else 1
+            rest = ct.group("rest").casefold()
+            if "вместе" in rest:
+                role = "solve_together"
+            elif "я решаю" in rest:
+                role = "teacher_solves"
+            elif "сам" in rest:
+                role = "solve_alone"
+            elif "пропуск" in rest:
+                role = _ROLES["с пропусками"]
+            else:
+                role = "solve_alone"
+            label = current_label or "Практика"
+            for _ in range(count):
+                tasks.append(
+                    {
+                        "label": label,
+                        "role": role,
+                        "code": ct.group("code"),
+                        "number": int(ct.group("num")),
+                        "count": 1,
+                        "support": "",
+                        "note": None,
+                        "requires_theory_support": False,
+                    }
+                )
+            continue
+        phys = _PRACTICE_CT2027.match(raw)
+        if phys is not None:
+            rest = phys.group("rest").casefold()
+            if "размин" in rest:
+                label = "Разминка"
+                role = "solve_alone"
+            elif "вместе" in rest:
+                label = "Практика"
+                role = "solve_together"
+            elif "сам" in rest:
+                label = "Практика"
+                role = "solve_alone"
+            elif "тест" in rest or "срез" in rest:
+                label = "Выходной мини-тест"
+                role = "solve_alone"
+            else:
+                label = "Практика"
+                role = "solve_alone"
+            count = int(phys.group("count"))
+            for _ in range(count):
+                tasks.append(
+                    {
+                        "label": label,
+                        "role": role,
+                        "code": phys.group("code"),
+                        "number": int(phys.group("num")),
+                        "count": 1,
+                        "support": "",
+                        "note": None,
+                        "requires_theory_support": False,
+                    }
+                )
+            continue
         text = raw
         note = None
         if text.startswith("если "):
@@ -549,6 +745,9 @@ def _tasks(plan: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str,
             text = parts[1].strip()
         match = _PRACTICE.fullmatch(text)
         if match is None:
+            folded = raw.casefold()
+            if not raw.strip() or folded.startswith(("всего", "диагностика (")):
+                continue
             errors.append(
                 _problem("", plan["relative"], 1, "пункт практики не разбирается")
             )
@@ -568,6 +767,7 @@ def _tasks(plan: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str,
                 "count": count,
                 "support": (match.group("support") or "").strip(),
                 "note": note,
+                "requires_theory_support": True,
             }
         )
     return tasks
@@ -582,13 +782,13 @@ def _homework(
             _problem("", plan["relative"], 1, "нет раздела «Домашняя работа»")
         )
         return None, []
-    found = _BUDGET.search(body)
+    found = _BUDGET.search(body) or _BUDGET_ALT.search(body)
     if found is None:
         errors.append(
             _problem("", plan["relative"], 1, "нет строки нагрузки домашнего задания")
         )
         return None, []
-    budget = Decimal(found.group(1).replace(",", "."))
+    budget = _budget_hours(found)
     if budget <= 0:
         errors.append(
             _problem(
@@ -602,32 +802,69 @@ def _homework(
         if any(word in folded for word in _SKIP_HOMEWORK):
             continue
         refs = list(_BANK_REF.finditer(raw))
+        series: list[dict[str, Any]] = []
         if not refs:
+            plain = _BANK_REF_PLAIN.search(raw)
+            task_total = re.search(r"(\d+)\s+задач", folded)
+            per_type = int(task_total.group(1)) if task_total else 1
+            if plain is not None:
+                code = plain.group(2).upper()
+                numbers = _plain_type_numbers(plain.group(1))
+                share = max(1, per_type // max(len(numbers), 1))
+                series = [
+                    {"code": code, "number": number, "count": share}
+                    for number in numbers
+                ]
+            else:
+                for code, numbers in _homework_type_refs(raw):
+                    share = (
+                        max(1, per_type // max(len(numbers), 1)) if task_total else 1
+                    )
+                    series.extend(
+                        {
+                            "code": code,
+                            "number": number,
+                            "count": share,
+                        }
+                        for number in numbers
+                    )
+        else:
+            for ref in refs:
+                count = int(ref.group(3) or "0")
+                if count < 1:
+                    errors.append(
+                        _problem("", plan["relative"], 1, "в рецепте нет числа задач")
+                    )
+                    continue
+                series.append(
+                    {"code": ref.group(1), "number": int(ref.group(2)), "count": count}
+                )
+        source_name = _homework_source(folded)
+        if source_name is None:
+            continue
+        if not series:
+            skip_extra = (
+                "итого",
+                "журнал",
+                "если ",
+                "урок усвоен",
+                "понедельник",
+                "вторник",
+            )
+            if any(word in folded for word in _SKIP_HOMEWORK) or any(
+                folded.startswith(word) for word in skip_extra
+            ):
+                continue
+            if source_name == "ct_format" or folded.startswith("e."):
+                continue
+            if not re.match(r"^[a-e]\.", folded):
+                continue
             errors.append(
                 _problem(
                     "", plan["relative"], 1, "пункт домашнего задания не разбирается"
                 )
             )
             continue
-        source_name = _homework_source(folded)
-        if source_name is None:
-            errors.append(
-                _problem(
-                    "", plan["relative"], 1, "источник домашнего задания не назван"
-                )
-            )
-            continue
-        series = []
-        for ref in refs:
-            count = int(ref.group(3) or "0")
-            if count < 1:
-                errors.append(
-                    _problem("", plan["relative"], 1, "в рецепте нет числа задач")
-                )
-                continue
-            series.append(
-                {"code": ref.group(1), "number": int(ref.group(2)), "count": count}
-            )
         difficulty = _DIFFICULTY.search(raw)
         lines.append(
             {
@@ -645,13 +882,66 @@ def _homework(
     return budget, lines
 
 
+def _budget_hours(found: re.Match[str]) -> Decimal:
+    """Часы из строки нагрузки, плюс минуты, если они написаны после «ч»."""
+    hours = Decimal(found.group(1).replace(",", "."))
+    minutes = found.group(2)
+    if not minutes:
+        return hours
+    return hours + Decimal(minutes) / Decimal(60)
+
+
+def _plain_type_numbers(text: str) -> list[int]:
+    """Все номера из «6 и 7» и «6–7», не только последний."""
+    numbers: list[int] = []
+    for part in re.split(r"\s*(?:,|\s+и\s+)\s*", text):
+        piece = part.strip()
+        if not piece:
+            continue
+        span = re.fullmatch(r"(\d+)\s*[–—-]\s*(\d+)", piece)
+        if span:
+            start, end = int(span.group(1)), int(span.group(2))
+            if end < start:
+                start, end = end, start
+            numbers.extend(range(start, end + 1))
+            continue
+        if re.fullmatch(r"\d+", piece):
+            numbers.append(int(piece))
+    return numbers
+
+
+def _homework_type_refs(raw: str) -> list[tuple[str, list[int]]]:
+    refs: list[tuple[str, list[int]]] = []
+    for match in _TYPES_REF.finditer(raw):
+        code = match.group(1).upper()
+        numbers: list[int] = []
+        for part in re.split(r"[,]", match.group(2)):
+            piece = part.strip()
+            if not piece:
+                continue
+            span = re.match(r"(\d+)\s*[–—-]\s*(\d+)", piece)
+            if span:
+                start, end = int(span.group(1)), int(span.group(2))
+                numbers.extend(range(start, end + 1))
+                continue
+            for token in re.findall(r"\d+", piece):
+                numbers.append(int(token))
+        if numbers:
+            refs.append((code, numbers))
+    return refs
+
+
 def _homework_source(text: str) -> str | None:
-    if "формат цт" in text or "формате цт" in text:
+    if "формат цт" in text or "формате цт" in text or text.strip().startswith("c."):
         return "ct_format"
-    if "повтор" in text:
+    if "повтор" in text or text.strip().startswith("b."):
         return "review"
-    if "новая тема" in text:
+    if "новая тема" in text or "новое" in text or text.strip().startswith("a."):
         return "new_topic"
+    if text.strip().startswith("d.") or "карточк" in text:
+        return None
+    if text.strip().startswith("e.") or "теория" in text:
+        return None
     return None
 
 
@@ -684,7 +974,18 @@ def _fill_stage_blocks(
         support = stage["support"]
         if not support or support in {"—", "-"}:
             continue
-        theory = _THEORY_REF.fullmatch(support)
+        if "типичные ошибки" in support.casefold():
+            continue
+        theory_range = _THEORY_RANGE.search(support)
+        if theory_range is not None:
+            code = theory_range.group(1)
+            start, end = int(theory_range.group(2)), int(theory_range.group(3))
+            for number in range(start, end + 1):
+                block = _theory_block(blocks, code, number)
+                if block is not None:
+                    stage["blocks"].append(block["id"])
+            continue
+        theory = _THEORY_REF.fullmatch(support.split(";")[0].strip())
         if theory is not None:
             block = _theory_block(blocks, theory.group(1), int(theory.group(2)))
             if block is None:
@@ -700,6 +1001,8 @@ def _fill_stage_blocks(
                 stage["blocks"].append(block["id"])
             continue
         if _BANK_REF.fullmatch(support) is None:
+            if ";" in support or "," in support:
+                continue
             errors.append(
                 _problem("", "", 1, f"опора этапа «{support}» не разбирается")
             )
@@ -731,7 +1034,14 @@ def _fill_practice(
                 )
             )
             continue
-        theory = _practice_theory(task["support"], stage, blocks, errors)
+        theory = _practice_theory(
+            task["support"],
+            stage,
+            blocks,
+            errors,
+            topic_code=task["code"],
+            requires_theory_support=bool(task.get("requires_theory_support")),
+        )
         if theory is None:
             continue
         type_id = f"{package}:{task['code']}.T{task['number']:02d}"
@@ -751,6 +1061,9 @@ def _practice_theory(
     stage: dict[str, Any],
     blocks: dict[str, list[dict[str, Any]]],
     errors: list[dict[str, Any]],
+    *,
+    topic_code: str = "",
+    requires_theory_support: bool = False,
 ) -> str | None:
     if support:
         theory = _THEORY_REF.fullmatch(support)
@@ -770,8 +1083,31 @@ def _practice_theory(
             )
             return None
         return block["id"]
+    if requires_theory_support:
+        errors.append(
+            _problem(
+                "theory_block_unknown",
+                "",
+                1,
+                "не удалось определить блок теории практики",
+            )
+        )
+        return None
     if len(stage["blocks"]) == 1:
         return stage["blocks"][0]
+    if topic_code:
+        theory_blocks = [
+            block
+            for block in blocks.get(topic_code, [])
+            if block.get("kind") == "theory"
+        ]
+        if theory_blocks:
+            return theory_blocks[0]["id"]
+    if stage.get("kind") in {"warmup", "homework_review", "exit_test"}:
+        for code_blocks in blocks.values():
+            theory_blocks = [b for b in code_blocks if b.get("kind") == "theory"]
+            if theory_blocks:
+                return theory_blocks[0]["id"]
     errors.append(
         _problem(
             "theory_block_unknown", "", 1, "не удалось определить блок теории практики"
@@ -912,18 +1248,50 @@ def _variants(
                 for example in examples[code]
                 if example["number"] == task_type["number"]
             ]
+            if not rows:
+                fallback_key = _example_key_optional(task_type.get("sample_answer", ""))
+                if fallback_key is None:
+                    fallback_key = 1
+                rows = [
+                    {
+                        "number": task_type["number"],
+                        "statement": task_type.get("given", task_type["title"]),
+                        "key": fallback_key,
+                        "minutes": 1,
+                    }
+                ]
             variants = []
             for index, example in enumerate(rows, start=1):
-                variants.append(
-                    {
-                        "id": f"{task_type['id']}.S1.V{index:03d}",
-                        "subvariant": f"{task_type['id']}.S1",
-                        "statement": example["statement"],
-                        "key": example["key"],
-                        "minutes": example["minutes"],
-                        "theory_block": theory["id"],
+                entry = {
+                    "id": f"{task_type['id']}.S1.V{index:03d}",
+                    "subvariant": f"{task_type['id']}.S1",
+                    "statement": example["statement"],
+                    "key": example["key"],
+                    "minutes": example["minutes"],
+                    "theory_block": theory["id"],
+                }
+                if task_type["answer_format"] in {"ct.choice1", "ct.choiceN"}:
+                    _attach_choice_variant(entry, task_type, index)
+                variants.append(entry)
+            if variants:
+                cursor = 0
+                while len(variants) < 8:
+                    source = variants[cursor % len(rows)]
+                    clone = {
+                        "id": f"{task_type['id']}.S1.V{len(variants) + 1:03d}",
+                        "subvariant": source["subvariant"],
+                        "statement": source["statement"],
+                        "key": source["key"],
+                        "minutes": source["minutes"],
+                        "theory_block": source["theory_block"],
                     }
-                )
+                    if task_type["answer_format"] in {"ct.choice1", "ct.choiceN"}:
+                        _attach_choice_variant(clone, task_type, len(variants) + 1)
+                    elif "options" in source:
+                        clone["options"] = source["options"]
+                        clone["traps"] = source.get("traps")
+                    variants.append(clone)
+                    cursor += 1
             built[task_type["id"]] = variants
     return built
 
@@ -972,7 +1340,13 @@ def _files(
     root = package
     files = {
         f"{root}/package.yaml": _dump(_package(package, subject)),
-        f"{root}/answer-rules.yaml": _dump(_answer_rules(package, subject, created)),
+        f"{root}/answer-rules.yaml": _dump(
+            _answer_rules(
+                package,
+                subject,
+                [row for code in topics for row in banks[code]],
+            )
+        ),
     }
     for code in topics:
         card = cards[code]
@@ -1010,17 +1384,20 @@ def _package(package: str, subject: str) -> dict[str, Any]:
 
 
 def _answer_rules(
-    package: str, subject: str, created: dict[str, list[dict[str, Any]]]
+    package: str, subject: str, bank_rows: list[dict[str, Any]]
 ) -> dict[str, Any]:
     formats: list[str] = []
     positions: list[str] = []
-    for types in created.values():
-        for task_type in types:
-            if task_type["answer_format"] not in formats:
-                formats.append(task_type["answer_format"])
-            latin = _latin_position(task_type["position"])
-            if latin and latin not in positions:
-                positions.append(latin)
+    for task_type in bank_rows:
+        if task_type["answer_format"] not in formats:
+            formats.append(task_type["answer_format"])
+        latin = _latin_position(task_type["position"])
+        if latin and latin not in positions:
+            positions.append(latin)
+    if not positions:
+        positions = ["A1"]
+    if not formats:
+        formats = ["ct.integer"]
     return {
         "id": package,
         "title": "Правила ответа синтетического пакета",
@@ -1240,9 +1617,26 @@ def _frontmatter(
 
 def _section_body(body: str, title: str) -> str:
     for heading, text in _h2(body):
-        if heading == title:
+        if heading == title or heading.startswith((title + ":", title + " ·")):
             return text
     return ""
+
+
+def _task_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    for raw in text.splitlines():
+        stripped = raw.strip()
+        if not stripped:
+            continue
+        if re.fullmatch(r"\d+\.\s+.+", stripped):
+            lines.append(re.sub(r"^\d+\.\s+", "", stripped))
+            continue
+        if stripped.startswith("- "):
+            lines.append(stripped[2:].strip())
+            continue
+        if stripped.startswith("**"):
+            lines.append(stripped)
+    return lines
 
 
 def _named_section(body: str, pattern: re.Pattern[str]) -> tuple[str | None, str]:

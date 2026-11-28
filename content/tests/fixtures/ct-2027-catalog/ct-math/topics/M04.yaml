@@ -1,0 +1,19 @@
+id: ct-math:M04
+title: 'Рациональные числа: отрицательные числа, модуль, координатная прямая'
+section: Числа и вычисления
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions:
+- А1
+- А5
+prerequisite_elements:
+- ct-math:M03.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M04-ratsionalnye-chisla-otritsatelnye.md
+elements:
+- id: ct-math:M04.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M04-ratsionalnye-chisla-otritsatelnye.md

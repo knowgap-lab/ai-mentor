@@ -513,6 +513,8 @@ def _text_field(
     value = data[key]
     if isinstance(value, str):
         return value
+    if key in {"phase", "lesson"} and isinstance(value, int):
+        return str(value)
     errors.append(
         _problem(
             "frontmatter_invalid",

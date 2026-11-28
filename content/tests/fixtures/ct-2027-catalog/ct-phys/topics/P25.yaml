@@ -1,0 +1,19 @@
+id: ct-phys:P25
+title: 'Электрическое поле: напряжённость, потенциал, напряжение, суперпозиция'
+section: Электродинамика
+foundation_level: ядро
+topic_hours: 3.5
+ct_positions:
+- В13
+- В14
+prerequisite_elements:
+- ct-phys:P24.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P25-elektricheskoe-pole-napryazhennost.md
+elements:
+- id: ct-phys:P25.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P25-elektricheskoe-pole-napryazhennost.md

@@ -1,0 +1,18 @@
+id: ct-math:M18
+title: Системы линейных уравнений
+section: Уравнения и неравенства
+foundation_level: база
+topic_hours: 3.5
+ct_positions:
+- В12
+prerequisite_elements:
+- ct-math:M16.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M18-sistemy-lineynyh-uravneniy.md
+elements:
+- id: ct-math:M18.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M18-sistemy-lineynyh-uravneniy.md
