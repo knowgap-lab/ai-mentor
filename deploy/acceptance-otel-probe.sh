@@ -21,7 +21,7 @@ for attempt in $(seq 1 15); do
   trace_ok=0
   log_ok=0
   if curl -sf -G "http://127.0.0.1:3200/api/search" \
-    --data-urlencode "tags=service.name%3D${SERVICE_NAME}" | grep -q traceID; then
+    --data-urlencode "tags=service.name=${SERVICE_NAME}" | grep -q traceID; then
     trace_ok=1
   fi
   if curl -sf -G "http://127.0.0.1:3100/loki/api/v1/query_range" \

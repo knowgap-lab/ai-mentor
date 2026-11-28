@@ -67,4 +67,4 @@ bash tools/vm-acceptance-guest-second-plan_test.sh
 bash tools/vm-acceptance-guest-second-plan-ssh-key_test.sh
 bash tools/ci/vm-acceptance-runner-env_test.sh
 bash tools/vm-acceptance-fields_test.sh
-python3 -m pytest deploy/acceptance_observability_compose_test.py deploy/acceptance_backup_drill_test.py
+python3 -m pytest deploy/acceptance_observability_compose_test.py deploy/acceptance_backup_drill_test.py deploy/acceptance_otlp_probe_test.py
