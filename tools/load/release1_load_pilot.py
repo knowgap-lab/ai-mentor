@@ -233,7 +233,9 @@ def build_measure_payload(
             active_users=active_by_action[name],
         )
 
-    read_p95 = actions.get("read", {}).get("p95_ms", int(percentile(buckets["read"]["latencies"], 95)))
+    read_p95 = actions.get("read", {}).get(
+        "p95_ms", int(percentile(buckets["read"]["latencies"], 95))
+    )
     answer_p95 = actions.get("answer", {}).get(
         "p95_ms", int(percentile(buckets["answer"]["latencies"], 95))
     )
@@ -406,9 +408,7 @@ class PilotSession:
             raise RuntimeError(f"HTTP {exc.code} on POST {path}") from exc
         self._request("GET", "/me", record=False, bucket="read")
 
-    def student_action(
-        self, rng: random.Random, mix: dict, record: bool
-    ) -> None:
+    def student_action(self, rng: random.Random, mix: dict, record: bool) -> None:
         roll = rng.random()
         read_cut = mix.get("read", 0.6)
         write_cut = read_cut + mix.get("answer_or_submit", 0.3)
