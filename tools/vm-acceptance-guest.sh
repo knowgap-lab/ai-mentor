@@ -91,7 +91,6 @@ step_create() {
 }
 
 step_second_plan() {
-  terraform_vm_dir terraform apply -auto-approve -input=false
   local code=0
   terraform_vm_dir terraform plan -detailed-exitcode -input=false || code=$?
   if [[ "$code" -eq 0 ]]; then
