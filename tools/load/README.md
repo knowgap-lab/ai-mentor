@@ -22,4 +22,5 @@ RELEASE_LOAD_PILOT_CONFIRM=1 LOAD_PILOT_VIRTUALIZATION=kvm \
 
 - Поднятое приложение на принятом SHA с синтетическими учётками (`AUTH_DEV_MODE` только на стенде, не в прод-приёмке).
 - Переменная `LOAD_PILOT_VIRTUALIZATION` не должна быть `cloud_container` или `cursor_cloud`.
+- Пилот исходит из одного IP к API (туннель/прокси): соблюдает AU-R20 (≤10 `/auth/*` и `/invite/*` в минуту на IP) и не крутит logout+login в нагрузке.
 - В GitHub Actions полный `--measure` завершается с кодом 2 (заблокирован).

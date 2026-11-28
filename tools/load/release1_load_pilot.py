@@ -19,6 +19,39 @@ from pathlib import Path
 PROFILE_PATH = Path(__file__).with_name("d326-profile.json")
 ROOT = PROFILE_PATH.resolve().parents[1]
 FORBIDDEN_VIRT = frozenset({"cloud_container", "cursor_cloud", "", None})
+# AU-R20: не более 10 запросов /auth/* и /invite/* в минуту с одного IP.
+AUTH_IP_LIMIT_PER_MINUTE = 10
+AUTH_IP_LIMIT_MAX = AUTH_IP_LIMIT_PER_MINUTE - 1
+AUTH_LOGIN_STAGGER_S = 60.0 / AUTH_IP_LIMIT_MAX
+
+
+class AuthIPLimiter:
+    """Скользящее окно для одного исходящего IP пилота (туннель / прокси)."""
+
+    def __init__(self, max_per_minute: int) -> None:
+        self._max = max_per_minute
+        self._times: list[float] = []
+        self._lock = threading.Lock()
+
+    def wait(self) -> None:
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                cutoff = now - 60.0
+                self._times = [t for t in self._times if t > cutoff]
+                if len(self._times) < self._max:
+                    self._times.append(now)
+                    return
+                sleep_s = max(0.05, self._times[0] + 60.0 - now)
+            time.sleep(sleep_s)
+
+
+AUTH_IP_LIMITER = AuthIPLimiter(AUTH_IP_LIMIT_MAX)
+HTTP_TOO_MANY_REQUESTS = 429
+
+
+class PilotRateLimited(RuntimeError):
+    """Сервер вернул rate_limited; замер нельзя считать успешным."""
 
 
 def evaluated_sha() -> str:
@@ -133,6 +166,8 @@ class PilotSession:
                         pass
         except urllib.error.HTTPError as exc:
             status = exc.code
+        if status == HTTP_TOO_MANY_REQUESTS:
+            raise PilotRateLimited(f"HTTP {status} on {method} {path}")
         elapsed = (time.perf_counter() - start) * 1000.0
         if record:
             with self.lock:
@@ -140,21 +175,28 @@ class PilotSession:
         return status, elapsed
 
     def login(self, telegram_id: str, role: str) -> None:
+        path = "/auth/dev"
         body = json.dumps(
             {"telegram_id": telegram_id, "role": role}, ensure_ascii=False
         ).encode()
-        url = f"{self.origin}/auth/dev"
+        url = f"{self.origin}{path}"
         req = urllib.request.Request(url, data=body, method="POST")
         req.add_header("Content-Type", "application/json")
         req.add_header("Origin", self.app_origin)
-        with self.opener.open(req, timeout=60) as resp:
-            token = resp.headers.get("X-CSRF-Token", "")
-            if not token:
-                raise RuntimeError(
-                    "login: нет X-CSRF-Token (нужен ENV=local и AUTH_DEV_MODE на стенде)"
-                )
-            self.csrf = token
-            _ = resp.read()
+        AUTH_IP_LIMITER.wait()
+        try:
+            with self.opener.open(req, timeout=60) as resp:
+                token = resp.headers.get("X-CSRF-Token", "")
+                if not token:
+                    raise RuntimeError(
+                        "login: нет X-CSRF-Token (нужен ENV=local и AUTH_DEV_MODE на стенде)"
+                    )
+                self.csrf = token
+                _ = resp.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == HTTP_TOO_MANY_REQUESTS:
+                raise PilotRateLimited(f"HTTP {exc.code} on POST {path}") from exc
+            raise RuntimeError(f"HTTP {exc.code} on POST {path}") from exc
         self._request("GET", "/me", record=False, bucket="read", samples={"read": []})
 
     def student_action(
@@ -168,12 +210,16 @@ class PilotSession:
             path = rng.choice(["/", "/me", "/me/sessions"])
             self._request("GET", path, record=record, bucket="read", samples=samples)
         elif roll < write_cut:
+            # Записывающий микс без /auth/* (AU-R20: 10 auth+invite/мин с IP).
             body = json.dumps({}, ensure_ascii=False).encode()
-            path = "/auth/logout"
             self._request(
-                "POST", path, body, record=record, bucket="write", samples=samples
+                "POST",
+                "/me/sessions/revoke-all",
+                body,
+                record=record,
+                bucket="write",
+                samples=samples,
             )
-            self.login("load-student-relogin", "student")
         else:
             body = json.dumps({}, ensure_ascii=False).encode()
             self._request(
@@ -209,10 +255,13 @@ def run_worker(
     end_at: float,
     record_from: float,
     samples: dict[str, list[float]],
+    login_stagger_s: float,
 ) -> None:
     seed = f"{profile.get('seed', 'release1-pilot-d326')}-{label}"
     rng = random.Random(seed)
     think = profile.get("think_seconds") or {"min": 3, "max": 10}
+    if login_stagger_s > 0:
+        time.sleep(login_stagger_s)
     sess = PilotSession(origin, app_origin)
     sess.login(f"load-{label}", role)
     while time.monotonic() < end_at:
@@ -256,8 +305,9 @@ def run_measure(origin: str, profile: dict) -> dict:
                 end_at,
                 record_from,
                 shared_samples,
+                idx * AUTH_LOGIN_STAGGER_S,
             )
-            for label, role in workers
+            for idx, (label, role) in enumerate(workers)
         ]
         for fut in as_completed(futures):
             exc = fut.exception()
