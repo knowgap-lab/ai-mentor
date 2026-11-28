@@ -2,9 +2,12 @@
 # Шаги §8 на выделенной гостевой Ubuntu (QA_VM_SSH_HOST). Результат — в stdout, без записи pass в аттестацию.
 set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=/dev/null
+source "$ROOT/tools/vm-acceptance-fields.sh"
 # RELEASE_SHA задаётся tools/verify_release_sha.sh (родитель) или окружением deploy.
 RELEASE_SHA="${RELEASE_SHA:?RELEASE_SHA unset; run via tools/vm-acceptance.sh}"
 GUEST_OVERALL=0
+VM_FIELDS_FILE=""
 
 sync_acceptance_ssh_public_key_tf_var() {
   if [[ -n "${ACCEPTANCE_SSH_PUBLIC_KEY:-}" ]]; then
@@ -27,6 +30,50 @@ guest_step() {
     GUEST_OVERALL=1
     return "$code"
   fi
+}
+
+map_step_vm_field() {
+  local step="$1"
+  local code="$2"
+  case "$step" in
+    create)
+      if [[ "$code" -eq 0 ]]; then
+        vm_field terraform.create pass
+      else
+        vm_field terraform.create fail
+      fi
+      ;;
+    second_plan)
+      if [[ "$code" -eq 0 ]]; then
+        vm_field terraform.second_plan no_changes
+      else
+        vm_field terraform.second_plan fail
+      fi
+      ;;
+    converge)
+      if [[ "$code" -eq 0 ]]; then
+        vm_field ansible.converge pass
+      else
+        vm_field ansible.converge fail
+      fi
+      ;;
+    second_converge)
+      if [[ "$code" -eq 0 ]]; then
+        vm_field ansible.second_converge no_changes
+      else
+        vm_field ansible.second_converge fail
+      fi
+      ;;
+  esac
+}
+
+guest_step_vm() {
+  local name="$1"
+  shift
+  local code=0
+  guest_step "$name" "$@" || code=$?
+  map_step_vm_field "$name" "$code"
+  return "$code"
 }
 
 ssh_guest() {
@@ -157,7 +204,6 @@ step_second_converge() {
   inv="$(ansible_guest_inventory)"
   local log
   log="$(mktemp)"
-  # Кавычки в trap — путь зафиксирован до RETURN (иначе set -u и local log уже снят).
   trap "rm -f '${log}'" RETURN
   set -o pipefail
   local playbook_status
@@ -174,6 +220,10 @@ step_second_converge() {
 
 step_reboot() {
   local boot_before uptime_before boot_after
+  if ! ssh_guest "cd /opt/ai-mentor/src && ACCEPTANCE_WRITE_REBOOT_MARKER=1 bash deploy/acceptance-guest-verify.sh"; then
+    echo "reboot: persistence marker not written"
+    return 1
+  fi
   boot_before="$(ssh_guest 'cat /proc/sys/kernel/random/boot_id')"
   uptime_before="$(ssh_guest 'cut -d. -f1 /proc/uptime')"
   if [[ -z "$boot_before" || -z "$uptime_before" ]]; then
@@ -208,6 +258,14 @@ step_reboot() {
   fi
 }
 
+step_observability() {
+  ssh_guest "cd /opt/ai-mentor/src && bash deploy/acceptance-observability-up.sh"
+}
+
+step_verify() {
+  ssh_guest "cd /opt/ai-mentor/src && bash deploy/acceptance-guest-verify.sh"
+}
+
 step_gotenberg() {
   ssh_guest "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health" | grep -q 200 || \
     ssh_guest "sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -qi gotenberg"
@@ -223,7 +281,26 @@ sys.exit(1 if bad else 0)
 '
 }
 
+print_vm_evidence_summary() {
+  section_vm_evidence
+  vm_field sha "$RELEASE_SHA"
+  vm_field environment clean_ubuntu_vm
+  if [[ "$GUEST_OVERALL" -eq 0 ]]; then
+    export VM_ACCEPTANCE_GUEST_DONE=1
+    emit_vm_recorded_when_guest_done
+  fi
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -n "$line" ]] || continue
+    local key="${line%%=*}"
+    local value="${line#*=}"
+    vm_field "$key" "$value"
+  done <"$VM_FIELDS_FILE"
+}
+
 run_guest_acceptance() {
+  VM_FIELDS_FILE="$(mktemp)"
+  export VM_FIELDS_FILE
+  trap 'rm -f "$VM_FIELDS_FILE"' EXIT
   if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
     echo "guest: fatal: QA_VM_SSH_HOST unset"
     exit 1
@@ -233,14 +310,17 @@ run_guest_acceptance() {
     exit 1
   fi
 
-  guest_step create step_create
-  guest_step second_plan step_second_plan
-  guest_step converge step_converge
-  guest_step second_converge step_second_converge
-  guest_step reboot step_reboot
-  guest_step gotenberg step_gotenberg
-  guest_step no_pii step_no_pii
+  guest_step_vm create step_create || true
+  guest_step_vm second_plan step_second_plan || true
+  guest_step_vm converge step_converge || true
+  guest_step_vm second_converge step_second_converge || true
+  guest_step reboot step_reboot || true
+  guest_step observability step_observability || true
+  guest_step verify step_verify || true
+  guest_step gotenberg step_gotenberg || true
+  guest_step no_pii step_no_pii || true
 
+  print_vm_evidence_summary
   echo "guest:overall: exit=$GUEST_OVERALL (not an attestation pass)"
   exit "$GUEST_OVERALL"
 }

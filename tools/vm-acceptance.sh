@@ -7,6 +7,8 @@ set -u
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=/dev/null
 source "$ROOT/tools/verify_release_sha.sh"
+# shellcheck source=/dev/null
+source "$ROOT/tools/vm-acceptance-fields.sh"
 
 section() {
   echo ""
@@ -75,6 +77,7 @@ compose_config() {
 
 record_syntax "compose-prod" compose_config "$ROOT/deploy/compose.prod.yml" || true
 record_syntax "compose-staging" compose_config "$ROOT/deploy/compose.staging.yml" || true
+record_syntax "compose-observability" compose_config "$ROOT/deploy/compose.observability.yml" || true
 
 section "syntax summary"
 echo "syntax:overall: exit=$syntax_ok"
@@ -91,9 +94,32 @@ if [[ "$have_guest" -eq 0 ]]; then
   if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
     echo "missing: VM_HYPERVISOR_ACCESS (ограниченный доступ к гипервизору для одноразовой тестовой VM)"
   fi
-  for step in create second_plan converge second_converge reboot gotenberg no_pii; do
+  for step in create second_plan converge second_converge reboot observability verify gotenberg no_pii; do
     record_guest_blocked "$step" "no guest secrets or hypervisor access"
   done
+  section_vm_evidence
+  emit_vm_static_waiting "$RELEASE_SHA"
+  blocked_vm="blocked (no guest secrets or hypervisor access)"
+  vm_field terraform.create "$blocked_vm"
+  vm_field terraform.second_plan "$blocked_vm"
+  vm_field ansible.converge "$blocked_vm"
+  vm_field ansible.second_converge "$blocked_vm"
+  vm_field reboot.services "$blocked_vm"
+  vm_field reboot.readiness "$blocked_vm"
+  vm_field reboot.data not_persisted
+  vm_field background_job "$blocked_vm"
+  vm_field pdf.gotenberg "$blocked_vm"
+  vm_field pdf.bytes_stable false
+  vm_field telemetry.logs "$blocked_vm"
+  vm_field telemetry.traces "$blocked_vm"
+  vm_field telemetry.prometheus "$blocked_vm"
+  vm_field telemetry.grafana "$blocked_vm"
+  vm_field telemetry.alert_rule "$blocked_vm"
+  vm_field telemetry.pii "$blocked_vm"
+  vm_field restore.separate_environment false
+  vm_field restore.records_compared false
+  vm_field restore.backup_file_only true
+  echo "guest:run_command: RELEASE_SHA=${RELEASE_SHA} QA_VM_SSH_HOST=<user@host> VM_HYPERVISOR_ACCESS=<path> bash tools/vm-acceptance.sh"
 else
   section "guest: remote acceptance"
   if bash "$ROOT/tools/vm-acceptance-guest.sh"; then

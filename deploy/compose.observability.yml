@@ -1,0 +1,76 @@
+# Наблюдаемость только для гостевой приёмки §8; не prod/staging.
+# Образы закреплены точной версией (D313). Наружу — только 127.0.0.1.
+name: ai-mentor-observability
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    restart: unless-stopped
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+      - "127.0.0.1:8889:8889"
+    networks:
+      - observability
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus-rules.yml:/etc/prometheus/prometheus-rules.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - observability
+
+  loki:
+    image: grafana/loki:3.2.1
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./observability/loki.yaml:/etc/loki/config.yaml:ro
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks:
+      - observability
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    restart: unless-stopped
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo/config.yaml:ro
+    ports:
+      - "127.0.0.1:3200:3200"
+    networks:
+      - observability
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: acceptance
+      GF_SECURITY_ADMIN_PASSWORD: acceptance-local-only
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./observability/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    ports:
+      - "127.0.0.1:3030:3000"
+    networks:
+      - observability
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+networks:
+  observability:
+    name: ai-mentor-observability
