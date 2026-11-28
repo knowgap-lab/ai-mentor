@@ -13,6 +13,7 @@ import { PreparationPage } from "./tutor/PreparationPage";
 import { SessionsPage } from "./tutor/SessionsPage";
 import { StudentCardPage } from "./tutor/StudentCardPage";
 import { TutorLessonPage } from "./tutor/TutorLessonPage";
+import { TutorHomePage } from "./tutor/TutorHomePage";
 import { TutorPage } from "./tutor/TutorPage";
 import { DesignPage } from "./design/DesignPage";
 
@@ -53,6 +54,7 @@ export function App() {
       <Route path="/assignment/:assignmentId" element={<AssignmentPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/task/:assignmentId/:itemId" element={<TaskPage />} />
+      <Route path="/tutor/home" element={<TutorHomePage />} />
       <Route path="/tutor" element={<TutorPage />} />
       <Route path="/tutor/sessions" element={<SessionsPage />} />
       <Route path="/tutor/students/new" element={<NewStudentPage />} />

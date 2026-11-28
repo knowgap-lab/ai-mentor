@@ -1,0 +1,187 @@
+/* Домашняя репетитора: сетка и локальная тёмная тема (переменные темы, DS-R1). */
+
+.root {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: var(--mantine-spacing-md);
+  padding-bottom: calc(var(--mantine-spacing-xl) + env(safe-area-inset-bottom));
+  background: var(--am-page);
+  color: var(--am-text);
+}
+
+.root[data-am-scheme="dark"] {
+  --am-page: var(--mantine-color-gray-9);
+  --am-sheet: var(--mantine-color-gray-8);
+  --am-text: var(--mantine-color-gray-0);
+  --am-text-muted: var(--mantine-color-gray-4);
+  --am-line: var(--mantine-color-gray-7);
+  --am-ink: var(--mantine-color-ink-4);
+}
+
+.shell {
+  max-width: var(--am-content-width);
+  margin: 0 auto;
+}
+
+@media (min-width: 48rem) {
+  .shell {
+    max-width: 56rem;
+  }
+}
+
+.topRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-lg);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: var(--mantine-h1-font-size);
+  line-height: var(--mantine-h1-line-height);
+  font-weight: 600;
+}
+
+.profileCard {
+  display: flex;
+  gap: var(--mantine-spacing-md);
+  align-items: flex-start;
+  padding: var(--mantine-spacing-md);
+  margin-bottom: var(--mantine-spacing-lg);
+  background: var(--am-sheet);
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+}
+
+.profileIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--am-target);
+  height: var(--am-target);
+  font-size: 1.5rem;
+  line-height: 1;
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-ink-0);
+}
+
+.profileName {
+  margin: 0 0 var(--mantine-spacing-xs);
+  font-size: var(--mantine-h3-font-size);
+  font-weight: 600;
+}
+
+.profileAbout {
+  margin: 0;
+  font-size: var(--mantine-font-size-sm);
+  color: var(--am-text-muted);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--mantine-spacing-sm);
+  font-size: var(--mantine-h2-font-size);
+  font-weight: 600;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--mantine-spacing-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 30rem) {
+  .board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 48rem) {
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.studentCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-md);
+  background: var(--am-sheet);
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+  box-sizing: border-box;
+}
+
+.studentHead {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  min-height: var(--am-target);
+}
+
+.studentIcon {
+  font-size: 1.375rem;
+  line-height: 1;
+}
+
+.studentName {
+  margin: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.metricLabel {
+  margin: 0;
+  font-size: var(--mantine-font-size-xs);
+  color: var(--am-text-muted);
+}
+
+.metricValue {
+  margin: 0;
+  font-size: var(--mantine-font-size-sm);
+}
+
+.footer {
+  margin-top: var(--mantine-spacing-xl);
+  padding-top: var(--mantine-spacing-md);
+  border-top: 1px solid var(--am-line);
+}
+
+.socialList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.socialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--am-target);
+  min-width: var(--am-target);
+  padding: 0 var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  border: 1px solid var(--am-line);
+  color: var(--am-ink);
+  text-decoration: none;
+  font-size: var(--mantine-font-size-sm);
+}
+
+.cabinetLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--am-target);
+  margin-top: var(--mantine-spacing-md);
+  color: var(--am-ink);
+  font-size: var(--mantine-font-size-sm);
+}
