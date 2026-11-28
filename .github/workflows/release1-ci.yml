@@ -209,7 +209,7 @@ jobs:
 
   deploy:
     name: deploy
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, acceptance-kvm]
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
