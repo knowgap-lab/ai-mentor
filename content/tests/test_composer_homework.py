@@ -8,8 +8,10 @@ from composer.compose import (
     _BANK_REF_PLAIN,
     _BUDGET,
     _BUDGET_ALT,
+    _ROLES,
     _budget_hours,
     _plain_type_numbers,
+    _tasks,
 )
 
 
@@ -39,3 +41,18 @@ def test_budget_keeps_hours_and_minutes() -> None:
     hours_only = _BUDGET.search("Нагрузка ≈ 1 ч")
     assert hours_only is not None
     assert _budget_hours(hours_only) == Decimal(1)
+
+
+def test_ct2027_task_with_gaps_is_scaffolded() -> None:
+    plan = {
+        "relative": "L02.md",
+        "body": (
+            "## Задачи на уроке\n\n"
+            "1. Тип 6 банка P03 — проекции, с пропусками в формуле.\n"
+        ),
+    }
+    tasks = _tasks(plan, [])
+    assert len(tasks) == 1
+    assert tasks[0]["role"] == "scaffolded"
+    assert tasks[0]["role"] == _ROLES["с пропусками"]
+    assert tasks[0]["role"] != "solve_with_gaps"

@@ -681,7 +681,7 @@ def _tasks(plan: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str,
             elif "сам" in rest:
                 role = "solve_alone"
             elif "пропуск" in rest:
-                role = "solve_with_gaps"
+                role = _ROLES["с пропусками"]
             else:
                 role = "solve_alone"
             label = current_label or "Практика"
