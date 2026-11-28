@@ -1,0 +1,10 @@
+groups:
+  - name: acceptance
+    rules:
+      - alert: AcceptanceOtelCollectorDown
+        expr: absent(up{job="otel-collector"})
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OTel collector scrape missing on acceptance guest"
