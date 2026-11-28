@@ -222,15 +222,19 @@ jobs:
           QA_VM_SSH_HOST: ${{ secrets.QA_VM_SSH_HOST }}
         run: |
           set -euo pipefail
-          if [[ -x tools/vm-acceptance.sh ]]; then
-            tools/vm-acceptance.sh
-          else
+          if [[ ! -x tools/vm-acceptance.sh ]]; then
             echo "§8 Ubuntu VM: отсутствует tools/vm-acceptance.sh (проверка «с нуля VM → развёртывание → перезагрузка», brief §8)."
-            if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
-              echo "Отсутствует секрет GitHub VM_HYPERVISOR_ACCESS (доступ к гипервизору для одноразовой VM)."
-            fi
-            if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
-              echo "Отсутствует секрет GitHub QA_VM_SSH_HOST (SSH к выделенной гостевой Ubuntu)."
-            fi
             exit 1
           fi
+          # Self-hosted acceptance-kvm: use repo libvirt helper when secrets are empty (D340).
+          # shellcheck source=tools/ci/vm-acceptance-runner-env.sh
+          source tools/ci/vm-acceptance-runner-env.sh
+          if [[ -z "${VM_HYPERVISOR_ACCESS:-}" || -z "${QA_VM_SSH_HOST:-}" ]]; then
+            if [[ -z "${VM_HYPERVISOR_ACCESS:-}" ]]; then
+              echo "missing: VM_HYPERVISOR_ACCESS (секрет GitHub или локальный libvirt + tools/vm-hypervisor-libvirt-apply.sh)"
+            fi
+            if [[ -z "${QA_VM_SSH_HOST:-}" ]]; then
+              echo "missing: QA_VM_SSH_HOST (секрет GitHub или placeholder после libvirt create)"
+            fi
+          fi
+          tools/vm-acceptance.sh
