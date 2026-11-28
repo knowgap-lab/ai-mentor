@@ -7,12 +7,14 @@ resource "libvirt_volume" "acceptance_base" {
 
 resource "libvirt_volume" "acceptance_disk" {
   name           = "${local.vm_domain_name}-disk"
+  pool           = var.libvirt_pool
   base_volume_id = libvirt_volume.acceptance_base.id
   size           = 20 * 1024 * 1024 * 1024
 }
 
 resource "libvirt_cloudinit_disk" "acceptance" {
   name = "${local.vm_domain_name}-cloudinit.iso"
+  pool = var.libvirt_pool
 
   user_data = <<-EOT
 #cloud-config
