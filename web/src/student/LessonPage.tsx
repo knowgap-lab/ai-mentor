@@ -1,4 +1,5 @@
 import { Button, Stack, Text } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { ActionBar, Screen, TaskSheet } from "../ui";
@@ -9,10 +10,6 @@ type Block = {
   id: string;
   markdown: string;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function readBlock(value: unknown): Block | null {
   if (!isRecord(value)) {

@@ -5,6 +5,7 @@
   "Ученик/Задача": "/task/:assignmentId/:itemId",
   "Ученик/Итог": "/assignment/:assignmentId/summary",
   "Ученик/Профиль": "/profile",
+  "Репетитор/Домашняя": "/tutor/home",
   "Репетитор/Ученики": "/tutor",
   "Репетитор/Ученик": "/tutor/students/:studentId",
   "Репетитор/Урок": "/tutor/lessons/:lessonId",

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders } from "../task/csrf";
 import { Screen } from "../ui";
-import { errorSentence } from "./api-error";
+import { errorSentence } from "../api-error";
+import { isRecord } from "../record";
 import { isUnderEighteen, minskTime } from "./minsk-time";
 
 type LessonRow = {
@@ -45,10 +46,6 @@ type LoadResult =
   | { phase: "offline" }
   | { phase: "error"; sentence: string | null }
   | { phase: "ready"; card: Card };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function warningTexts(value: unknown): string[] {
   if (!Array.isArray(value)) {

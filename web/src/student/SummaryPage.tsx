@@ -1,7 +1,8 @@
 import { Button, NativeSelect, Stack, Text, Textarea } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import { messageForResponse, OFFLINE_TEXT } from "../api-error";
+import { errorSentence, OFFLINE_TEXT } from "../api-error";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen, StatusBadge, type Status } from "../ui";
 
@@ -10,7 +11,7 @@ const REASONS = [
   { value: "statement_error", label: "ошибка в условии" },
   { value: "equivalent_answer", label: "мой ответ эквивалентен" },
   { value: "other", label: "другое" },
-] as const;
+];
 
 type Verdict = "correct" | "partial" | "wrong";
 
@@ -20,10 +21,6 @@ type SummaryItem = {
   showKey: string | null;
   hasSolution: boolean;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function readVerdict(value: unknown): Verdict | null {
   if (value === "correct" || value === "partial" || value === "wrong") {
@@ -87,7 +84,7 @@ export function SummaryPage() {
         );
         rememberCsrfFromResponse(response);
         if (!response.ok) {
-          const text = await messageForResponse(response);
+          const text = (await errorSentence(response)) ?? OFFLINE_TEXT;
           if (!cancelled) {
             setItems(null);
             setLoadError(text);
@@ -140,7 +137,7 @@ export function SummaryPage() {
       );
       rememberCsrfFromResponse(response);
       if (!response.ok) {
-        setActionError(await messageForResponse(response));
+        setActionError((await errorSentence(response)) ?? OFFLINE_TEXT);
         return;
       }
       if (path === "dispute") {

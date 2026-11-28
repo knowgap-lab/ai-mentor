@@ -2,10 +2,9 @@ import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { type FormEvent, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { List, ListButton, Screen } from "../ui";
-import { errorSentence } from "./api-error";
+import { errorSentence, errorText } from "../api-error";
+import { isRecord } from "../record";
 import { minskTime } from "./minsk-time";
-
-type Verdict = "correct" | "partial" | "wrong";
 
 type StudentSummary = {
   id: string;
@@ -19,31 +18,8 @@ type StudentSummary = {
   warnings: string[];
 };
 
-type AttemptRow = {
-  attempt_id: string;
-  raw_input: string;
-  verdict?: Verdict;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function readCount(value: unknown): number {
   return typeof value === "number" ? value : 0;
-}
-
-function readWarnings(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  const texts: string[] = [];
-  for (const item of value) {
-    if (isRecord(item) && typeof item.text === "string" && item.text !== "") {
-      texts.push(item.text);
-    }
-  }
-  return texts;
 }
 
 function readStudent(value: unknown): StudentSummary | null {
@@ -67,6 +43,19 @@ function readStudent(value: unknown): StudentSummary | null {
   };
 }
 
+function readWarnings(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const out: string[] = [];
+  for (const item of value) {
+    if (isRecord(item) && typeof item.text === "string" && item.text) {
+      out.push(item.text);
+    }
+  }
+  return out;
+}
+
 function rowSubtitle(student: StudentSummary): string {
   const time = student.next_lesson_at ? minskTime(student.next_lesson_at) : "";
   return [
@@ -80,27 +69,6 @@ function rowSubtitle(student: StudentSummary): string {
   ]
     .filter((part) => part !== "")
     .join(" ");
-}
-
-function readAttempt(value: unknown): AttemptRow | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-  if (
-    typeof value.attempt_id !== "string" ||
-    typeof value.raw_input !== "string"
-  ) {
-    return null;
-  }
-  const verdict = value.verdict;
-  const row: AttemptRow = {
-    attempt_id: value.attempt_id,
-    raw_input: value.raw_input,
-  };
-  if (verdict === "correct" || verdict === "partial" || verdict === "wrong") {
-    row.verdict = verdict;
-  }
-  return row;
 }
 
 function byNextLesson(left: StudentSummary, right: StudentSummary): number {
@@ -118,21 +86,13 @@ function byNextLesson(left: StudentSummary, right: StudentSummary): number {
   return leftAt < rightAt ? -1 : 1;
 }
 
-function verdictLabel(verdict: Verdict): string {
-  return verdict === "correct"
-    ? "верно"
-    : verdict === "wrong"
-      ? "неверно"
-      : "частично верно";
-}
-
 export function TutorPage() {
   const [telegramId, setTelegramId] = useState("");
   const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
-  const [attempts, setAttempts] = useState<AttemptRow[]>([]);
+  const [attempts, setAttempts] = useState<string[]>([]);
 
   async function loadStudents() {
     try {
@@ -140,8 +100,7 @@ export function TutorPage() {
       if (!list.ok) {
         const sentence = await errorSentence(list);
         if (list.status === 401) {
-          // Код unauthorized в таблице web.md нет: на форме входа тот же текст, что у login_stale.
-          setLoginNotice(sentence ?? "Войдите ещё раз");
+          setLoginNotice(sentence ?? errorText("login_stale") ?? "");
           setPhase("login");
           return;
         }
@@ -190,10 +149,9 @@ export function TutorPage() {
   }
 
   async function onOpen(student: StudentSummary) {
-    const response = await fetch(
-      `/assignments?student_id=${encodeURIComponent(student.id)}`,
-      { credentials: "include" },
-    );
+    const response = await fetch(`/assignments?student_id=${student.id}`, {
+      credentials: "include",
+    });
     if (!response.ok) {
       return;
     }
@@ -201,15 +159,14 @@ export function TutorPage() {
     if (!Array.isArray(payload)) {
       return;
     }
-    const rows: AttemptRow[] = [];
+    const rows: string[] = [];
     for (const item of payload) {
       if (!isRecord(item) || typeof item.id !== "string") {
         continue;
       }
-      const attemptsResponse = await fetch(
-        `/assignments/${encodeURIComponent(item.id)}/attempts`,
-        { credentials: "include" },
-      );
+      const attemptsResponse = await fetch(`/assignments/${item.id}/attempts`, {
+        credentials: "include",
+      });
       if (!attemptsResponse.ok) {
         continue;
       }
@@ -218,9 +175,8 @@ export function TutorPage() {
         continue;
       }
       for (const attempt of body) {
-        const row = readAttempt(attempt);
-        if (row) {
-          rows.push(row);
+        if (isRecord(attempt) && typeof attempt.raw_input === "string") {
+          rows.push(attempt.raw_input);
         }
       }
     }
@@ -247,8 +203,6 @@ export function TutorPage() {
           <Stack gap="md">
             <TextInput
               label="telegram_id"
-              name="telegram_id"
-              autoComplete="off"
               value={telegramId}
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
@@ -263,19 +217,11 @@ export function TutorPage() {
   return (
     <Screen title="Ученики">
       <Stack gap="md">
-        <Button type="button" variant="default" onClick={() => void onLogout()}>
-          Выход
-        </Button>
+        <Button onClick={() => void onLogout()}>Выход</Button>
         {phase === "offline" ? (
           <Stack gap="sm">
             <Text>{listNotice ?? "Нет связи"}</Text>
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => void loadStudents()}
-            >
-              Повторить
-            </Button>
+            <Button onClick={() => void loadStudents()}>Повторить</Button>
           </Stack>
         ) : (
           <List label="Ученики">
@@ -289,17 +235,74 @@ export function TutorPage() {
             ))}
           </List>
         )}
-        {attempts.length > 0 ? (
-          <Stack gap="sm" component="section">
-            {attempts.map((attempt) => (
-              <Text key={attempt.attempt_id}>
-                {attempt.raw_input}
-                {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
-              </Text>
-            ))}
-          </Stack>
-        ) : null}
+        {attempts.length > 0
+          ? attempts.map((raw) => <p key={raw}>{raw}</p>)
+          : null}
       </Stack>
     </Screen>
+  );
+}
+
+const HOME = [
+  ["Алина К.", "ДЗ 6 из 8 · курс 58%"],
+  ["Богдан М.", "ДЗ 3 из 5 · курс 41%"],
+  ["Вера С.", "ДЗ 8 из 8 · курс 72%"],
+  ["Глеб Т.", "ДЗ 1 из 6 · курс 22%"],
+  ["Дина Л.", "ДЗ 4 из 7 · курс 49%"],
+  ["Егор П.", "ДЗ 5 из 5 · курс 63%"],
+];
+
+export function TutorHomePage() {
+  const [dark, setDark] = useState(
+    () => localStorage.getItem("am-th") === "dark",
+  );
+  return (
+    <div
+      className="tr"
+      data-am-scheme={dark ? "dark" : "light"}
+      data-testid="th"
+    >
+      <h1>Домашняя</h1>
+      <label className="tt">
+        <input
+          type="checkbox"
+          checked={dark}
+          onChange={() => {
+            const n = !dark;
+            setDark(n);
+            localStorage.setItem("am-th", n ? "dark" : "light");
+          }}
+          aria-label="Тема"
+        />
+        <span>{dark ? "Тьма" : "Свет"}</span>
+      </label>
+      <div className="tp">
+        <strong>Марина Волкова</strong>
+        <p className="tm">План, ДЗ, разбор ошибок</p>
+      </div>
+      <ul aria-label="Ученики">
+        {HOME.map(([title, sub]) => (
+          <li key={title}>
+            <a href="/tutor">
+              {title}
+              <br />
+              {sub}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div className="tf">
+        <ul className="ts">
+          {["Telegram", "VK", "Сайт"].map((label) => (
+            <li key={label}>
+              <a href="/tutor">{label}</a>
+            </li>
+          ))}
+        </ul>
+        <a className="tc" href="/tutor">
+          В кабинет
+        </a>
+      </div>
+    </div>
   );
 }

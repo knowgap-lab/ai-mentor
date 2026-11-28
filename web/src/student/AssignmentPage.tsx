@@ -1,4 +1,5 @@
 import { Button, Stack, Text } from "@mantine/core";
+import { isRecord } from "../record";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import {
@@ -29,10 +30,6 @@ type Assignment = {
   subject?: string;
   items: ItemRow[];
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
 
 function readVerdict(value: unknown): Verdict | undefined {
   if (

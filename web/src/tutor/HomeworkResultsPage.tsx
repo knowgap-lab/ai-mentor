@@ -10,10 +10,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen, StatusBadge, type Status } from "../ui";
-import { ERROR_TEXT, errorSentence, isRecord } from "./api-error";
+import { errorSentence, errorText } from "../api-error";
+import { isRecord } from "../record";
 import classes from "./field-focus.module.css";
-
-// Причины спора — подписи AT-R18. Ключ и решение сюда не выводятся (WB-R4, WB-R22).
 
 const REASON_LABEL: Record<string, string> = {
   key_wrong: "ключ неверен",
@@ -27,7 +26,7 @@ const VERDICTS = [
   { value: "correct", label: "верно" },
   { value: "partial", label: "частично" },
   { value: "wrong", label: "неверно" },
-] as const;
+];
 
 type Verdict = "correct" | "partial" | "wrong";
 
@@ -106,7 +105,7 @@ async function readFailure(
     }
     return {
       code: payload.code,
-      sentence: ERROR_TEXT[payload.code] ?? null,
+      sentence: errorText(payload.code) ?? null,
     };
   } catch {
     return { code: null, sentence: null };
@@ -453,7 +452,7 @@ export function HomeworkResultsPage() {
                     classNames={{ input: classes.field }}
                     size="md"
                     value={form.verdict}
-                    data={[...VERDICTS]}
+                    data={VERDICTS}
                     onChange={(event) =>
                       setField(attempt.id, {
                         verdict: event.currentTarget.value,

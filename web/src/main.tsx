@@ -1,5 +1,4 @@
 import { MantineProvider } from "@mantine/core";
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./App";
@@ -11,20 +10,18 @@ import { theme } from "./design/theme";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
-  throw new Error("root element is missing");
+  throw new Error("no root");
 }
 
 createRoot(rootElement).render(
-  <StrictMode>
-    <MantineProvider
-      theme={theme}
-      forceColorScheme="light"
-      withCssVariables={false}
-      withGlobalClasses={false}
-    >
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </MantineProvider>
-  </StrictMode>,
+  <MantineProvider
+    theme={theme}
+    forceColorScheme="light"
+    withCssVariables={false}
+    withGlobalClasses={false}
+  >
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </MantineProvider>,
 );

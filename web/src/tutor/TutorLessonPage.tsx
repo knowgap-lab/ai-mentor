@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders } from "../task/csrf";
 import { ChoiceRow, Screen } from "../ui";
-import { errorSentence, isRecord } from "./api-error";
+import { errorSentence } from "../api-error";
+import { isRecord } from "../record";
 import { minskLocalToUtc, minskTime } from "./minsk-time";
 
 // Слова для planned, frozen и held в web.md нет: показываем только «пропущен».

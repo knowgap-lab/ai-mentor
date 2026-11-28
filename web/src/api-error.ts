@@ -1,6 +1,6 @@
-// Тексты из таблицы «Ошибки» web.md. Код и message API на экран не попадают (WB-R6).
+import { isRecord } from "./record";
 
-const TEXTS: Record<string, string> = {
+const ERROR_TEXT: Record<string, string> = {
   item_closed: "Эта задача уже закрыта",
   assignment_closed: "ДЗ уже сдано",
   idempotency_conflict:
@@ -14,21 +14,27 @@ const TEXTS: Record<string, string> = {
   dispute_text_invalid:
     "Уберите из текста телефоны, почту и ссылки или сократите до 300 символов",
   not_submitted: "Спор можно открыть после сдачи ДЗ",
+  consent_missing: "Нужно согласие родителя — обратитесь к репетитору",
+  has_answers: "Нельзя отозвать: ученик уже отвечал",
+  account_locked: "Вход закрыт — обратитесь к репетитору",
 };
 
 export const OFFLINE_TEXT = "Нет связи";
 
-export async function messageForResponse(response: Response): Promise<string> {
+export function errorText(code: string): string | undefined {
+  return ERROR_TEXT[code];
+}
+
+export async function errorSentence(
+  response: Response,
+): Promise<string | null> {
   try {
-    const body = (await response.json()) as { code?: unknown };
-    if (typeof body.code === "string") {
-      const text = TEXTS[body.code];
-      if (text) {
-        return text;
-      }
+    const payload: unknown = await response.json();
+    if (!isRecord(payload) || typeof payload.code !== "string") {
+      return null;
     }
+    return errorText(payload.code) ?? null;
   } catch {
-    return OFFLINE_TEXT;
+    return null;
   }
-  return OFFLINE_TEXT;
 }

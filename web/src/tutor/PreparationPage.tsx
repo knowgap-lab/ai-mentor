@@ -2,7 +2,8 @@ import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { Screen } from "../ui";
-import { errorSentence, isRecord } from "./api-error";
+import { errorSentence } from "../api-error";
+import { isRecord } from "../record";
 
 // Ключ и решение уже в первом ответе, но в DOM их нет до «показать» (WB-R22).
 

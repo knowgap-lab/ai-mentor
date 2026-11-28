@@ -57,3 +57,108 @@ body {
   background: var(--am-sheet);
   transform: translateX(-50%);
 }
+
+.tr {
+  min-height: 100vh;
+  background: var(--am-page);
+  color: var(--am-text);
+}
+
+.tr h1 {
+  margin: 0 0 var(--mantine-spacing-md);
+  font-size: var(--mantine-h1-font-size);
+  font-weight: 600;
+}
+
+.tr[data-am-scheme="dark"] {
+  --am-page: var(--mantine-color-gray-9);
+  --am-sheet: var(--mantine-color-gray-8);
+  --am-text: var(--mantine-color-gray-0);
+  --am-text-muted: var(--mantine-color-gray-4);
+  --am-line: var(--mantine-color-gray-7);
+  --am-ink: var(--mantine-color-ink-4);
+}
+
+.tt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  min-height: var(--am-target);
+  margin-bottom: var(--mantine-spacing-md);
+  font-size: var(--mantine-font-size-sm);
+  cursor: pointer;
+}
+
+.tp {
+  display: flex;
+  gap: var(--mantine-spacing-sm);
+  margin-bottom: var(--mantine-spacing-lg);
+  padding: var(--mantine-spacing-md);
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+  background: var(--am-sheet);
+}
+
+.tm {
+  margin: 0;
+  color: var(--am-text-muted);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.tf {
+  margin-top: var(--mantine-spacing-xl);
+  padding-top: var(--mantine-spacing-md);
+  border-top: 1px solid var(--am-line);
+}
+
+.ts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mantine-spacing-sm);
+  margin: var(--mantine-spacing-sm) 0 var(--mantine-spacing-md);
+  padding: 0;
+  list-style: none;
+}
+
+.ts a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--am-target);
+  padding: 0 var(--mantine-spacing-md);
+  border: 1px solid var(--am-line);
+  border-radius: var(--mantine-radius-md);
+  color: var(--am-ink);
+  text-decoration: none;
+  font-size: var(--mantine-font-size-sm);
+}
+
+.tc {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--am-target);
+  color: var(--am-ink);
+  font-size: var(--mantine-font-size-sm);
+  text-decoration: none;
+}
+
+@media (min-width: 30rem) {
+  .tr ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--mantine-spacing-sm);
+    border: 0;
+    background: transparent;
+  }
+
+  .tr ul > li {
+    border: 1px solid var(--am-line);
+    border-radius: var(--mantine-radius-md);
+    background: var(--am-sheet);
+  }
+}
+
+@media (min-width: 48rem) {
+  .tr ul {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
