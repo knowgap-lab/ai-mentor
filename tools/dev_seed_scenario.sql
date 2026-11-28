@@ -54,9 +54,9 @@ SELECT
     'student-demo',
     'math',
     1,
-    'Демо: сложение',
+    'Демо: дроби (урок 2)',
     'regular',
-    'ct-demo:L01',
+    'ct-math:L02',
     'held',
     '2026-W10',
     TIMESTAMPTZ '2026-03-02T13:00:00Z',
@@ -65,12 +65,12 @@ SELECT
     false,
     true,
     $template$[
-      {"id":"ct-demo:L01.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-demo:D1.B01","ct-demo:D1.B02"]},
-      {"id":"ct-demo:L01.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[{"stage_id":"ct-demo:L01.G2","variant_id":"ct-demo:D1.T01.S1.V001","type_id":"ct-demo:D1.T01","role":"solve_together","position":1,"theory_block":"ct-demo:D1.B01"}]}
+      {"id":"ct-math:L02.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-math:M01.B01","ct-math:M01.B02"]},
+      {"id":"ct-math:L02.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[{"stage_id":"ct-math:L02.G2","variant_id":"ct-math:M01.T11.S1.V001","type_id":"ct-math:M01.T11","role":"solve_together","position":1,"theory_block":"ct-math:M01.B01"}]}
     ]$template$::jsonb,
     $template$[
-      {"id":"ct-demo:L01.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-demo:D1.B01","ct-demo:D1.B02"]},
-      {"id":"ct-demo:L01.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[{"stage_id":"ct-demo:L01.G2","variant_id":"ct-demo:D1.T01.S1.V001","type_id":"ct-demo:D1.T01","role":"solve_together","position":1,"theory_block":"ct-demo:D1.B01"}]}
+      {"id":"ct-math:L02.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-math:M01.B01","ct-math:M01.B02"]},
+      {"id":"ct-math:L02.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[{"stage_id":"ct-math:L02.G2","variant_id":"ct-math:M01.T11.S1.V001","type_id":"ct-math:M01.T11","role":"solve_together","position":1,"theory_block":"ct-math:M01.B01"}]}
     ]$template$::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM core.lesson WHERE id = 'lesson-demo-held');
 
@@ -85,7 +85,7 @@ SELECT
     2,
     'Демо: следующий урок',
     'regular',
-    'ct-demo:L01',
+    'ct-math:L02',
     'planned',
     '2026-W11',
     NULL,
@@ -94,26 +94,26 @@ SELECT
     false,
     false,
     $template$[
-      {"id":"ct-demo:L01.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-demo:D1.B01"]},
-      {"id":"ct-demo:L01.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[]}
+      {"id":"ct-math:L02.G1","title":"Новая тема","kind":"theory","minutes":[0,30],"blocks":["ct-math:M01.B01"]},
+      {"id":"ct-math:L02.G2","title":"Практика","kind":"practice","minutes":[30,60],"practice":[]}
     ]$template$::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM core.lesson WHERE id = 'lesson-demo-next');
 
 INSERT INTO core.lesson_mark (
     lesson_id, last_theory_block, practice_stage_id, practice_position, coverage
 )
-SELECT 'lesson-demo-held', 'ct-demo:D1.B01', 'ct-demo:L01.G2', 1, 'all'
+SELECT 'lesson-demo-held', 'ct-math:M01.B01', 'ct-math:L02.G2', 1, 'all'
 WHERE NOT EXISTS (SELECT 1 FROM core.lesson_mark WHERE lesson_id = 'lesson-demo-held');
 
 INSERT INTO core.lesson_topic (lesson_id, position, topic)
-SELECT 'lesson-demo-held', 1, 'ct-demo:D1'
+SELECT 'lesson-demo-held', 1, 'ct-math:M01'
 WHERE NOT EXISTS (
     SELECT 1 FROM core.lesson_topic
     WHERE lesson_id = 'lesson-demo-held' AND position = 1
 );
 
 INSERT INTO core.plan_snapshot (student_id, subject, version, source_hashes)
-SELECT 'student-demo', 'math', 0, '{"ct-demo:L01":"dev-seed"}'::jsonb
+SELECT 'student-demo', 'math', 0, '{"ct-math:L02":"dev-seed"}'::jsonb
 WHERE NOT EXISTS (
     SELECT 1 FROM core.plan_snapshot
     WHERE student_id = 'student-demo' AND subject = 'math' AND version = 0
@@ -122,7 +122,7 @@ WHERE NOT EXISTS (
 INSERT INTO core.plan_snapshot_lesson (
     student_id, subject, version, place_no, lesson_id, template_id, planned_week
 )
-SELECT 'student-demo', 'math', 0, 1, 'lesson-demo-held', 'ct-demo:L01', '2026-W10'
+SELECT 'student-demo', 'math', 0, 1, 'lesson-demo-held', 'ct-math:L02', '2026-W10'
 WHERE NOT EXISTS (
     SELECT 1 FROM core.plan_snapshot_lesson
     WHERE student_id = 'student-demo' AND subject = 'math' AND version = 0 AND place_no = 1
@@ -131,38 +131,38 @@ WHERE NOT EXISTS (
 INSERT INTO core.plan_snapshot_lesson (
     student_id, subject, version, place_no, lesson_id, template_id, planned_week
 )
-SELECT 'student-demo', 'math', 0, 2, 'lesson-demo-next', 'ct-demo:L01', '2026-W11'
+SELECT 'student-demo', 'math', 0, 2, 'lesson-demo-next', 'ct-math:L02', '2026-W11'
 WHERE NOT EXISTS (
     SELECT 1 FROM core.plan_snapshot_lesson
     WHERE student_id = 'student-demo' AND subject = 'math' AND version = 0 AND place_no = 2
 );
 
 INSERT INTO core.variant_pool (student_id, variant_id, type_id, seen, reserve)
-SELECT 'student-demo', 'ct-demo:D1.T01.S1.V001', 'ct-demo:D1.T01', true, false
+SELECT 'student-demo', 'ct-math:M01.T11.S1.V001', 'ct-math:M01.T11', true, false
 WHERE NOT EXISTS (
     SELECT 1 FROM core.variant_pool
-    WHERE student_id = 'student-demo' AND variant_id = 'ct-demo:D1.T01.S1.V001'
+    WHERE student_id = 'student-demo' AND variant_id = 'ct-math:M01.T11.S1.V001'
 );
 
 INSERT INTO core.variant_pool (student_id, variant_id, type_id, seen, reserve)
-SELECT 'student-demo', 'ct-demo:D1.T01.S1.V002', 'ct-demo:D1.T01', true, false
+SELECT 'student-demo', 'ct-math:M01.T11.S1.V002', 'ct-math:M01.T11', true, false
 WHERE NOT EXISTS (
     SELECT 1 FROM core.variant_pool
-    WHERE student_id = 'student-demo' AND variant_id = 'ct-demo:D1.T01.S1.V002'
+    WHERE student_id = 'student-demo' AND variant_id = 'ct-math:M01.T11.S1.V002'
 );
 
 INSERT INTO core.variant_pool (student_id, variant_id, type_id, seen, reserve)
-SELECT 'student-demo', 'ct-demo:D1.T01.S1.V003', 'ct-demo:D1.T01', false, false
+SELECT 'student-demo', 'ct-math:M01.T11.S1.V003', 'ct-math:M01.T11', false, false
 WHERE NOT EXISTS (
     SELECT 1 FROM core.variant_pool
-    WHERE student_id = 'student-demo' AND variant_id = 'ct-demo:D1.T01.S1.V003'
+    WHERE student_id = 'student-demo' AND variant_id = 'ct-math:M01.T11.S1.V003'
 );
 
 INSERT INTO core.homework_draft (id, lesson_id, items, deadline)
 SELECT
     'draft-demo',
     'lesson-demo-next',
-    '["ct-demo:D1.T01.S1.V003","ct-demo:D1.T01.S1.V004"]'::jsonb,
+    '["ct-math:M01.T11.S1.V003","ct-math:M01.T11.S1.V004"]'::jsonb,
     '2026-03-15T18:00:00Z'
 WHERE NOT EXISTS (SELECT 1 FROM core.homework_draft WHERE id = 'draft-demo');
 
@@ -179,8 +179,8 @@ SELECT
     'home',
     $snap${
       "items": [
-        {"item_id":"item-demo-ok","statement":"Найдите значение выражения $2 + 3$.","answer_format":"ct.integer","max_points":1},
-        {"item_id":"item-demo-bad","statement":"Найдите значение выражения $3 + 4$.","answer_format":"ct.integer","max_points":1}
+        {"item_id":"item-demo-ok","statement":"НОД(252, 198)","answer_format":"ct.integer","max_points":1},
+        {"item_id":"item-demo-bad","statement":"НОД(252, 198)","answer_format":"ct.integer","max_points":1}
       ]
     }$snap$::jsonb
 WHERE NOT EXISTS (SELECT 1 FROM core.assignment WHERE id = 'asg-demo-submitted');
@@ -203,7 +203,7 @@ INSERT INTO core.attempts (
     id, assignment_id, item_id, raw_input, journal_seq, source, place, attempt_no
 )
 SELECT
-    'attempt-demo-ok', 'asg-demo-submitted', 'item-demo-ok', '5', 101,
+    'attempt-demo-ok', 'asg-demo-submitted', 'item-demo-ok', '18', 101,
     'homework', 'home', 1
 WHERE NOT EXISTS (SELECT 1 FROM core.attempts WHERE id = 'attempt-demo-ok');
 
@@ -270,7 +270,7 @@ SELECT
     1,
     1,
     0,
-    ARRAY['ct-demo:D1.T01.S1.V002']::text[],
+    ARRAY['ct-math:M01.T11.S1.V002']::text[],
     TIMESTAMPTZ '2026-03-03T09:00:00Z',
     TIMESTAMPTZ '2026-03-03T09:05:00Z'
 WHERE NOT EXISTS (SELECT 1 FROM core.recheck_batch WHERE correction_id = 1);
@@ -279,7 +279,7 @@ INSERT INTO core.journal_event (journal_seq, kind, payload, at, student_id, acto
 SELECT
     1,
     'lesson_marked',
-    '{"lesson_id":"lesson-demo-held","last_theory_block":"ct-demo:D1.B01","last_practice":{"stage_id":"ct-demo:L01.G2","position":1},"coverage":"all"}'::jsonb,
+    '{"lesson_id":"lesson-demo-held","last_theory_block":"ct-math:M01.B01","last_practice":{"stage_id":"ct-math:L02.G2","position":1},"coverage":"all"}'::jsonb,
     TIMESTAMPTZ '2026-03-02T14:00:00Z',
     'student-demo',
     'tutor',
@@ -302,14 +302,14 @@ SELECT
         'items', jsonb_build_array(
             jsonb_build_object(
                 'item_id', 'item-demo-ok',
-                'variant_id', 'ct-demo:D1.T01.S1.V001',
+                'variant_id', 'ct-math:M01.T11.S1.V001',
                 'answer_format', 'ct.integer',
                 'max_points', 1,
                 'source', 'new_topic'
             ),
             jsonb_build_object(
                 'item_id', 'item-demo-bad',
-                'variant_id', 'ct-demo:D1.T01.S1.V002',
+                'variant_id', 'ct-math:M01.T11.S1.V002',
                 'answer_format', 'ct.integer',
                 'max_points', 1,
                 'source', 'new_topic'
@@ -330,10 +330,10 @@ SELECT
         'attempt_id', 'attempt-demo-ok',
         'assignment_id', 'asg-demo-submitted',
         'item_id', 'item-demo-ok',
-        'variant_id', 'ct-demo:D1.T01.S1.V001',
+        'variant_id', 'ct-math:M01.T11.S1.V001',
         'catalog_version', __CATALOG_VERSION__,
-        'raw_input', '5',
-        'normalized_input', '5',
+        'raw_input', '18',
+        'normalized_input', '18',
         'attempt_no', 1,
         'verdict', 'correct',
         'points', 1,
@@ -367,7 +367,7 @@ SELECT
         'attempt_id', 'attempt-demo-bad',
         'assignment_id', 'asg-demo-submitted',
         'item_id', 'item-demo-bad',
-        'variant_id', 'ct-demo:D1.T01.S1.V002',
+        'variant_id', 'ct-math:M01.T11.S1.V002',
         'catalog_version', __CATALOG_VERSION__,
         'raw_input', '0',
         'normalized_input', '0',

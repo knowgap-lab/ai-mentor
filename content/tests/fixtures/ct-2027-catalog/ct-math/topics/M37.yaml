@@ -1,0 +1,19 @@
+id: ct-math:M37
+title: 'Прямоугольный треугольник: теорема Пифагора, синус, косинус, тангенс'
+section: Планиметрия
+foundation_level: база
+topic_hours: 4.5
+ct_positions:
+- В5
+prerequisite_elements:
+- ct-math:M36.E1
+- ct-math:M07.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M37-pryamougolnyy-treugolnik-teorema.md
+elements:
+- id: ct-math:M37.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M37-pryamougolnyy-treugolnik-teorema.md

@@ -1,0 +1,12 @@
+id: ct-phys
+title: Правила ответа синтетического пакета
+subject: physics
+spec_version: '1'
+positions:
+- A1
+answer_formats:
+- id: ct.integer
+  title: целое число
+  applies_to: часть В
+  input: целое число
+  max_points: 2

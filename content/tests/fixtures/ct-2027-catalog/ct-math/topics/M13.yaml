@@ -1,0 +1,20 @@
+id: ct-math:M13
+title: 'Тригонометрия: единичная окружность, значения, основные тождества, формулы
+  приведения'
+section: Тригонометрия
+foundation_level: ядро
+topic_hours: 6
+ct_positions:
+- А8
+prerequisite_elements:
+- ct-math:M04.E1
+- ct-math:M07.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M13-trigonometriya-edinichnaya-okruzhnost.md
+elements:
+- id: ct-math:M13.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M13-trigonometriya-edinichnaya-okruzhnost.md

@@ -1,0 +1,19 @@
+id: ct-math:M06
+title: Степень с целым показателем и стандартный вид числа
+section: Выражения и преобразования
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions:
+- А3
+- А6
+prerequisite_elements:
+- ct-math:M04.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M06-stepen-tselym-pokazatelem.md
+elements:
+- id: ct-math:M06.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M06-stepen-tselym-pokazatelem.md

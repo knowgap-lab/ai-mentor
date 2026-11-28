@@ -1,0 +1,20 @@
+id: ct-math:M22
+title: Показательные уравнения
+section: Уравнения и неравенства
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- В6
+prerequisite_elements:
+- ct-math:M06.E1
+- ct-math:M07.E1
+- ct-math:M19.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M22-pokazatelnye-uravneniya.md
+elements:
+- id: ct-math:M22.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M22-pokazatelnye-uravneniya.md

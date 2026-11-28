@@ -1,0 +1,109 @@
+id: ct-math:M01
+title: 'Натуральные числа: действия, делимость, НОД и НОК'
+section: Числа и вычисления
+foundation_level: фундамент
+topic_hours: 3.5
+prerequisite_elements: []
+citations:
+- doc: topic-card
+  ref: math/topics/M01-naturalnye-chisla-deystviya.md
+elements:
+- id: ct-math:M01.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M01-naturalnye-chisla-deystviya.md
+types:
+- id: ct-math:M01.T05
+  title: Признак делимости на одно число
+  kind: skill
+  primary_element: ct-math:M01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M01 §Банк 5
+  subvariants:
+  - id: ct-math:M01.T05.S1
+    given: Делится ли 4536 на 4? / Признак делимости на одно число
+- id: ct-math:M01.T06
+  title: Признак делимости на 3 и 9 одновременно
+  kind: skill
+  primary_element: ct-math:M01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M01 §Банк 6
+  subvariants:
+  - id: ct-math:M01.T06.S1
+    given: Делится ли 5832 на 3 и на 9? / Признак делимости на 3 и 9 одновременно
+- id: ct-math:M01.T09
+  title: Разложение на простые множители
+  kind: skill
+  primary_element: ct-math:M01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M01 §Банк 9
+  subvariants:
+  - id: ct-math:M01.T09.S1
+    given: Разложите 360 на простые множители / Разложение на простые множители
+- id: ct-math:M01.T11
+  title: НОД алгоритмом Евклида
+  kind: skill
+  primary_element: ct-math:M01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M01 §Банк 11
+  subvariants:
+  - id: ct-math:M01.T11.S1
+    given: НОД(252, 198) / НОД алгоритмом Евклида
+- id: ct-math:M01.T12
+  title: НОК через НОД
+  kind: skill
+  primary_element: ct-math:M01.E1
+  prerequisites: []
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: M01 §Банк 12
+  subvariants:
+  - id: ct-math:M01.T12.S1
+    given: НОК(18, 24) / НОК через НОД
+ct_positions:
+- А7
+- В3

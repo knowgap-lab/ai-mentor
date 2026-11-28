@@ -1,0 +1,50 @@
+type: ct-phys:P04.T02
+variants:
+- id: ct-phys:P04.T02.S1.V001
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V002
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V003
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V004
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V005
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V006
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V007
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T02.S1.V008
+  subvariant: ct-phys:P04.T02.S1
+  statement: Точки (0 с; 0 м) и (5 с; 25 м)
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P04.B01

@@ -1,0 +1,50 @@
+type: ct-phys:P01.T14
+variants:
+- id: ct-phys:P01.T14.S1.V001
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V002
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V003
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V004
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V005
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V006
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V007
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01
+- id: ct-phys:P01.T14.S1.V008
+  subvariant: ct-phys:P01.T14.S1
+  statement: Мощность 60 мВт в ваттах в стандартном виде
+  key: 10
+  minutes: 1
+  theory_block: ct-phys:P01.B01

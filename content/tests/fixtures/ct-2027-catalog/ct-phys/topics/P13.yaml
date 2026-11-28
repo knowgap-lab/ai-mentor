@@ -1,0 +1,19 @@
+id: ct-phys:P13
+title: Импульс тела, импульс силы, закон сохранения импульса
+section: Механика
+foundation_level: ядро
+topic_hours: 3.5
+ct_positions:
+- В4
+- В5
+prerequisite_elements:
+- ct-phys:P10.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P13-impuls-tela-impuls.md
+elements:
+- id: ct-phys:P13.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P13-impuls-tela-impuls.md

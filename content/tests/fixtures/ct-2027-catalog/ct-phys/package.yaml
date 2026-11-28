@@ -1,0 +1,5 @@
+id: ct-phys
+title: Физика
+subject: physics
+spec_version: '1'
+answer_rules: answer-rules.yaml

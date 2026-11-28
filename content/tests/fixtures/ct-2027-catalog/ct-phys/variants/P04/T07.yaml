@@ -1,0 +1,50 @@
+type: ct-phys:P04.T07
+variants:
+- id: ct-phys:P04.T07.S1.V001
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V002
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V003
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V004
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V005
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V006
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V007
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01
+- id: ct-phys:P04.T07.S1.V008
+  subvariant: ct-phys:P04.T07.S1
+  statement: v = 4 м/с первые 3 с, v = 2 м/с следующие 2 с
+  key: 16
+  minutes: 1
+  theory_block: ct-phys:P04.B01

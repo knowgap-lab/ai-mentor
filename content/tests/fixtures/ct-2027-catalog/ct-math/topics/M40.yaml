@@ -1,0 +1,18 @@
+id: ct-math:M40
+title: Теоремы синусов и косинусов, решение треугольников
+section: Планиметрия
+foundation_level: ядро
+topic_hours: 3.5
+ct_positions: []
+prerequisite_elements:
+- ct-math:M37.E1
+- ct-math:M13.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M40-teoremy-sinusov-kosinusov.md
+elements:
+- id: ct-math:M40.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M40-teoremy-sinusov-kosinusov.md

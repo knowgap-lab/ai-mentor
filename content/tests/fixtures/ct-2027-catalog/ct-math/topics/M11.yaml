@@ -1,0 +1,19 @@
+id: ct-math:M11
+title: 'Алгебраические дроби: сокращение и действия'
+section: Выражения и преобразования
+foundation_level: база
+topic_hours: 4.5
+ct_positions:
+- А3
+prerequisite_elements:
+- ct-math:M10.E1
+- ct-math:M02.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M11-algebraicheskie-drobi-sokraschenie.md
+elements:
+- id: ct-math:M11.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M11-algebraicheskie-drobi-sokraschenie.md

@@ -1,0 +1,20 @@
+id: ct-math:M21
+title: Квадратные и рациональные неравенства, метод интервалов
+section: Уравнения и неравенства
+foundation_level: ядро
+topic_hours: 6
+ct_positions:
+- В14
+- В18
+prerequisite_elements:
+- ct-math:M19.E1
+- ct-math:M17.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M21-kvadratnye-ratsionalnye-neravenstva.md
+elements:
+- id: ct-math:M21.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M21-kvadratnye-ratsionalnye-neravenstva.md

@@ -1,0 +1,18 @@
+id: ct-math:M27
+title: Уравнения и неравенства с модулем
+section: Уравнения и неравенства
+foundation_level: продвинутое
+topic_hours: 3.25
+ct_positions: []
+prerequisite_elements:
+- ct-math:M04.E1
+- ct-math:M21.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M27-uravneniya-neravenstva-modulem.md
+elements:
+- id: ct-math:M27.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M27-uravneniya-neravenstva-modulem.md

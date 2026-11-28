@@ -1,0 +1,50 @@
+type: ct-phys:P02.T11
+variants:
+- id: ct-phys:P02.T11.S1.V001
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V002
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V003
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V004
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V005
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V006
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V007
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01
+- id: ct-phys:P02.T11.S1.V008
+  subvariant: ct-phys:P02.T11.S1
+  statement: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I?
+  key: 5
+  minutes: 1
+  theory_block: ct-phys:P02.B01

@@ -1,0 +1,265 @@
+id: ct-phys:P02
+title: 'Работа с формулами: выразить величину, пропорциональность, размерность, калькулятор'
+section: Математика для физики
+foundation_level: фундамент
+topic_hours: 3.5
+prerequisite_elements:
+- ct-phys:P01.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P02-rabota-formulami-vyrazit.md
+elements:
+- id: ct-phys:P02.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P02-rabota-formulami-vyrazit.md
+types:
+- id: ct-phys:P02.T01
+  title: Выразить величину из формулы умножения
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 1
+  subvariants:
+  - id: ct-phys:P02.T01.S1
+    given: Из s = vt выразите v. s = 150 м, t = 25 с / Выразить величину из формулы умножения
+- id: ct-phys:P02.T02
+  title: Выразить делимое из формулы деления
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 2
+  subvariants:
+  - id: ct-phys:P02.T02.S1
+    given: Из I = U/R выразите U. I = 3 А, R = 8 Ом / Выразить делимое из формулы деления
+- id: ct-phys:P02.T03
+  title: Выразить делитель из формулы деления
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 3
+  subvariants:
+  - id: ct-phys:P02.T03.S1
+    given: Из I = U/R выразите R. U = 36 В, I = 4 А / Выразить делитель из формулы деления
+- id: ct-phys:P02.T04
+  title: Выразить множитель из формулы плотности
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 4
+  subvariants:
+  - id: ct-phys:P02.T04.S1
+    given: Из ρ = m/V выразите m. ρ = 800 кг/м³, V = 0,5 м³ / Выразить множитель из формулы плотности
+- id: ct-phys:P02.T05
+  title: Выразить слагаемое
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 5
+  subvariants:
+  - id: ct-phys:P02.T05.S1
+    given: Из Fрез = F₁ + F₂ выразите F₂. Fрез = 70 Н, F₁ = 45 Н / Выразить слагаемое
+- id: ct-phys:P02.T06
+  title: Выразить величину из формулы со степенью (1)
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 6
+  subvariants:
+  - id: ct-phys:P02.T06.S1
+    given: Из v² = 2as выразите a. v = 12 м/с, s = 18 м / Выразить величину из формулы со степенью (1)
+- id: ct-phys:P02.T07
+  title: Выразить величину из формулы со степенью (2)
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 7
+  subvariants:
+  - id: ct-phys:P02.T07.S1
+    given: Из v² = 2as выразите s. v = 10 м/с, a = 5 м/с² / Выразить величину из формулы со степенью (2)
+- id: ct-phys:P02.T08
+  title: Выразить величину из-под корня
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 8
+  subvariants:
+  - id: ct-phys:P02.T08.S1
+    given: Из v = √(2gh) выразите h. v = 10 м/с, g = 10 м/с² / Выразить величину из-под корня
+- id: ct-phys:P02.T10
+  title: Прямая пропорциональность (качественно)
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 10
+  subvariants:
+  - id: ct-phys:P02.T10.S1
+    given: F = ma. Массу увеличили в 3 раза, a не менялось. Во сколько раз изменилась F? / Прямая пропорциональность (качественно)
+- id: ct-phys:P02.T11
+  title: Обратная пропорциональность (качественно)
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 1
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 11
+  subvariants:
+  - id: ct-phys:P02.T11.S1
+    given: I = U/R. Сопротивление увеличили в 5 раз, U не менялось. Во сколько раз изменился I? / Обратная пропорциональность (качественно)
+- id: ct-phys:P02.T12
+  title: Квадратичная пропорциональность
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 12
+  subvariants:
+  - id: ct-phys:P02.T12.S1
+    given: Eк = mv²/2. Скорость увеличили в 4 раза, m не менялась. Во сколько раз изменилась Eк? / Квадратичная пропорциональность
+- id: ct-phys:P02.T14
+  title: Проверка формулы по единицам
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 2
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 14
+  subvariants:
+  - id: ct-phys:P02.T14.S1
+    given: Верна ли запись t = s·v, если s — путь, v — скорость? Проверьте единицами / Проверка формулы по единицам
+- id: ct-phys:P02.T15
+  title: Расчёт на калькуляторе в формате части В
+  kind: skill
+  primary_element: ct-phys:P02.E1
+  prerequisites:
+  - ct-phys:P01.E1
+  answer_format: ct.integer
+  difficulty: 3
+  levels:
+    base:
+      hours: 0.25
+    automatism:
+      hours: 0.25
+  citations:
+  - doc: topic-card
+    ref: P02 §Банк 15
+  subvariants:
+  - id: ct-phys:P02.T15.S1
+    given: A = 360 Дж, t = 0,3 мин. Найдите мощность P в ваттах (целое число) / Расчёт на калькуляторе в формате части В
+ct_positions: []

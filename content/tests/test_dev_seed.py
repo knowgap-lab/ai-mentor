@@ -154,6 +154,7 @@ def run_seed(dsn: str) -> subprocess.CompletedProcess[str]:
     for key in _PG_KEYS:
         env.pop(key, None)
     env["DATABASE_URL"] = dsn
+    env["AI_MENTOR_DEV_CATALOG"] = str(DEMO_CATALOG)
     env["PGCLIENTENCODING"] = "UTF8"
     env["PYTHONUNBUFFERED"] = "1"
     return subprocess.run(

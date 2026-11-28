@@ -1,0 +1,18 @@
+id: ct-math:M36
+title: 'Треугольники: углы, виды, равенство, параллельные прямые'
+section: Планиметрия
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions:
+- В10
+prerequisite_elements:
+- ct-math:M16.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M36-treugolniki-ugly-vidy.md
+elements:
+- id: ct-math:M36.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M36-treugolniki-ugly-vidy.md

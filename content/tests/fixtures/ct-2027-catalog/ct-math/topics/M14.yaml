@@ -1,0 +1,19 @@
+id: ct-math:M14
+title: Обратные тригонометрические функции и простейшие тригонометрические уравнения
+section: Тригонометрия
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- А8
+- В17
+prerequisite_elements:
+- ct-math:M13.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M14-obratnye-trigonometricheskie-funktsii.md
+elements:
+- id: ct-math:M14.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M14-obratnye-trigonometricheskie-funktsii.md

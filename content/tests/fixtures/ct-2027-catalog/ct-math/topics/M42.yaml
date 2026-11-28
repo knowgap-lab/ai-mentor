@@ -1,0 +1,19 @@
+id: ct-math:M42
+title: 'Многогранники: призма и пирамида — площади и объёмы'
+section: Стереометрия
+foundation_level: ядро
+topic_hours: 4.5
+ct_positions:
+- В16
+prerequisite_elements:
+- ct-math:M38.E1
+- ct-math:M37.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M42-mnogogranniki-prizma-piramida.md
+elements:
+- id: ct-math:M42.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M42-mnogogranniki-prizma-piramida.md

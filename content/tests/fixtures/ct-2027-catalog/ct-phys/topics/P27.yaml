@@ -1,0 +1,21 @@
+id: ct-phys:P27
+title: 'Постоянный ток: сила тока, напряжение, сопротивление, закон Ома для участка
+  цепи'
+section: Электродинамика
+foundation_level: база
+topic_hours: 3.5
+ct_positions:
+- А6
+- А7
+prerequisite_elements:
+- ct-phys:P24.E1
+- ct-phys:P01.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P27-postoyannyy-tok-sila.md
+elements:
+- id: ct-phys:P27.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P27-postoyannyy-tok-sila.md

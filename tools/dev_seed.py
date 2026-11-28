@@ -20,7 +20,12 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 CONTENT = REPO / "content"
-DEMO_CATALOG = CONTENT / "tests" / "fixtures" / "demo-catalog"
+_CATALOG_OVERRIDE = os.environ.get("AI_MENTOR_DEV_CATALOG", "").strip()
+DEMO_CATALOG = (
+    Path(_CATALOG_OVERRIDE)
+    if _CATALOG_OVERRIDE
+    else CONTENT / "tests" / "fixtures" / "ct-2027-catalog"
+)
 SCENARIO = Path(__file__).resolve().parent / "dev_seed_scenario.sql"
 MIGRATIONS = REPO / "migrations"
 DEFAULT_DSN = "postgres://postgres@127.0.0.1:55432/ai_mentor?sslmode=disable"

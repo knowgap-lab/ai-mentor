@@ -1,0 +1,19 @@
+id: ct-phys:P07
+title: Равноускоренное прямолинейное движение
+section: Механика
+foundation_level: база
+topic_hours: 5
+ct_positions:
+- В1
+- В3
+prerequisite_elements:
+- ct-phys:P05.E1
+citations:
+- doc: topic-card
+  ref: physics/topics/P07-ravnouskorennoe-pryamolineynoe-dvizhenie.md
+elements:
+- id: ct-phys:P07.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: physics/topics/P07-ravnouskorennoe-pryamolineynoe-dvizhenie.md

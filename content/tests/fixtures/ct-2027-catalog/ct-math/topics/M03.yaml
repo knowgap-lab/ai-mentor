@@ -1,0 +1,18 @@
+id: ct-math:M03
+title: 'Десятичные дроби: действия, перевод, округление'
+section: Числа и вычисления
+foundation_level: фундамент
+topic_hours: 3.5
+ct_positions:
+- А1
+prerequisite_elements:
+- ct-math:M02.E1
+citations:
+- doc: topic-card
+  ref: math/topics/M03-desyatichnye-drobi-deystviya.md
+elements:
+- id: ct-math:M03.E1
+  title: тема целиком
+  citations:
+  - doc: topic-card
+    ref: math/topics/M03-desyatichnye-drobi-deystviya.md

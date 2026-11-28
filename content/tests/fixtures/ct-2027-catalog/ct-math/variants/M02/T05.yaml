@@ -1,0 +1,50 @@
+type: ct-math:M02.T05
+variants:
+- id: ct-math:M02.T05.S1.V001
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V002
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V003
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V004
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V005
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V006
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V007
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
+- id: ct-math:M02.T05.S1.V008
+  subvariant: ct-math:M02.T05.S1
+  statement: 5 3/8 и 47/6
+  key: 6
+  minutes: 1
+  theory_block: ct-math:M02.B01
