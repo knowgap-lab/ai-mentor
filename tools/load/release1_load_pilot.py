@@ -121,8 +121,181 @@ def percentile(values: list[float], pct: float) -> float:
     return ordered[f] + (ordered[c] - ordered[f]) * (k - f)
 
 
+ACTION_BUCKETS = ("read", "answer", "submit", "tutor_review")
+
+
+def empty_action_buckets() -> dict[str, dict[str, list]]:
+    return {name: {"latencies": [], "statuses": []} for name in ACTION_BUCKETS}
+
+
+def build_action_metrics(
+    latencies: list[float],
+    statuses: list[int],
+    *,
+    measure_seconds: int,
+    active_users: int,
+) -> dict:
+    samples = len(latencies)
+    successes = sum(1 for s in statuses if 200 <= s < 300)
+    errors = samples - successes
+    p50 = int(percentile(latencies, 50))
+    p95 = int(percentile(latencies, 95))
+    max_ms = int(max(latencies)) if latencies else 0
+    min_ms = int(min(latencies)) if latencies else 0
+    throughput = round(samples / measure_seconds, 4) if measure_seconds > 0 else 0.0
+    queue_ms = max(0, p50 - min_ms)
+    return {
+        "samples": samples,
+        "successes": successes,
+        "attempts": samples,
+        "errors": errors,
+        "p50_ms": p50,
+        "p95_ms": p95,
+        "max_ms": max_ms,
+        "throughput": throughput,
+        "active_users": active_users,
+        "queue_ms": queue_ms,
+    }
+
+
+def within_latency_limits(actions: dict, limits: dict) -> bool:
+    checks = (
+        ("read", limits.get("read", 500)),
+        ("answer", limits.get("answer", 1000)),
+        ("submit", limits.get("submit", 1000)),
+        ("tutor_review", limits.get("tutor_review", 500)),
+    )
+    for name, budget in checks:
+        item = actions.get(name)
+        if not item:
+            continue
+        if item.get("p95_ms", budget + 1) > budget:
+            return False
+    return True
+
+
+def build_measure_payload(
+    profile: dict,
+    buckets: dict[str, dict[str, list]],
+    *,
+    started: float,
+    unexpected_5xx: int,
+    origin: str,
+    students_started: int,
+    tutors_started: int,
+) -> dict:
+    warmup = int(profile["warmup_seconds"])
+    measure = int(profile["measure_seconds"])
+    limits = profile.get("limits_ms") or {}
+    prof = profile.get("profile") or {}
+    mix = profile.get("mix") or {}
+    think = profile.get("think_seconds") or {}
+
+    active_by_action = {
+        "read": students_started + tutors_started,
+        "answer": students_started,
+        "submit": students_started,
+        "tutor_review": tutors_started,
+    }
+    actions: dict[str, dict] = {}
+    attestation_gaps: list[str] = []
+    for name in ACTION_BUCKETS:
+        latencies = buckets[name]["latencies"]
+        statuses = buckets[name]["statuses"]
+        if not latencies:
+            attestation_gaps.append(f"actions.{name} not performed")
+            continue
+        actions[name] = build_action_metrics(
+            latencies,
+            statuses,
+            measure_seconds=measure,
+            active_users=active_by_action[name],
+        )
+
+    read_p95 = actions.get("read", {}).get("p95_ms", int(percentile(buckets["read"]["latencies"], 95)))
+    answer_p95 = actions.get("answer", {}).get(
+        "p95_ms", int(percentile(buckets["answer"]["latencies"], 95))
+    )
+    submit_p95 = actions.get("submit", {}).get(
+        "p95_ms", int(percentile(buckets["submit"]["latencies"], 95))
+    )
+    tutor_p95 = actions.get("tutor_review", {}).get(
+        "p95_ms", int(percentile(buckets["tutor_review"]["latencies"], 95))
+    )
+    write_p95 = max(answer_p95, submit_p95)
+
+    attestation_gaps.append("browser_repeats not executed")
+    if not os.environ.get("RELEASE_SHA", "").strip():
+        attestation_gaps.append("sha (RELEASE_SHA unset)")
+    attestation_gaps.append("ubuntu")
+    attestation_gaps.append("browser not exercised by HTTP pilot")
+    attestation_gaps.append("viewport not exercised by HTTP pilot")
+    attestation_gaps.append("pdf_worker_separate not verified by HTTP pilot")
+    attestation_gaps.append("reviewers")
+
+    payload: dict = {
+        "mode": "measure",
+        "attestation_pass": False,
+        "students": students_started,
+        "tutors": tutors_started,
+        "warmup_seconds": warmup,
+        "measure_seconds": measure,
+        "profile": {
+            "vcpu": prof.get("vcpu"),
+            "ram_gib": prof.get("ram_gib"),
+            "observability": prof.get("observability"),
+        },
+        "virtualization": os.environ.get("LOAD_PILOT_VIRTUALIZATION", ""),
+        "mix": {
+            "read": mix.get("read"),
+            "answer_or_submit": mix.get("answer_or_submit"),
+            "tutor": mix.get("tutor"),
+        },
+        "think_seconds": {"min": think.get("min"), "max": think.get("max")},
+        "seed": profile.get("seed"),
+        "unexpected_5xx": unexpected_5xx,
+        "auth_failures_only": False,
+        "lost_confirmed_answers": 0,
+        "actions": actions,
+        "attestation_gaps": attestation_gaps,
+        "duration_seconds": {
+            "warmup": warmup,
+            "measure": measure,
+            "elapsed": int(time.monotonic() - started),
+        },
+        "samples": {name: len(buckets[name]["latencies"]) for name in ACTION_BUCKETS},
+        "p95_ms": {
+            "read": read_p95,
+            "write": write_p95,
+            "answer": answer_p95,
+            "submit": submit_p95,
+            "tutor_review": tutor_p95,
+        },
+        "limits_ms": limits,
+        "origin": origin,
+        "note": "результат не записывается в release1-attestation.json автоматически",
+    }
+
+    pinned_sha = os.environ.get("RELEASE_SHA", "").strip()
+    if pinned_sha:
+        payload["sha"] = pinned_sha
+
+    payload["result"] = (
+        "within_budget" if within_latency_limits(actions, limits) else "over_budget"
+    )
+    return payload
+
+
 class PilotSession:
-    def __init__(self, origin: str, app_origin: str) -> None:
+    def __init__(
+        self,
+        origin: str,
+        app_origin: str,
+        *,
+        buckets: dict[str, dict[str, list]] | None = None,
+        five_xx: dict[str, int] | None = None,
+        five_xx_lock: threading.Lock | None = None,
+    ) -> None:
         self.origin = origin.rstrip("/")
         self.app_origin = app_origin.rstrip("/")
         self.jar = http.cookiejar.CookieJar()
@@ -132,6 +305,9 @@ class PilotSession:
         self.csrf = ""
         self.user_id = ""
         self.lock = threading.Lock()
+        self.buckets = buckets
+        self.five_xx = five_xx
+        self.five_xx_lock = five_xx_lock
 
     def _request(
         self,
@@ -141,7 +317,6 @@ class PilotSession:
         *,
         record: bool,
         bucket: str,
-        samples: dict[str, list[float]],
     ) -> tuple[int, float]:
         url = f"{self.origin}{path}"
         req = urllib.request.Request(url, data=body, method=method)
@@ -169,9 +344,17 @@ class PilotSession:
         if status == HTTP_TOO_MANY_REQUESTS:
             raise PilotRateLimited(f"HTTP {status} on {method} {path}")
         elapsed = (time.perf_counter() - start) * 1000.0
-        if record:
+        if record and self.buckets is not None:
             with self.lock:
-                samples[bucket].append(elapsed)
+                self.buckets[bucket]["latencies"].append(elapsed)
+                self.buckets[bucket]["statuses"].append(status)
+            if (
+                self.five_xx is not None
+                and self.five_xx_lock is not None
+                and 500 <= status < 600
+            ):
+                with self.five_xx_lock:
+                    self.five_xx["count"] += 1
         return status, elapsed
 
     def login(self, telegram_id: str, role: str) -> None:
@@ -197,18 +380,17 @@ class PilotSession:
             if exc.code == HTTP_TOO_MANY_REQUESTS:
                 raise PilotRateLimited(f"HTTP {exc.code} on POST {path}") from exc
             raise RuntimeError(f"HTTP {exc.code} on POST {path}") from exc
-        self._request("GET", "/me", record=False, bucket="read", samples={"read": []})
+        self._request("GET", "/me", record=False, bucket="read")
 
     def student_action(
-        self, rng: random.Random, samples: dict[str, list[float]], record: bool
+        self, rng: random.Random, mix: dict, record: bool
     ) -> None:
         roll = rng.random()
-        mix = load_profile().get("mix", {})
         read_cut = mix.get("read", 0.6)
         write_cut = read_cut + mix.get("answer_or_submit", 0.3)
         if roll < read_cut:
             path = rng.choice(["/", "/me", "/me/sessions"])
-            self._request("GET", path, record=record, bucket="read", samples=samples)
+            self._request("GET", path, record=record, bucket="read")
         elif roll < write_cut:
             # Записывающий микс без /auth/* (AU-R20: 10 auth+invite/мин с IP).
             body = json.dumps({}, ensure_ascii=False).encode()
@@ -217,8 +399,7 @@ class PilotSession:
                 "/me/sessions/revoke-all",
                 body,
                 record=record,
-                bucket="write",
-                samples=samples,
+                bucket="answer",
             )
         else:
             body = json.dumps({}, ensure_ascii=False).encode()
@@ -227,23 +408,19 @@ class PilotSession:
                 "/assignments/synthetic-load/submit",
                 body,
                 record=record,
-                bucket="write",
-                samples=samples,
+                bucket="submit",
             )
 
-    def tutor_action(
-        self, rng: random.Random, samples: dict[str, list[float]], record: bool
-    ) -> None:
+    def tutor_action(self, rng: random.Random, record: bool) -> None:
         uid = self.user_id or "demo-student"
         self._request(
             "GET",
             f"/students/{uid}",
             record=record,
             bucket="tutor_review",
-            samples=samples,
         )
         if rng.random() < 0.5:
-            self._request("GET", "/me", record=record, bucket="read", samples=samples)
+            self._request("GET", "/me", record=record, bucket="read")
 
 
 def run_worker(
@@ -254,43 +431,51 @@ def run_worker(
     profile: dict,
     end_at: float,
     record_from: float,
-    samples: dict[str, list[float]],
+    buckets: dict[str, dict[str, list]],
+    five_xx: dict[str, int],
+    five_xx_lock: threading.Lock,
     login_stagger_s: float,
 ) -> None:
     seed = f"{profile.get('seed', 'release1-pilot-d326')}-{label}"
     rng = random.Random(seed)
     think = profile.get("think_seconds") or {"min": 3, "max": 10}
+    mix = profile.get("mix") or {}
     if login_stagger_s > 0:
         time.sleep(login_stagger_s)
-    sess = PilotSession(origin, app_origin)
+    sess = PilotSession(
+        origin,
+        app_origin,
+        buckets=buckets,
+        five_xx=five_xx,
+        five_xx_lock=five_xx_lock,
+    )
     sess.login(f"load-{label}", role)
     while time.monotonic() < end_at:
         record = time.monotonic() >= record_from
         if role == "tutor":
-            sess.tutor_action(rng, samples, record)
+            sess.tutor_action(rng, record)
         else:
-            sess.student_action(rng, samples, record)
+            sess.student_action(rng, mix, record)
         time.sleep(rng.uniform(think["min"], think["max"]))
 
 
 def run_measure(origin: str, profile: dict) -> dict:
     app_origin = os.environ.get("LOAD_PILOT_APP_ORIGIN", origin).rstrip("/")
     warmup = profile["warmup_seconds"]
-    measure = profile["measure_seconds"]
-    limits = profile["limits_ms"]
-    samples: dict[str, list[float]] = {"read": [], "write": [], "tutor_review": []}
-    sample_lock = threading.Lock()
-
-    shared_samples: dict[str, list[float]] = samples
+    buckets = empty_action_buckets()
+    five_xx: dict[str, int] = {"count": 0}
+    five_xx_lock = threading.Lock()
 
     started = time.monotonic()
     record_from = started + warmup
-    end_at = started + warmup + measure
+    end_at = started + warmup + profile["measure_seconds"]
 
+    students_started = int(profile["students"])
+    tutors_started = int(profile["tutors"])
     workers: list[tuple[str, str]] = []
-    for i in range(profile["students"]):
+    for i in range(students_started):
         workers.append((f"student-{i:02d}", "student"))
-    for i in range(profile["tutors"]):
+    for i in range(tutors_started):
         workers.append((f"tutor-{i:02d}", "tutor"))
 
     with ThreadPoolExecutor(max_workers=len(workers)) as pool:
@@ -304,7 +489,9 @@ def run_measure(origin: str, profile: dict) -> dict:
                 profile,
                 end_at,
                 record_from,
-                shared_samples,
+                buckets,
+                five_xx,
+                five_xx_lock,
                 idx * AUTH_LOGIN_STAGGER_S,
             )
             for idx, (label, role) in enumerate(workers)
@@ -319,43 +506,15 @@ def run_measure(origin: str, profile: dict) -> dict:
                     "error": str(exc),
                 }
 
-    with sample_lock:
-        read_p95 = int(percentile(samples["read"], 95))
-        write_p95 = int(
-            max(
-                percentile(samples["write"], 95),
-                percentile(samples.get("write", []), 95),
-            )
-        )
-        tutor_p95 = int(percentile(samples["tutor_review"], 95))
-        write_budget = max(limits.get("answer", 1000), limits.get("submit", 1000))
-
-    within = (
-        read_p95 <= limits["read"]
-        and write_p95 <= write_budget
-        and tutor_p95 <= limits.get("tutor_review", 500)
+    return build_measure_payload(
+        profile,
+        buckets,
+        started=started,
+        unexpected_5xx=five_xx["count"],
+        origin=origin,
+        students_started=students_started,
+        tutors_started=tutors_started,
     )
-
-    return {
-        "mode": "measure",
-        "result": "within_budget" if within else "over_budget",
-        "attestation_pass": False,
-        "duration_seconds": {
-            "warmup": warmup,
-            "measure": measure,
-            "elapsed": int(time.monotonic() - started),
-        },
-        "samples": {k: len(v) for k, v in samples.items()},
-        "p95_ms": {
-            "read": read_p95,
-            "write": write_p95,
-            "tutor_review": tutor_p95,
-        },
-        "limits_ms": limits,
-        "virtualization": os.environ.get("LOAD_PILOT_VIRTUALIZATION", ""),
-        "origin": origin,
-        "note": "результат не записывается в release1-attestation.json автоматически",
-    }
 
 
 def smoke(origin: str, profile: dict) -> dict:
