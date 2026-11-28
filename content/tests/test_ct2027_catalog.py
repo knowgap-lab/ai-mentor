@@ -50,6 +50,52 @@ def test_dev_seed_defaults_to_demo_catalog() -> None:
     assert "AI_MENTOR_CT2027_CATALOG" in seed
 
 
+@pytest.mark.parametrize(
+    "sample",
+    (
+        "Наш ученик слабый.",
+        "Нашего ученика это не касается.",
+        "НАШ УЧЕНИК не сдаёт в этот день.",
+    ),
+)
+def test_sanitize_our_pupil_phrase_case_insensitive(sample: str) -> None:
+    import importlib.util
+
+    script = SOURCES / "sanitize_public.py"
+    spec = importlib.util.spec_from_file_location("sanitize_public", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    cleaned = module.sanitize_text(sample)
+    assert "уровеньа" not in cleaned.casefold()
+    assert not module._OUR_PUPIL_PHRASE.search(cleaned)
+    assert "на базовом уровне" in cleaned
+
+
+@pytest.mark.parametrize(
+    "sample",
+    (
+        "Наш ученик",
+        "Нашего ученика",
+        "НАШ УЧЕНИК",
+    ),
+)
+def test_forbidden_our_pupil_phrase_case_insensitive(sample: str) -> None:
+    import importlib.util
+
+    script = SOURCES / "sanitize_public.py"
+    spec = importlib.util.spec_from_file_location("sanitize_public", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert module._OUR_PUPIL_PHRASE.search(sample)
+    assert any(
+        rule.search(sample)
+        for rule in module.FORBIDDEN
+        if rule is module._OUR_PUPIL_PHRASE
+    )
+
+
 def test_sanitize_nashego_uchenika_whole_phrase() -> None:
     import importlib.util
 

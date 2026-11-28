@@ -50,7 +50,7 @@ FORBIDDEN = (
     re.compile(r"времени у ученика нет"),
     re.compile(r"этот ученик"),
     re.compile(r"нашему ученику"),
-    re.compile(_OUR_PUPIL_PHRASE.pattern),
+    _OUR_PUPIL_PHRASE,
     re.compile(r"ученику хватит"),
 )
 
