@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
-import { errorSentence, isRecord } from "./api-error";
+import { errorSentence, isRecord } from "../api-error";
 import classes from "./field-focus.module.css";
 import { minskLocalToUtc, minskTime } from "./minsk-time";
 

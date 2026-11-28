@@ -284,34 +284,24 @@ test("wb-r4: свой ученик виден, чужой не виден", asyn
   expectNoKey();
 });
 
-test("wb-r4: на экране попыток нет ключа 12", async () => {
+test("wb-r4: список учеников без ключа ответа", async () => {
   const fetchMock = installFetch();
   renderTutor();
   expect(await screen.findByRole("button", { name: "Войти" })).toBeTruthy();
   await login(fetchMock);
 
   expect(renderedText()).not.toContain(RAW);
-  fireEvent.click(screen.getByText(OWN_NEAR));
-
-  await waitFor(() => {
-    expect(renderedText()).toContain(RAW);
-  });
+  const row = screen.getByRole("link", { name: new RegExp(OWN_NEAR) });
+  expect(row.getAttribute("href")).toBe("/tutor/students/student-demo");
   expectNoKey();
   const records = await callRecords(fetchMock);
   expect(
     records.some(
       (record) =>
         record.method === "GET" &&
-        record.url.includes("student_id=student-demo"),
-    ),
-  ).toBe(true);
-  expect(
-    records.some(
-      (record) =>
-        record.method === "GET" &&
         record.url.includes("/assignments/asg-1/attempts"),
     ),
-  ).toBe(true);
+  ).toBe(false);
 });
 
 test("wb-r4: выход возвращает к форме входа", async () => {

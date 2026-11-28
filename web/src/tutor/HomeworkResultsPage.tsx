@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { Screen, StatusBadge, type Status } from "../ui";
-import { ERROR_TEXT, errorSentence, isRecord } from "./api-error";
+import { ERROR_TEXT, errorSentence, isRecord } from "../api-error";
 import classes from "./field-focus.module.css";
 
 // Причины спора — подписи AT-R18. Ключ и решение сюда не выводятся (WB-R4, WB-R22).

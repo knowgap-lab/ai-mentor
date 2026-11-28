@@ -2,7 +2,7 @@ import { Button, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
-import { errorSentence, isRecord } from "./api-error";
+import { errorSentence, isRecord } from "../api-error";
 import { minskTime } from "./minsk-time";
 
 type SessionRow = {

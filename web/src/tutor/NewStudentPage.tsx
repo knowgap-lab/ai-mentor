@@ -6,7 +6,7 @@ import {
   rememberCsrfFromResponse,
 } from "../task/csrf";
 import { ActionBar, Screen } from "../ui";
-import { errorSentence, isRecord } from "./api-error";
+import { errorSentence, isRecord } from "../api-error";
 import classes from "./field-focus.module.css";
 import { isUnderEighteen, minskTime } from "./minsk-time";
 

@@ -17,14 +17,22 @@ import { TutorHomePage, TutorPage } from "./tutor/TutorPage";
 import { DesignPage } from "./design/DesignPage";
 
 function parkProviderStyles(): void {
+  const parked = new Set(
+    [...document.head.querySelectorAll("style")].map(
+      (node) => node.textContent ?? "",
+    ),
+  );
   for (const node of document.body.querySelectorAll("style")) {
     const text = node.textContent ?? "";
     if (text === "") {
       continue;
     }
-    const copy = document.createElement("style");
-    copy.textContent = text;
-    document.head.appendChild(copy);
+    if (!parked.has(text)) {
+      const copy = document.createElement("style");
+      copy.textContent = text;
+      document.head.appendChild(copy);
+      parked.add(text);
+    }
     node.textContent = "";
   }
 }

@@ -1,11 +1,9 @@
 import { Button, Stack, Text, TextInput } from "@mantine/core";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
-import { List, ListButton, Screen } from "../ui";
-import { errorSentence } from "./api-error";
+import { List, ListRow, Screen } from "../ui";
+import { errorSentence, isRecord } from "../api-error";
 import { minskTime } from "./minsk-time";
-
-type Verdict = "correct" | "partial" | "wrong";
 
 type StudentSummary = {
   id: string;
@@ -19,16 +17,6 @@ type StudentSummary = {
   warnings: string[];
 };
 
-type AttemptRow = {
-  attempt_id: string;
-  raw_input: string;
-  verdict?: Verdict;
-};
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
 function readCount(value: unknown): number {
   return typeof value === "number" ? value : 0;
 }
@@ -37,13 +25,13 @@ function readWarnings(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
   }
-  const texts: string[] = [];
+  const out: string[] = [];
   for (const item of value) {
-    if (isRecord(item) && typeof item.text === "string" && item.text !== "") {
-      texts.push(item.text);
+    if (isRecord(item) && typeof item.text === "string" && item.text) {
+      out.push(item.text);
     }
   }
-  return texts;
+  return out;
 }
 
 function readStudent(value: unknown): StudentSummary | null {
@@ -82,27 +70,6 @@ function rowSubtitle(student: StudentSummary): string {
     .join(" ");
 }
 
-function readAttempt(value: unknown): AttemptRow | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-  if (
-    typeof value.attempt_id !== "string" ||
-    typeof value.raw_input !== "string"
-  ) {
-    return null;
-  }
-  const verdict = value.verdict;
-  const row: AttemptRow = {
-    attempt_id: value.attempt_id,
-    raw_input: value.raw_input,
-  };
-  if (verdict === "correct" || verdict === "partial" || verdict === "wrong") {
-    row.verdict = verdict;
-  }
-  return row;
-}
-
 function byNextLesson(left: StudentSummary, right: StudentSummary): number {
   const leftAt = left.next_lesson_at ?? "";
   const rightAt = right.next_lesson_at ?? "";
@@ -118,21 +85,12 @@ function byNextLesson(left: StudentSummary, right: StudentSummary): number {
   return leftAt < rightAt ? -1 : 1;
 }
 
-function verdictLabel(verdict: Verdict): string {
-  return verdict === "correct"
-    ? "верно"
-    : verdict === "wrong"
-      ? "неверно"
-      : "частично верно";
-}
-
 export function TutorPage() {
   const [telegramId, setTelegramId] = useState("");
   const [phase, setPhase] = useState<"login" | "offline" | "ready">("login");
   const [loginNotice, setLoginNotice] = useState<string | null>(null);
   const [listNotice, setListNotice] = useState<string | null>(null);
   const [students, setStudents] = useState<StudentSummary[]>([]);
-  const [attempts, setAttempts] = useState<AttemptRow[]>([]);
 
   async function loadStudents() {
     try {
@@ -140,7 +98,6 @@ export function TutorPage() {
       if (!list.ok) {
         const sentence = await errorSentence(list);
         if (list.status === 401) {
-          // Код unauthorized в таблице web.md нет: на форме входа тот же текст, что у login_stale.
           setLoginNotice(sentence ?? "Войдите ещё раз");
           setPhase("login");
           return;
@@ -157,7 +114,6 @@ export function TutorPage() {
         .map((item) => readStudent(item))
         .filter((item): item is StudentSummary => item !== null)
         .sort(byNextLesson);
-      setAttempts([]);
       setStudents(next);
       setListNotice(null);
       setPhase("ready");
@@ -189,51 +145,12 @@ export function TutorPage() {
     await loadStudents();
   }
 
-  async function onOpen(student: StudentSummary) {
-    const response = await fetch(
-      `/assignments?student_id=${encodeURIComponent(student.id)}`,
-      { credentials: "include" },
-    );
-    if (!response.ok) {
-      return;
-    }
-    const payload: unknown = await response.json();
-    if (!Array.isArray(payload)) {
-      return;
-    }
-    const rows: AttemptRow[] = [];
-    for (const item of payload) {
-      if (!isRecord(item) || typeof item.id !== "string") {
-        continue;
-      }
-      const attemptsResponse = await fetch(
-        `/assignments/${encodeURIComponent(item.id)}/attempts`,
-        { credentials: "include" },
-      );
-      if (!attemptsResponse.ok) {
-        continue;
-      }
-      const body: unknown = await attemptsResponse.json();
-      if (!Array.isArray(body)) {
-        continue;
-      }
-      for (const attempt of body) {
-        const row = readAttempt(attempt);
-        if (row) {
-          rows.push(row);
-        }
-      }
-    }
-    setAttempts(rows);
-  }
-
   async function onLogout() {
     await fetch("/auth/logout", {
       method: "POST",
       credentials: "include",
       headers: csrfHeaders(),
     });
-    setAttempts([]);
     setStudents([]);
     setLoginNotice(null);
     setListNotice(null);
@@ -247,8 +164,6 @@ export function TutorPage() {
           <Stack gap="md">
             <TextInput
               label="telegram_id"
-              name="telegram_id"
-              autoComplete="off"
               value={telegramId}
               onChange={(event) => setTelegramId(event.currentTarget.value)}
             />
@@ -263,47 +178,99 @@ export function TutorPage() {
   return (
     <Screen title="Ученики">
       <Stack gap="md">
-        <Button type="button" variant="default" onClick={() => void onLogout()}>
+        <Button onClick={() => void onLogout()}>
           Выход
         </Button>
         {phase === "offline" ? (
           <Stack gap="sm">
             <Text>{listNotice ?? "Нет связи"}</Text>
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => void loadStudents()}
-            >
+            <Button onClick={() => void loadStudents()}>
               Повторить
             </Button>
           </Stack>
         ) : (
           <List label="Ученики">
             {students.map((student) => (
-              <ListButton
+              <ListRow
                 key={student.id}
+                to={`/tutor/students/${student.id}`}
                 title={student.display_name}
                 subtitle={rowSubtitle(student)}
-                onClick={() => void onOpen(student)}
               />
             ))}
           </List>
         )}
-        {attempts.length > 0 ? (
-          <Stack gap="sm" component="section">
-            {attempts.map((attempt) => (
-              <Text key={attempt.attempt_id}>
-                {attempt.raw_input}
-                {attempt.verdict ? ` ${verdictLabel(attempt.verdict)}` : ""}
-              </Text>
-            ))}
-          </Stack>
-        ) : null}
       </Stack>
     </Screen>
   );
 }
 
 export function TutorHomePage() {
-  return <iframe src="/th.html" title="Дом репет" />;
+  const [dark, setDark] = useState(
+    () => localStorage.getItem("am-th-scheme") === "dark",
+  );
+  const [pack, setPack] = useState<{
+    title: string;
+    profileName: string;
+    profileBio: string;
+    listLabel: string;
+    social: string[];
+    cabinet: string;
+    themeAria: string;
+    themeDark: string;
+    themeLight: string;
+    rows: [string, string][];
+  } | null>(null);
+  useEffect(() => {
+    fetch("/th.json").then((r) => r.json()).then(setPack);
+  }, []);
+  if (!pack) {
+    return null;
+  }
+  return (
+    <div
+      className="tr"
+      data-am-scheme={dark ? "dark" : "light"}
+      data-testid="th"
+    >
+      <Screen title={pack.title}>
+        <label className="tt">
+          <input
+            type="checkbox"
+            checked={dark}
+            onChange={() => {
+              const n = !dark;
+              setDark(n);
+              localStorage.setItem("am-th-scheme", n ? "dark" : "light");
+            }}
+            aria-label={pack.themeAria}
+          />
+          <span>{dark ? pack.themeDark : pack.themeLight}</span>
+        </label>
+        <div className="tp">
+          <strong>{pack.profileName}</strong>
+          <p className="tm">{pack.profileBio}</p>
+        </div>
+        <List label={pack.listLabel}>
+          {pack.rows.map(([t, sub]) => (
+            <ListRow key={t} to="/tutor" title={t} subtitle={sub} />
+          ))}
+        </List>
+        <div className="tf">
+          <ul className="ts">
+            {pack.social.map((label) => (
+              <li key={label}>
+                <a href="#" onClick={(e) => e.preventDefault()}>
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a className="tc" href="/tutor">
+            {pack.cabinet}
+          </a>
+        </div>
+      </Screen>
+    </div>
+  );
 }
