@@ -64,3 +64,4 @@ ruff format --check
 
 bash tools/vm-acceptance-guest-second-converge_test.sh
 bash tools/vm-acceptance-guest-second-plan_test.sh
+bash tools/vm-acceptance-guest-second-plan-ssh-key_test.sh

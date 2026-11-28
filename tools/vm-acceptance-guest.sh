@@ -6,6 +6,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RELEASE_SHA="${RELEASE_SHA:?RELEASE_SHA unset; run via tools/vm-acceptance.sh}"
 GUEST_OVERALL=0
 
+sync_acceptance_ssh_public_key_tf_var() {
+  if [[ -n "${ACCEPTANCE_SSH_PUBLIC_KEY:-}" ]]; then
+    export TF_VAR_acceptance_ssh_public_key="$ACCEPTANCE_SSH_PUBLIC_KEY"
+  fi
+}
+
 guest_step() {
   local name="$1"
   shift
@@ -36,6 +42,7 @@ terraform_contract_dir() {
 }
 
 terraform_vm_dir() {
+  sync_acceptance_ssh_public_key_tf_var
   (
     cd "$ROOT/infra/terraform/acceptance-vm"
     terraform init -input=false >/dev/null
