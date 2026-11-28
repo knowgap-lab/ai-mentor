@@ -303,3 +303,7 @@ export function TutorPage() {
     </Screen>
   );
 }
+
+export function TutorHomePage() {
+  return <iframe src="/th.html" title="Дом репет" />;
+}

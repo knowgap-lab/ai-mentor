@@ -13,27 +13,18 @@ import { PreparationPage } from "./tutor/PreparationPage";
 import { SessionsPage } from "./tutor/SessionsPage";
 import { StudentCardPage } from "./tutor/StudentCardPage";
 import { TutorLessonPage } from "./tutor/TutorLessonPage";
-import { TutorHomePage } from "./tutor/TutorHomePage";
-import { TutorPage } from "./tutor/TutorPage";
+import { TutorHomePage, TutorPage } from "./tutor/TutorPage";
 import { DesignPage } from "./design/DesignPage";
 
 function parkProviderStyles(): void {
-  const parked = new Set(
-    [...document.head.querySelectorAll("style")].map(
-      (node) => node.textContent ?? "",
-    ),
-  );
   for (const node of document.body.querySelectorAll("style")) {
     const text = node.textContent ?? "";
     if (text === "") {
       continue;
     }
-    if (!parked.has(text)) {
-      const copy = document.createElement("style");
-      copy.textContent = text;
-      document.head.appendChild(copy);
-      parked.add(text);
-    }
+    const copy = document.createElement("style");
+    copy.textContent = text;
+    document.head.appendChild(copy);
     node.textContent = "";
   }
 }
