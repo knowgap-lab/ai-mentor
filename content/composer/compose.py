@@ -107,8 +107,13 @@ _MATCH_KEY = re.compile(r"(?:[А-ЯЁAB]\d+){3}")
 _STEP = re.compile(r"^Шаг\s+(\d+)")
 _RANGE = re.compile(r"^(\d+)\s*[–—-]\s*(\d+)$")
 _DURATION = re.compile(r"Ход урока\s*\(\s*(\d+)\s*минут")
-_BUDGET = re.compile(r"(?:Нагрузка|Ориентир)[^\n]*?[≈~*=]\s*(\d+(?:[.,]\d+)?)\s*ч")
-_BUDGET_ALT = re.compile(r"(?:Нагрузка|Ориентир)[^\n]*?(\d+)\s*ч\s*(?:\d+\s*мин)?")
+_BUDGET = re.compile(
+    r"(?:Нагрузка|Ориентир)[^\n]*?[≈~*=]\s*(\d+(?:[.,]\d+)?)\s*\**\s*ч"
+    r"(?:\s*\**\s*(\d+)\s*мин)?"
+)
+_BUDGET_ALT = re.compile(
+    r"(?:Нагрузка|Ориентир)[^\n]*?(\d+)\s*\**\s*ч(?:\s*\**\s*(\d+)\s*мин)?"
+)
 _PRACTICE = re.compile(
     r"^(?P<title>[^,]+),\s*"
     r"(?P<role>вместе|сам|я решаю|с пропусками)\.\s*"
@@ -125,7 +130,8 @@ _PRACTICE_CT2027 = re.compile(
 _TASK_COUNT = re.compile(r"(?P<count>\d+)\s+задач")
 _BANK_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Банк\s*(\d+)(?:\s*[×xх]\s*(\d+))?")
 _BANK_REF_PLAIN = re.compile(
-    r"(?:типы?\s*)?([\d,\s]+)\s+банка\s+([A-Z][A-Z0-9]*)", re.IGNORECASE
+    r"(?:типы?\s*)?((?:\d+\s*(?:[–—-]|,|\s+и\s+)\s*)*\d+)\s+банка\s+([A-Z][A-Z0-9]*)",
+    re.IGNORECASE,
 )
 _TYPES_REF = re.compile(r"([A-Z][A-Z0-9]*)\s+типы?\s+([^.;]+)", re.IGNORECASE)
 _THEORY_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Теория шаг\s*(\d+)")
@@ -782,7 +788,7 @@ def _homework(
             _problem("", plan["relative"], 1, "нет строки нагрузки домашнего задания")
         )
         return None, []
-    budget = Decimal(found.group(1).replace(",", "."))
+    budget = _budget_hours(found)
     if budget <= 0:
         errors.append(
             _problem(
@@ -803,7 +809,7 @@ def _homework(
             per_type = int(task_total.group(1)) if task_total else 1
             if plain is not None:
                 code = plain.group(2).upper()
-                numbers = [int(item) for item in re.findall(r"\d+", plain.group(1))]
+                numbers = _plain_type_numbers(plain.group(1))
                 share = max(1, per_type // max(len(numbers), 1))
                 series = [
                     {"code": code, "number": number, "count": share}
@@ -874,6 +880,34 @@ def _homework(
     if not lines:
         errors.append(_problem("", plan["relative"], 1, "в рецепте нет задач"))
     return budget, lines
+
+
+def _budget_hours(found: re.Match[str]) -> Decimal:
+    """Часы из строки нагрузки, плюс минуты, если они написаны после «ч»."""
+    hours = Decimal(found.group(1).replace(",", "."))
+    minutes = found.group(2)
+    if not minutes:
+        return hours
+    return hours + Decimal(minutes) / Decimal(60)
+
+
+def _plain_type_numbers(text: str) -> list[int]:
+    """Все номера из «6 и 7» и «6–7», не только последний."""
+    numbers: list[int] = []
+    for part in re.split(r"\s*(?:,|\s+и\s+)\s*", text):
+        piece = part.strip()
+        if not piece:
+            continue
+        span = re.fullmatch(r"(\d+)\s*[–—-]\s*(\d+)", piece)
+        if span:
+            start, end = int(span.group(1)), int(span.group(2))
+            if end < start:
+                start, end = end, start
+            numbers.extend(range(start, end + 1))
+            continue
+        if re.fullmatch(r"\d+", piece):
+            numbers.append(int(piece))
+    return numbers
 
 
 def _homework_type_refs(raw: str) -> list[tuple[str, list[int]]]:
