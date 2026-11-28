@@ -47,6 +47,11 @@ class AuthIPLimiter:
 
 
 AUTH_IP_LIMITER = AuthIPLimiter(AUTH_IP_LIMIT_MAX)
+HTTP_TOO_MANY_REQUESTS = 429
+
+
+class PilotRateLimited(RuntimeError):
+    """Сервер вернул rate_limited; замер нельзя считать успешным."""
 
 
 def evaluated_sha() -> str:
@@ -161,6 +166,8 @@ class PilotSession:
                         pass
         except urllib.error.HTTPError as exc:
             status = exc.code
+        if status == HTTP_TOO_MANY_REQUESTS:
+            raise PilotRateLimited(f"HTTP {status} on {method} {path}")
         elapsed = (time.perf_counter() - start) * 1000.0
         if record:
             with self.lock:
@@ -187,6 +194,8 @@ class PilotSession:
                 self.csrf = token
                 _ = resp.read()
         except urllib.error.HTTPError as exc:
+            if exc.code == HTTP_TOO_MANY_REQUESTS:
+                raise PilotRateLimited(f"HTTP {exc.code} on POST {path}") from exc
             raise RuntimeError(f"HTTP {exc.code} on POST {path}") from exc
         self._request("GET", "/me", record=False, bucket="read", samples={"read": []})
 
