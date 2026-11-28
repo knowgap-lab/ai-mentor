@@ -29,6 +29,7 @@ def test_acceptance_backup_drill_bash_syntax() -> None:
         ["bash", "-n", str(SCRIPT)],
         capture_output=True,
         text=True,
+        check=False,
     )
     if proc.returncode != 0:
         raise AssertionError(proc.stderr or proc.stdout)
