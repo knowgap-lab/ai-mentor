@@ -20,6 +20,35 @@ class BuildResult:
     errors: tuple[str, ...]
 
 
+def _verify_public_source(source: Path, errors: list[str]) -> None:
+    script = source / "sanitize_public.py"
+    if not script.is_file():
+        return
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("sanitize_public", script)
+    if spec is None or spec.loader is None:
+        errors.append("не удалось загрузить sanitize_public.py")
+        return
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    problems: list[str] = []
+    skip = {"README.md", "sanitize_public.py"}
+    for path in sorted(source.rglob("*.md")):
+        if path.name in skip:
+            continue
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(source)
+        for rule in module.FORBIDDEN:
+            if rule.search(text):
+                problems.append(f"{rel}")
+                break
+    if problems:
+        errors.append(
+            "источник содержит запрещённые фрагменты: " + ", ".join(problems[:5])
+        )
+
+
 def build_catalog(
     out_dir: Path,
     *,
@@ -32,6 +61,7 @@ def build_catalog(
     out_dir = Path(out_dir)
     errors: list[str] = []
     _assert_source_safe(source, errors)
+    _verify_public_source(source, errors)
     if errors:
         return BuildResult(out_dir, (), tuple(errors))
 

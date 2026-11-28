@@ -48,3 +48,20 @@ def test_dev_seed_defaults_to_demo_catalog() -> None:
     seed = (REPO / "tools" / "dev_seed.py").read_text(encoding="utf-8")
     assert '"demo-catalog"' in seed or "demo-catalog" in seed
     assert "AI_MENTOR_CT2027_CATALOG" in seed
+
+
+def test_ct2027_sources_have_no_private_pupil_data() -> None:
+    import importlib.util
+
+    script = SOURCES / "sanitize_public.py"
+    spec = importlib.util.spec_from_file_location("sanitize_public", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    skip = {"README.md", "sanitize_public.py"}
+    for path in SOURCES.rglob("*.md"):
+        if path.name in skip:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for rule in module.FORBIDDEN:
+            assert not rule.search(text), f"{path}: {rule.pattern}"
