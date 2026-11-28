@@ -39,9 +39,7 @@ function renderHome() {
 test("tutor home: рендерит доску, профиль и соцссылки", () => {
   renderHome();
 
-  expect(
-    screen.getByRole("heading", { name: "Домашняя репетитора" }),
-  ).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "Домашняя" })).toBeTruthy();
   expect(screen.getByText("Марина Волкова")).toBeTruthy();
   expect(screen.getByText(/разбор ошибок/i)).toBeTruthy();
 
@@ -55,25 +53,19 @@ test("tutor home: рендерит доску, профиль и соцссыл�
   expect(screen.getByRole("link", { name: "Telegram" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "VK" })).toBeTruthy();
   expect(screen.getByRole("link", { name: "Сайт" })).toBeTruthy();
-  expect(
-    screen.getByRole("link", { name: "Войти в кабинет репетитора" }),
-  ).toBeTruthy();
+  expect(screen.getByRole("link", { name: "В кабинет" })).toBeTruthy();
 });
 
 test("tutor home: переключатель темы", () => {
   renderHome();
   const root = screen.getByTestId("th");
   expect(root.getAttribute("data-am-scheme")).toBe("light");
-  fireEvent.click(
-    screen.getByRole("checkbox", {
-      name: "Переключить светлую и тёмную тему",
-    }),
-  );
+  fireEvent.click(screen.getByRole("checkbox", { name: "Тема" }));
   expect(root.getAttribute("data-am-scheme")).toBe("dark");
 });
 
 test("tutor home: сетка из шести учеников", () => {
   renderHome();
-  const board = screen.getByRole("list", { name: "Синтетические ученики" });
+  const board = screen.getByRole("list", { name: "Ученики" });
   expect(board.querySelectorAll("li").length).toBe(STUDENTS.length);
 });

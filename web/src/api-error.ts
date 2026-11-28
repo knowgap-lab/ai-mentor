@@ -1,8 +1,6 @@
-// Тексты из таблицы «Ошибки» web.md. Код и message API на экран не попадают (WB-R6).
-
 import { isRecord } from "./record";
 
-export const ERROR_TEXT: Record<string, string> = {
+const ERROR_TEXT: Record<string, string> = {
   item_closed: "Эта задача уже закрыта",
   assignment_closed: "ДЗ уже сдано",
   idempotency_conflict:
@@ -17,20 +15,15 @@ export const ERROR_TEXT: Record<string, string> = {
     "Уберите из текста телефоны, почту и ссылки или сократите до 300 символов",
   not_submitted: "Спор можно открыть после сдачи ДЗ",
   consent_missing: "Нужно согласие родителя — обратитесь к репетитору",
-  invite_gone: "Приглашение недействительно — попросите новое",
-  device_pending: "Подтвердите вход в Telegram",
   has_answers: "Нельзя отозвать: ученик уже отвечал",
   account_locked: "Вход закрыт — обратитесь к репетитору",
-  login_invalid: "Не удалось войти — попробуйте ещё раз",
-  telegram_already_bound: "Этот Telegram уже привязан к другому пользователю",
-  consent_link_gone:
-    "Ссылка согласия недействительна — попросите у репетитора новую",
-  deadline_shorter: "Срок можно только продлить",
 };
 
 export const OFFLINE_TEXT = "Нет связи";
 
-export { isRecord } from "./record";
+export function errorText(code: string): string | undefined {
+  return ERROR_TEXT[code];
+}
 
 export async function errorSentence(
   response: Response,
@@ -40,12 +33,8 @@ export async function errorSentence(
     if (!isRecord(payload) || typeof payload.code !== "string") {
       return null;
     }
-    return ERROR_TEXT[payload.code] ?? null;
+    return errorText(payload.code) ?? null;
   } catch {
     return null;
   }
-}
-
-export async function messageForResponse(response: Response): Promise<string> {
-  return (await errorSentence(response)) ?? OFFLINE_TEXT;
 }

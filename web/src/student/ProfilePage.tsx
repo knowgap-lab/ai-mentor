@@ -1,7 +1,7 @@
 import { Button, Stack, Text } from "@mantine/core";
 import { isRecord } from "../record";
 import { useEffect, useRef, useState } from "react";
-import { messageForResponse, OFFLINE_TEXT } from "../api-error";
+import { errorSentence, OFFLINE_TEXT } from "../api-error";
 import {
   csrfHeaders,
   forgetCsrf,
@@ -33,7 +33,7 @@ export function ProfilePage() {
         }
         rememberCsrfFromResponse(response);
         if (!response.ok) {
-          const text = await messageForResponse(response);
+          const text = (await errorSentence(response)) ?? OFFLINE_TEXT;
           if (!cancelled && gen === loadGen.current) {
             setLoadError(text);
           }
@@ -71,7 +71,7 @@ export function ProfilePage() {
       });
       rememberCsrfFromResponse(response);
       if (!response.ok) {
-        setActionError(await messageForResponse(response));
+        setActionError((await errorSentence(response)) ?? OFFLINE_TEXT);
         return;
       }
       if (path === "/auth/logout") {

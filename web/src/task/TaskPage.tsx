@@ -9,7 +9,7 @@ import {
 } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import { messageForResponse } from "../api-error";
+import { errorSentence, OFFLINE_TEXT } from "../api-error";
 import { ActionBar, ChoiceRow, Screen, TaskSheet } from "../ui";
 import { csrfHeaders, rememberCsrfFromResponse } from "./csrf";
 import {
@@ -180,7 +180,10 @@ async function deliver(entry: OutboxItem): Promise<Delivered> {
     );
     rememberCsrfFromResponse(response);
     if (!response.ok) {
-      return { kind: "http", text: await messageForResponse(response) };
+      return {
+        kind: "http",
+        text: (await errorSentence(response)) ?? OFFLINE_TEXT,
+      };
     }
     const body = (await response.json()) as AnswerResponse;
     return { kind: "ok", body };

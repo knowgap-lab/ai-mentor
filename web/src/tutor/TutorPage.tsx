@@ -2,7 +2,7 @@ import { Button, Stack, Text, TextInput } from "@mantine/core";
 import { type FormEvent, useState } from "react";
 import { csrfHeaders, rememberCsrfFromResponse } from "../task/csrf";
 import { List, ListButton, Screen } from "../ui";
-import { errorSentence } from "../api-error";
+import { errorSentence, errorText } from "../api-error";
 import { isRecord } from "../record";
 import { minskTime } from "./minsk-time";
 
@@ -100,7 +100,7 @@ export function TutorPage() {
       if (!list.ok) {
         const sentence = await errorSentence(list);
         if (list.status === 401) {
-          setLoginNotice(sentence ?? "Войдите ещё раз");
+          setLoginNotice(sentence ?? errorText("login_stale") ?? "");
           setPhase("login");
           return;
         }
@@ -250,11 +250,11 @@ const HOME = [
   ["Глеб Т.", "ДЗ 1 из 6 · курс 22%"],
   ["Дина Л.", "ДЗ 4 из 7 · курс 49%"],
   ["Егор П.", "ДЗ 5 из 5 · курс 63%"],
-] as const;
+];
 
 export function TutorHomePage() {
   const [dark, setDark] = useState(
-    () => localStorage.getItem("am-th-scheme") === "dark",
+    () => localStorage.getItem("am-th") === "dark",
   );
   return (
     <div
@@ -262,7 +262,7 @@ export function TutorHomePage() {
       data-am-scheme={dark ? "dark" : "light"}
       data-testid="th"
     >
-      <h1>Домашняя репетитора</h1>
+      <h1>Домашняя</h1>
       <label className="tt">
         <input
           type="checkbox"
@@ -270,17 +270,17 @@ export function TutorHomePage() {
           onChange={() => {
             const n = !dark;
             setDark(n);
-            localStorage.setItem("am-th-scheme", n ? "dark" : "light");
+            localStorage.setItem("am-th", n ? "dark" : "light");
           }}
-          aria-label="Переключить светлую и тёмную тему"
+          aria-label="Тема"
         />
-        <span>{dark ? "Тёмная тема" : "Светлая тема"}</span>
+        <span>{dark ? "Тьма" : "Свет"}</span>
       </label>
       <div className="tp">
         <strong>Марина Волкова</strong>
-        <p className="tm">Репетитор. План, ДЗ, разбор ошибок.</p>
+        <p className="tm">План, ДЗ, разбор ошибок</p>
       </div>
-      <ul aria-label="Синтетические ученики">
+      <ul aria-label="Ученики">
         {HOME.map(([title, sub]) => (
           <li key={title}>
             <a href="/tutor">
@@ -300,7 +300,7 @@ export function TutorHomePage() {
           ))}
         </ul>
         <a className="tc" href="/tutor">
-          Войти в кабинет репетитора
+          В кабинет
         </a>
       </div>
     </div>
