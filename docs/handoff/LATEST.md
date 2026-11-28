@@ -14,7 +14,7 @@
 
 ## Что в работе сейчас
 
-PR с правилом в [AGENTS.md](../AGENTS.md) § Git.
+PR с правилом в [AGENTS.md](../../AGENTS.md) § Git.
 
 ## Следующий шаг
 
