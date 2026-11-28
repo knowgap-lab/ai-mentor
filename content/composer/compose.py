@@ -107,9 +107,7 @@ _MATCH_KEY = re.compile(r"(?:[А-ЯЁAB]\d+){3}")
 _STEP = re.compile(r"^Шаг\s+(\d+)")
 _RANGE = re.compile(r"^(\d+)\s*[–—-]\s*(\d+)$")
 _DURATION = re.compile(r"Ход урока\s*\(\s*(\d+)\s*минут")
-_BUDGET = re.compile(
-    r"(?:Нагрузка|Ориентир)[^\n]*?[≈~*=]\s*(\d+(?:[.,]\d+)?)\s*ч"
-)
+_BUDGET = re.compile(r"(?:Нагрузка|Ориентир)[^\n]*?[≈~*=]\s*(\d+(?:[.,]\d+)?)\s*ч")
 _BUDGET_ALT = re.compile(r"(?:Нагрузка|Ориентир)[^\n]*?(\d+)\s*ч\s*(?:\d+\s*мин)?")
 _PRACTICE = re.compile(
     r"^(?P<title>[^,]+),\s*"
@@ -125,17 +123,13 @@ _PRACTICE_CT2027 = re.compile(
     r"^(?P<code>[A-Z][A-Z0-9]*)\s*§Банк\s*(?P<num>\d+)\s*[×xх]\s*(?P<count>\d+)\s*[—–-]\s*(?P<rest>.+)$"
 )
 _TASK_COUNT = re.compile(r"(?P<count>\d+)\s+задач")
-_BANK_REF = re.compile(
-    r"([A-Z][A-Z0-9]*)\s*§Банк\s*(\d+)(?:\s*[×xх]\s*(\d+))?"
-)
+_BANK_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Банк\s*(\d+)(?:\s*[×xх]\s*(\d+))?")
 _BANK_REF_PLAIN = re.compile(
     r"(?:типы?\s*)?([\d,\s]+)\s+банка\s+([A-Z][A-Z0-9]*)", re.IGNORECASE
 )
 _TYPES_REF = re.compile(r"([A-Z][A-Z0-9]*)\s+типы?\s+([^.;]+)", re.IGNORECASE)
 _THEORY_REF = re.compile(r"([A-Z][A-Z0-9]*)\s*§Теория шаг\s*(\d+)")
-_THEORY_RANGE = re.compile(
-    r"([A-Z][A-Z0-9]*)\s*§Теория шаги\s*(\d+)\s*[–—-]\s*(\d+)"
-)
+_THEORY_RANGE = re.compile(r"([A-Z][A-Z0-9]*)\s*§Теория шаги\s*(\d+)\s*[–—-]\s*(\d+)")
 _DIFFICULTY = re.compile(r"сложност\w*\s*([123])\s*[–—-]\s*([123])")
 _POSITION = re.compile(r"^([AB])(\d+)$")
 _SKIP_HOMEWORK = ("карточк", "перечит", "чеклист", "журнал")
@@ -485,9 +479,7 @@ def _examples_from_bank(
     parsed: list[dict[str, Any]] = []
     for row in rows:
         statement = (
-            row.get("condition")
-            or (row.get("given") or "").split(" / ")[0]
-            or ""
+            row.get("condition") or (row.get("given") or "").split(" / ")[0] or ""
         ).strip()
         key = row.get("default_key")
         if key is None:
@@ -814,11 +806,14 @@ def _homework(
                 numbers = [int(item) for item in re.findall(r"\d+", plain.group(1))]
                 share = max(1, per_type // max(len(numbers), 1))
                 series = [
-                    {"code": code, "number": number, "count": share} for number in numbers
+                    {"code": code, "number": number, "count": share}
+                    for number in numbers
                 ]
             else:
                 for code, numbers in _homework_type_refs(raw):
-                    share = max(1, per_type // max(len(numbers), 1)) if task_total else 1
+                    share = (
+                        max(1, per_type // max(len(numbers), 1)) if task_total else 1
+                    )
                     series.extend(
                         {
                             "code": code,
@@ -842,7 +837,14 @@ def _homework(
         if source_name is None:
             continue
         if not series:
-            skip_extra = ("итого", "журнал", "если ", "урок усвоен", "понедельник", "вторник")
+            skip_extra = (
+                "итого",
+                "журнал",
+                "если ",
+                "урок усвоен",
+                "понедельник",
+                "вторник",
+            )
             if any(word in folded for word in _SKIP_HOMEWORK) or any(
                 folded.startswith(word) for word in skip_extra
             ):
