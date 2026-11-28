@@ -158,6 +158,25 @@ def build_action_metrics(
     }
 
 
+AUTH_FAILURE_STATUSES = frozenset({401, 403})
+
+
+def all_recorded_statuses(buckets: dict[str, dict[str, list]]) -> list[int]:
+    statuses: list[int] = []
+    for name in ACTION_BUCKETS:
+        statuses.extend(buckets[name]["statuses"])
+    return statuses
+
+
+def derive_auth_failures_only(buckets: dict[str, dict[str, list]]) -> bool | None:
+    statuses = all_recorded_statuses(buckets)
+    if not statuses:
+        return None
+    if all(status in AUTH_FAILURE_STATUSES for status in statuses):
+        return True
+    return None
+
+
 def within_latency_limits(actions: dict, limits: dict) -> bool:
     checks = (
         ("read", limits.get("read", 500)),
@@ -168,7 +187,9 @@ def within_latency_limits(actions: dict, limits: dict) -> bool:
     for name, budget in checks:
         item = actions.get(name)
         if not item:
-            continue
+            return False
+        if item.get("successes", 0) < 1:
+            return False
         if item.get("p95_ms", budget + 1) > budget:
             return False
     return True
@@ -232,6 +253,7 @@ def build_measure_payload(
     attestation_gaps.append("viewport not exercised by HTTP pilot")
     attestation_gaps.append("pdf_worker_separate not verified by HTTP pilot")
     attestation_gaps.append("reviewers")
+    attestation_gaps.append("lost_confirmed_answers not measured")
 
     payload: dict = {
         "mode": "measure",
@@ -254,8 +276,6 @@ def build_measure_payload(
         "think_seconds": {"min": think.get("min"), "max": think.get("max")},
         "seed": profile.get("seed"),
         "unexpected_5xx": unexpected_5xx,
-        "auth_failures_only": False,
-        "lost_confirmed_answers": 0,
         "actions": actions,
         "attestation_gaps": attestation_gaps,
         "duration_seconds": {
@@ -279,6 +299,10 @@ def build_measure_payload(
     pinned_sha = os.environ.get("RELEASE_SHA", "").strip()
     if pinned_sha:
         payload["sha"] = pinned_sha
+
+    auth_only = derive_auth_failures_only(buckets)
+    if auth_only is not None:
+        payload["auth_failures_only"] = auth_only
 
     payload["result"] = (
         "within_budget" if within_latency_limits(actions, limits) else "over_budget"

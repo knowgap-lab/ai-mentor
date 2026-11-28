@@ -67,6 +67,12 @@ class BuildMeasurePayloadTest(unittest.TestCase):
         self.assertEqual(payload["mix"]["read"], 0.6)
         self.assertEqual(payload["seed"], "release1-pilot-d326")
         self.assertIn("browser_repeats not executed", payload["attestation_gaps"])
+        self.assertIn(
+            "lost_confirmed_answers not measured", payload["attestation_gaps"]
+        )
+        self.assertNotIn("lost_confirmed_answers", payload)
+        self.assertNotIn("auth_failures_only", payload)
+        self.assertEqual(payload["result"], "within_budget")
 
         for name in ("read", "answer", "submit", "tutor_review"):
             action = payload["actions"][name]
@@ -101,6 +107,24 @@ class BuildMeasurePayloadTest(unittest.TestCase):
         )
         self.assertNotIn("submit", payload["actions"])
         self.assertIn("actions.submit not performed", payload["attestation_gaps"])
+        self.assertEqual(payload["result"], "over_budget")
+
+    def test_auth_failures_only_when_all_auth_errors(self) -> None:
+        buckets = fake_buckets()
+        for name in buckets:
+            buckets[name]["statuses"] = [401] * len(buckets[name]["latencies"])
+        payload = pilot.build_measure_payload(
+            PROFILE,
+            buckets,
+            started=pilot.time.monotonic(),
+            unexpected_5xx=0,
+            origin="https://example.test",
+            students_started=20,
+            tutors_started=2,
+        )
+        self.assertTrue(payload["auth_failures_only"])
+        self.assertEqual(payload["result"], "over_budget")
+        self.assertEqual(payload["actions"]["read"]["successes"], 0)
 
 
 if __name__ == "__main__":
