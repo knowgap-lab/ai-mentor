@@ -50,6 +50,22 @@ def test_dev_seed_defaults_to_demo_catalog() -> None:
     assert "AI_MENTOR_CT2027_CATALOG" in seed
 
 
+def test_sanitize_nashego_uchenika_whole_phrase() -> None:
+    import importlib.util
+
+    script = SOURCES / "sanitize_public.py"
+    spec = importlib.util.spec_from_file_location("sanitize_public", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    sample = "На ЦТ редкость, для нашего ученика не нужно."
+    cleaned = module.sanitize_text(sample)
+    assert "нашего" not in cleaned.casefold()
+    assert "ученика" not in cleaned.casefold()
+    assert "уровеньа" not in cleaned.casefold()
+    assert "на базовом уровне" in cleaned
+
+
 def test_ct2027_sources_have_no_private_pupil_data() -> None:
     import importlib.util
 

@@ -7,6 +7,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
+# Целые формы «наш … ученик», без частичного совпадения по корню «ученик».
+_OUR_PUPIL_PHRASE = re.compile(
+    r"\bнаш(?:его|ему|ем|им|ей|ую|яя|и|их|ими)?\s+ученик(?:а|у|е|ом|и|ов|ам|ах|ами)?\b",
+    re.IGNORECASE,
+)
+
 REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\(`student/mistakes\.md`[^)]*\)", "(`журнал ошибок`)"),
     (r"`student/mistakes\.md`", "`журнал ошибок`"),
@@ -20,7 +26,6 @@ REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"этот ученик ([а-яё]+) тогда не сдаёт", r"в этот день \1 не сдаём"),
     (r"нашему ученику не нужно", "в базовую программу не входит"),
     (r"нашему ученику", "в программе курса"),
-    (r"наш[а-я]* ученик", "базовый уровень"),
     (r"ученику хватит", "достаточно"),
     (r"а у этого ученика", "при слабой базе"),
     (r"это пишет репетитор", "это фиксируется"),
@@ -45,8 +50,7 @@ FORBIDDEN = (
     re.compile(r"времени у ученика нет"),
     re.compile(r"этот ученик"),
     re.compile(r"нашему ученику"),
-    re.compile(r"наш[её]?му ученику"),
-    re.compile(r"наш\w* ученик"),
+    re.compile(_OUR_PUPIL_PHRASE.pattern),
     re.compile(r"ученику хватит"),
 )
 
@@ -54,6 +58,7 @@ FORBIDDEN = (
 def sanitize_text(text: str) -> str:
     for pattern, repl in REPLACEMENTS:
         text = re.sub(pattern, repl, text)
+    text = _OUR_PUPIL_PHRASE.sub("на базовом уровне", text)
     return text
 
 
