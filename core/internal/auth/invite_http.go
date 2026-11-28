@@ -26,7 +26,7 @@ func (s *Service) getInvite(w http.ResponseWriter, r *http.Request) {
 	err := s.pool.QueryRow(r.Context(), `
 		SELECT i.expires_at, i.used_at, p.display_name
 		FROM core.telegram_invite AS i
-		LEFT JOIN core.student_pii AS p ON p.student_id = i.student_id
+		LEFT JOIN core.student_pii AS p ON p.student_id = i.student_id AND i.student_id IS NOT NULL
 		WHERE i.token_hash = $1
 	`, hash).Scan(&expires, &used, &name)
 	if errors.Is(err, pgx.ErrNoRows) || used != nil || time.Now().After(expires) {
