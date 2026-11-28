@@ -2,30 +2,28 @@
 
 > Единственный перезаписываемый файл журнала. Обновляйте его в конце каждой сессии. Подробности — в [записях](entries/); протокол — в [README](README.md).
 
-**Обновлено:** 2026-11-24 (AM-43 Chrome apt pin, main `c6d9603`)
-**Ветка:** `cursor/chrome-apt-pin-am43-4c59` — PR chrome pin
-**Этап:** main после #73; AM-43 smoke задокументирован.
+**Обновлено:** 2026-11-28 (правило PR в AGENTS.md)
+**Ветка:** `cursor/agents-pr-rule-8695`
+**Этап:** правило совместной работы через открытые PR.
 
 ## Где мы
 
 | Область | Готово | Не готово |
 |---|---|---|
-| release1-ci | generation, build, storybook, e2e, docker, chrome, size-limit (D335), contract-live (D336) | deploy (VM) |
-| Бюджет bundle | `web/size-limit.budget.json`, 252639 gzip bytes JS | — |
+| AGENTS.md § Git | правило «всё через PR», доска = открытые PR | слияние PR |
 
 ## Что в работе сейчас
 
-PR [#64](https://github.com/knowgap-lab/ai-mentor/pull/64) после коммита с D335.
+PR с правилом в [AGENTS.md](../../AGENTS.md) § Git.
 
 ## Следующий шаг
 
-Зелёный CI на PR #73; при наличии секретов — гостевая приёмка §8.
+Ревью и merge PR.
 
 ## Блокеры и вопросы
 
-`QA_VM_SSH_HOST`, `VM_HYPERVISOR_ACCESS` для гостя. Schemathesis не зафиксирован в `tools/requirements.txt`.
+—
 
 ## Куда смотреть
 
-- D335 в [docs/decisions/log.md](../decisions/log.md)
-- [release1-ci-open-checks.yaml](release1-ci-open-checks.yaml)
+- [2026-11-28-1920-cursor-agents-pr-rule-done.md](entries/2026-11-28-1920-cursor-agents-pr-rule-done.md)
