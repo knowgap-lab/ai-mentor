@@ -33,6 +33,36 @@ ssh_guest() {
   ssh -o BatchMode=yes -o ConnectTimeout=30 -o StrictHostKeyChecking=accept-new "$QA_VM_SSH_HOST" "$@"
 }
 
+sync_acceptance_ssh_host_from_tf() {
+  local ip ssh_user host
+  ip="$(terraform_vm_dir terraform output -raw acceptance_ipv4 2>/dev/null || true)"
+  if [[ -z "$ip" ]]; then
+    return 0
+  fi
+  if [[ "$QA_VM_SSH_HOST" == *@* ]]; then
+    ssh_user="${QA_VM_SSH_HOST%%@*}"
+    host="${QA_VM_SSH_HOST#*@}"
+    if [[ "$host" != "$ip" ]]; then
+      export QA_VM_SSH_HOST="${ssh_user}@${ip}"
+    fi
+  else
+    export QA_VM_SSH_HOST="$ip"
+  fi
+}
+
+wait_ssh_guest() {
+  local attempt
+  for attempt in $(seq 1 60); do
+    sync_acceptance_ssh_host_from_tf
+    if ssh_guest "true" 2>/dev/null; then
+      return 0
+    fi
+    sleep 5
+  done
+  echo "create: guest SSH did not come up"
+  return 1
+}
+
 terraform_contract_dir() {
   (
     cd "$ROOT/infra/terraform"
@@ -53,11 +83,15 @@ terraform_vm_dir() {
 step_create() {
   terraform_contract_dir terraform apply -auto-approve -input=false
   bash "$ROOT/tools/vm-hypervisor-create.sh"
+  terraform_vm_dir terraform apply -auto-approve -input=false
+  sync_acceptance_ssh_host_from_tf
+  wait_ssh_guest
   ssh_guest "uname -a" >/dev/null
   ssh_guest "test -f /etc/os-release && grep -q '^ID=ubuntu' /etc/os-release"
 }
 
 step_second_plan() {
+  terraform_vm_dir terraform apply -auto-approve -input=false
   local code=0
   terraform_vm_dir terraform plan -detailed-exitcode -input=false || code=$?
   if [[ "$code" -eq 0 ]]; then
@@ -69,6 +103,27 @@ step_second_plan() {
     *) echo "second_plan: terraform plan exit=$code" ;;
   esac
   return "$code"
+}
+
+run_ansible_site() {
+  local inv="$1"
+  local -a extra=(
+    -e "app_sha=${RELEASE_SHA}"
+    -e "acceptance_local_images=${ACCEPTANCE_LOCAL_IMAGES:-false}"
+  )
+  if [[ "${ACCEPTANCE_LOCAL_IMAGES:-false}" == true ]]; then
+    : "${ACCEPTANCE_CORE_IMAGE_REPOSITORY:=ai-mentor-core-local}"
+    : "${ACCEPTANCE_WEB_IMAGE_REPOSITORY:=ai-mentor-web-local}"
+    : "${ACCEPTANCE_CONTENT_IMAGE_REPOSITORY:=ai-mentor-content-local}"
+    extra+=(
+      -e "core_image_repository=${ACCEPTANCE_CORE_IMAGE_REPOSITORY}"
+      -e "web_image_repository=${ACCEPTANCE_WEB_IMAGE_REPOSITORY}"
+      -e "content_image_repository=${ACCEPTANCE_CONTENT_IMAGE_REPOSITORY}"
+    )
+  fi
+  (
+    cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml "${extra[@]}"
+  )
 }
 
 ansible_guest_inventory() {
@@ -95,7 +150,7 @@ EOF
 step_converge() {
   local inv
   inv="$(ansible_guest_inventory)"
-  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml -e "app_sha=${RELEASE_SHA}")
+  run_ansible_site "$inv"
 }
 
 step_second_converge() {
@@ -107,7 +162,7 @@ step_second_converge() {
   trap "rm -f '${log}'" RETURN
   set -o pipefail
   local playbook_status
-  (cd "$ROOT/infra/ansible" && ansible-playbook -i "$inv" site.yml -e "app_sha=${RELEASE_SHA}") 2>&1 | tee "$log"
+  run_ansible_site "$inv" 2>&1 | tee "$log"
   playbook_status=$?
   if [[ "$playbook_status" -ne 0 ]]; then
     return "$playbook_status"
@@ -156,7 +211,7 @@ step_reboot() {
 
 step_gotenberg() {
   ssh_guest "curl -sf -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/health" | grep -q 200 || \
-    ssh_guest "docker ps --format '{{.Names}}' 2>/dev/null | grep -qi gotenberg"
+    ssh_guest "sudo docker ps --format '{{.Names}}' 2>/dev/null | grep -qi gotenberg"
 }
 
 step_no_pii() {

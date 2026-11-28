@@ -83,7 +83,15 @@
 
 - name: Скачать образы {{ stack_env.name }}
   ansible.builtin.command:
-    argv: "{{ stack_compose_argv + ['pull', 'db', 'gotenberg', 'migrate', 'core', 'web'] }}"
+    argv: >-
+      {{
+        stack_compose_argv
+        + (
+          ['pull', 'db', 'gotenberg']
+          if acceptance_local_images | default(false)
+          else ['pull', 'db', 'gotenberg', 'migrate', 'core', 'web']
+        )
+      }}
   when: stack_bootstrap | bool
   changed_when: false
 
