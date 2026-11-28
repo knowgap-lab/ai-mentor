@@ -35,15 +35,16 @@ def test_ct2027_build_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_ct2027_variant_integer_answer_scores() -> None:
-  """Ответ 18 сходится с ключом M01.T11 из урока 2 математики."""
-  spec = EXAMPLES.read_text(encoding="utf-8")
-  ns: dict = {}
-  exec(spec, ns)
-  score = ns["score"]
-  result = score("ct.integer", 18, "18")
-  assert result["verdict"] == "correct"
+    """Ответ 18 сходится с ключом M01.T11 из урока 2 математики."""
+    spec = EXAMPLES.read_text(encoding="utf-8")
+    ns: dict = {}
+    exec(spec, ns)
+    score = ns["score"]
+    result = score("ct.integer", 18, "18")
+    assert result["verdict"] == "correct"
 
 
-def test_dev_seed_default_catalog_is_ct2027() -> None:
+def test_dev_seed_defaults_to_demo_catalog() -> None:
     seed = (REPO / "tools" / "dev_seed.py").read_text(encoding="utf-8")
-    assert "ct-2027-catalog" in seed
+    assert '"demo-catalog"' in seed or "demo-catalog" in seed
+    assert "AI_MENTOR_CT2027_CATALOG" in seed

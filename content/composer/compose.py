@@ -429,7 +429,7 @@ def _bank(card: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str, 
         condition = (row.get("Пример условия") or given or "").strip()
         sample_answer = (row.get("Ответ") or "").strip()
         position = (row.get("Позиция ЦТ") or "").strip()
-        if position in {"—", "-", "–", "—", ""}:
+        if position in {"—", "-", "–", ""}:
             position = ""
         if (
             number is None
@@ -748,7 +748,7 @@ def _tasks(plan: dict[str, Any], errors: list[dict[str, Any]]) -> list[dict[str,
         match = _PRACTICE.fullmatch(text)
         if match is None:
             folded = raw.casefold()
-            if not raw.strip() or folded.startswith("всего") or folded.startswith("диагностика ("):
+            if not raw.strip() or folded.startswith(("всего", "диагностика (")):
                 continue
             errors.append(
                 _problem("", plan["relative"], 1, "пункт практики не разбирается")
@@ -1068,7 +1068,7 @@ def _practice_theory(
         if theory_blocks:
             return theory_blocks[0]["id"]
     if stage.get("kind") in {"warmup", "homework_review", "exit_test"}:
-        for code, code_blocks in blocks.items():
+        for code_blocks in blocks.values():
             theory_blocks = [b for b in code_blocks if b.get("kind") == "theory"]
             if theory_blocks:
                 return theory_blocks[0]["id"]
@@ -1581,7 +1581,7 @@ def _frontmatter(
 
 def _section_body(body: str, title: str) -> str:
     for heading, text in _h2(body):
-        if heading == title or heading.startswith(title + ":") or heading.startswith(title + " ·"):
+        if heading == title or heading.startswith((title + ":", title + " ·")):
             return text
     return ""
 

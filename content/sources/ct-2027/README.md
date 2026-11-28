@@ -11,4 +11,4 @@ cd content
 python3 -m ct2027_build ../content/tests/fixtures/ct-2027-catalog
 ```
 
-По умолчанию собираются уроки математики и физики `L02`. Локальный сид `tools/dev_seed.py` грузит fixture `content/tests/fixtures/ct-2027-catalog`. Чтобы вернуть синтетический `demo-catalog`, задайте `AI_MENTOR_DEV_CATALOG`.
+По умолчанию собираются уроки математики и физики `L02`. Локальный сид по умолчанию грузит `demo-catalog`; для ct-2027 задайте `AI_MENTOR_CT2027_CATALOG=1` или `AI_MENTOR_DEV_CATALOG` с путём к fixture.
