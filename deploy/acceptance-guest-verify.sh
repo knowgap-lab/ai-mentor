@@ -215,10 +215,9 @@ check_observability_stack() {
     vm_field telemetry.grafana fail
     ok=0
   fi
-  if docker run --rm \
+  if docker run --rm --entrypoint promtool \
     -v "${SRC}/deploy/observability/prometheus-rules.yml:/rules.yml:ro" \
-    prom/prometheus:v2.54.1 \
-    promtool check rules /rules.yml >/dev/null 2>&1 && \
+    prom/prometheus:v2.54.1 check rules /rules.yml >/dev/null 2>&1 && \
     curl -sf 'http://127.0.0.1:9090/api/v1/rules' | grep -q AcceptanceOtelCollectorDown; then
     vm_field telemetry.alert_rule pass
   else
